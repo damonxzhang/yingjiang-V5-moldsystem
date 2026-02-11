@@ -12,13 +12,14 @@ import ShotCountMonitor from './ShotCountMonitor';
 import ProductionReadyList from './ProductionReadyList';
 import ToolingDashboard from './ToolingDashboard';
 import MachineDashboard from './MachineDashboard';
+import SparePartPrediction from './SparePartPrediction';
 
 interface AdminLayoutProps {
   userRole: Role;
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
-  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds' | 'spares' | 'binding' | 'maintenance_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen'>('machine_screen');
+  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds' | 'spares' | 'prediction' | 'binding' | 'maintenance_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen'>('machine_screen');
 
   const menuItems = [
     { id: 'machine_screen', name: '设备生产看板 (主入口)', icon: 'fa-display' },
@@ -28,6 +29,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
     { id: 'shot_monitor', name: '实时 Shot 数监控', icon: 'fa-wave-square' },
     { id: 'molds', name: '模具台账', icon: 'fa-cube' },
     { id: 'spares', name: '备件管理', icon: 'fa-cog' },
+    { id: 'prediction', name: '备件购买预测 (AI)', icon: 'fa-magnifying-glass-chart' },
     { id: 'binding', name: '模具配件绑定', icon: 'fa-link' },
     { id: 'maintenance_confirm', name: '任务中心', icon: 'fa-envelope-open-text' },
     { id: 'maintenance_logs', name: '保养执行记录', icon: 'fa-clipboard-check' },
@@ -56,6 +58,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
       case 'molds': return <MoldManagement />;
       case 'maintenance_confirm': return <MaintenanceCenter />;
       case 'spares': return <SparePartManagement />;
+      case 'prediction': return <SparePartPrediction />;
       case 'binding': return <MoldSpareBinding />;
       case 'maintenance_logs': return <MaintenanceRecords />;
       case 'repair_logs': return <RepairRecords />;

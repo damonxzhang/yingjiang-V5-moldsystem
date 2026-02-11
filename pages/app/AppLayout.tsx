@@ -67,15 +67,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({ userRole }) => {
           </main>
 
           {/* 底部导航 (简化版) */}
-          <nav className="absolute bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 flex justify-center py-4 z-40">
+          <nav className="absolute bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 flex justify-around py-3 z-40">
             <button 
               onClick={() => setCurrentScreen('main')}
-              className="flex flex-col items-center gap-1 group"
+              className={`flex flex-col items-center gap-1 ${currentScreen === 'main' ? 'text-blue-600' : 'text-slate-400'}`}
             >
-              <div className="bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white active:scale-90 transition-transform group-hover:bg-blue-700">
-                <i className="fas fa-qrcode text-2xl"></i>
-              </div>
-              <span className="text-[10px] font-bold text-blue-600 mt-1 uppercase tracking-widest">扫描二维码</span>
+              <i className="fas fa-home text-xl"></i>
+              <span className="text-[10px] font-bold uppercase tracking-widest">首页</span>
+            </button>
+            <button 
+              className="flex flex-col items-center gap-1 text-slate-400"
+            >
+              <i className="fas fa-user text-xl"></i>
+              <span className="text-[10px] font-bold uppercase tracking-widest">我的</span>
             </button>
           </nav>
 

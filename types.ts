@@ -98,4 +98,7 @@ export interface SparePart {
   category: string;
   stock: number;
   minStock: number;
+  trackShots?: boolean; // 是否追踪冲次
+  currentShots?: number; // 当前冲次
+  maxShots?: number; // 冲次上限
 }

@@ -30,9 +30,11 @@ const SparePartManagement: React.FC = () => {
 
   const filteredSpares = spares.filter(s => {
     const matchesSearch = s.name.includes(searchTerm) || s.id.includes(searchTerm) || s.category.includes(searchTerm);
-    const matchesAlert = filterAlerts ? s.stock < s.minStock : true;
+    const matchesAlert = filterAlerts ? (s.stock < s.minStock || (s.trackShots && s.currentShots! >= s.maxShots! * 0.9)) : true;
     return matchesSearch && matchesAlert;
   });
+
+  const shotAlertCount = spares.filter(s => s.trackShots && s.currentShots! >= s.maxShots! * 0.9).length;
 
   const handleStockMove = () => {
     if (!selectedSpare.id) return;
@@ -59,6 +61,9 @@ const SparePartManagement: React.FC = () => {
       category: selectedSpare.category || '通用件',
       stock: Number(selectedSpare.stock) || 0,
       minStock: Number(selectedSpare.minStock) || 5,
+      trackShots: selectedSpare.trackShots || false,
+      currentShots: selectedSpare.trackShots ? (Number(selectedSpare.currentShots) || 0) : undefined,
+      maxShots: selectedSpare.trackShots ? (Number(selectedSpare.maxShots) || 1000000) : undefined,
     };
     setSpares([...spares, newPart]);
     setIsModalOpen(false);
@@ -103,9 +108,10 @@ const SparePartManagement: React.FC = () => {
           </h3>
           <p className="text-[10px] mt-1 opacity-70">{filterAlerts ? '点击取消筛选' : '点击筛选预警件'}</p>
         </div>
-        <div className="bg-blue-50 p-6 rounded-2xl shadow-sm border border-blue-100">
-          <p className="text-blue-600 text-xs font-bold uppercase">今日出库数</p>
-          <h3 className="text-2xl font-bold text-blue-700 mt-1">8</h3>
+        <div className="bg-amber-50 p-6 rounded-2xl shadow-sm border border-amber-100">
+          <p className="text-amber-600 text-xs font-bold uppercase">冲次预警品类</p>
+          <h3 className="text-2xl font-bold text-amber-700 mt-1">{shotAlertCount}</h3>
+          <p className="text-[10px] text-amber-500 mt-1 font-bold">寿命即将到期</p>
         </div>
         <div className="bg-indigo-50 p-6 rounded-2xl shadow-sm border border-indigo-100">
           <p className="text-indigo-600 text-xs font-bold uppercase">本月消耗额</p>
@@ -140,7 +146,8 @@ const SparePartManagement: React.FC = () => {
               <th className="px-6 py-4 font-bold">分类</th>
               <th className="px-6 py-4 font-bold">当前库存</th>
               <th className="px-6 py-4 font-bold">最低阈值</th>
-              <th className="px-6 py-4 font-bold">库存状态</th>
+              <th className="px-6 py-4 font-bold">冲次统计</th>
+              <th className="px-6 py-4 font-bold">状态</th>
               <th className="px-6 py-4 font-bold">建议采购数量 (AI 预测)</th>
               <th className="px-6 py-4 font-bold text-right">操作</th>
             </tr>
@@ -162,11 +169,37 @@ const SparePartManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-400">{spare.minStock}</td>
                   <td className="px-6 py-4">
-                    {spare.stock < spare.minStock ? (
-                      <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">库存不足</span>
+                    {spare.trackShots ? (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-mono">
+                          <span className="text-slate-500">{spare.currentShots?.toLocaleString()}</span>
+                          <span className="text-slate-400">/ {spare.maxShots?.toLocaleString()}</span>
+                        </div>
+                        <div className="h-1 w-24 bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all ${
+                              spare.currentShots! >= spare.maxShots! * 0.9 ? 'bg-amber-500' : 'bg-blue-500'
+                            }`}
+                            style={{ width: `${Math.min(100, (spare.currentShots! / spare.maxShots!) * 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold">正常</span>
+                      <span className="text-slate-300 text-[10px] italic">无需统计</span>
                     )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-1">
+                      {spare.stock < spare.minStock && (
+                        <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold w-fit">库存不足</span>
+                      )}
+                      {spare.trackShots && spare.currentShots! >= spare.maxShots! * 0.9 && (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold w-fit">寿命预警</span>
+                      )}
+                      {spare.stock >= spare.minStock && (!spare.trackShots || spare.currentShots! < spare.maxShots! * 0.9) && (
+                        <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold w-fit">正常</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     {suggestion ? (
@@ -290,6 +323,41 @@ const SparePartManagement: React.FC = () => {
                       onChange={e => setSelectedSpare({...selectedSpare, stock: Number(e.target.value)})}
                     />
                   </div>
+                  <div className="col-span-2 border-t border-slate-100 pt-4 mt-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedSpare.trackShots || false}
+                        onChange={e => setSelectedSpare({...selectedSpare, trackShots: e.target.checked})}
+                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-xs font-bold text-slate-700 uppercase">开启冲次寿命统计 (特殊备件)</span>
+                    </label>
+                  </div>
+                  {selectedSpare.trackShots && (
+                    <>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">当前累计冲次</label>
+                        <input 
+                          type="number" 
+                          placeholder="例如: 0" 
+                          className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                          value={selectedSpare.currentShots || ''}
+                          onChange={e => setSelectedSpare({...selectedSpare, currentShots: Number(e.target.value)})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">设计寿命上限</label>
+                        <input 
+                          type="number" 
+                          placeholder="例如: 1000000" 
+                          className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                          value={selectedSpare.maxShots || ''}
+                          onChange={e => setSelectedSpare({...selectedSpare, maxShots: Number(e.target.value)})}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="py-10 text-center">

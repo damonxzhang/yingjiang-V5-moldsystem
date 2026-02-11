@@ -94,6 +94,19 @@ const TransferFlow: React.FC<TransferFlowProps> = ({ onBack }) => {
                <p className="text-[9px] text-red-300 mt-2 text-left italic">
                  * 此数值将作为保养任务的起始参考基准
                </p>
+               <div className="mt-3 pt-3 border-t border-red-200/20 flex flex-col gap-1.5">
+                 <p className="text-[8px] font-black text-red-200/60 uppercase tracking-tighter">
+                   <i className="fas fa-network-wired mr-1"></i>
+                   Data Integration Mode (Development Note)
+                 </p>
+                 <div className="flex gap-2">
+                   <span className="bg-red-900/30 text-red-200 text-[8px] px-2 py-0.5 rounded border border-red-200/20">SOCKET.IO</span>
+                   <span className="bg-red-900/30 text-red-200 text-[8px] px-2 py-0.5 rounded border border-red-200/20">RESTful API</span>
+                 </div>
+                 <p className="text-[9px] text-red-300/80 italic leading-tight">
+                   需要同时准备 Socket 实时推送和 API 轮询/回调两种方式接收冲次数据
+                 </p>
+               </div>
              </div>
 
              <p className="text-xs text-red-600 leading-relaxed italic">

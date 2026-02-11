@@ -6,7 +6,7 @@ import AppLayout from './pages/app/AppLayout';
 
 const App: React.FC = () => {
   const [view, setView] = useState<'APP' | 'ADMIN'>('ADMIN');
-  const [role, setRole] = useState<Role>(Role.Operator);
+  const [role, setRole] = useState<Role>(Role.Admin);
 
   return (
     <div className="min-h-screen">

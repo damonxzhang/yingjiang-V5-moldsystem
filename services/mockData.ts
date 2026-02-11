@@ -228,6 +228,8 @@ export const MOCK_WORK_ORDERS: WorkOrder[] = [
 ];
 
 export const MOCK_SPARES: SparePart[] = [
-  { id: 'SP-001', name: '加热棒 220V', category: '电器件', stock: 15, minStock: 5 },
-  { id: 'SP-002', name: '顶杆 5mm', category: '机械件', stock: 2, minStock: 10 },
+  { id: 'SP-001', name: '加热棒 220V', category: '电器件', stock: 15, minStock: 5, trackShots: false },
+  { id: 'SP-002', name: '顶杆 5mm', category: '机械件', stock: 2, minStock: 10, trackShots: false },
+  { id: 'SP-003', name: '精密型腔条 (Cavity Bar)', category: '核心模件', stock: 8, minStock: 5, trackShots: true, currentShots: 850000, maxShots: 1000000 },
+  { id: 'SP-004', name: '柱塞杆 (Plunger)', category: 'Transfer件', stock: 12, minStock: 10, trackShots: true, currentShots: 38000, maxShots: 40000 },
 ];
