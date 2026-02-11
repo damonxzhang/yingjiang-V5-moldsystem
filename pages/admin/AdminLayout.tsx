@@ -29,7 +29,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
     { id: 'shot_monitor', name: '实时 Shot 数监控', icon: 'fa-wave-square' },
     { id: 'molds', name: '模具台账', icon: 'fa-cube' },
     { id: 'spares', name: '备件管理', icon: 'fa-cog' },
-    { id: 'prediction', name: '备件购买预测 (AI)', icon: 'fa-magnifying-glass-chart' },
+    { id: 'prediction', name: '备件购买预测', icon: 'fa-magnifying-glass-chart' },
     { id: 'binding', name: '模具配件绑定', icon: 'fa-link' },
     { id: 'maintenance_confirm', name: '任务中心', icon: 'fa-envelope-open-text' },
     { id: 'maintenance_logs', name: '保养执行记录', icon: 'fa-clipboard-check' },

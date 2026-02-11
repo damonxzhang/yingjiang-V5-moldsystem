@@ -2,19 +2,45 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# SmartMold 模具管理系统
 
-This contains everything you need to run your app locally.
+SmartMold 是一款专为现代化工厂设计的智能化模具管理与维护平台。系统通过实时监控、数据分析和预测算法，全方位提升模具使用寿命，优化备件库存，确保生产流程的连续性与高效性。
 
-View your app in AI Studio: https://ai.studio/apps/drive/1JkJp3ABmWq6TaSNZ1FD-becF4HUsnvEx
+## 核心功能模块
 
-## Run Locally
+### 1. 数字化监控大屏
+- **设备生产看板**：作为系统主入口，实时展示全厂设备生产状态、稼动率及关键产线指标。
+- **模具监控大屏**：针对模具维度的可视化展示，直观呈现模具在位情况、健康度及待办维护任务。
 
-**Prerequisites:**  Node.js
+### 2. 生产准备与实时监控
+- **可生产产品 LIST**：根据模具状态自动筛选当前可投入生产的产品清单。
+- **实时 Shot 数监控**：实时采集模具冲次数据，通过波动图表预测维护节点。
 
+### 3. 模具全生命周期管理
+- **模具台账**：建立完整的数字化档案，记录模具参数、履历、状态及存放位置。
+- **任务中心**：集中处理点检、保养、维修任务的下达与确认。
+- **记录追溯**：详尽的保养执行记录与维修执行记录，为模具改良提供数据支持。
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 4. 备件管理与智能预测
+- **备件库存管理**：数字化管理备件入库、出库及库存水位。
+- **模具配件绑定**：建立模具与备件的 BOM 级对应关系，实现精准更换。
+- **备件购买预测**：**（核心特色）** 支持上传 Excel 排产计划，系统自动结合当前库存与模具消耗规律，生成智能采买清单，防止停工待料。
+
+## 技术特性
+- **现代化 UI 设计**：基于 Tailwind CSS 构建，支持深色（大屏）与浅色（后台）模式。
+- **多角色权限**：针对管理员、模具工程师、维修工、操作员等提供差异化视图。
+- **响应式架构**：完美适配 PC 端管理界面与现场移动端操作需求。
+
+## 快速开始
+
+### 开发环境配置
+1. **安装依赖**：
+   ```bash
+   npm install
+   ```
+2. **配置环境变量**：
+   在 `.env.local` 中设置 `GEMINI_API_KEY`（如涉及 AI 功能）。
+3. **启动项目**：
+   ```bash
+   npm run dev
+   ```
