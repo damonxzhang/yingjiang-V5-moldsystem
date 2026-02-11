@@ -1,11 +1,27 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { MOCK_MOLDS } from '../../services/mockData';
 
 const ShotCountMonitor: React.FC = () => {
   const [showRawData, setShowRawData] = useState(false);
+  const [filterProcess, setFilterProcess] = useState('');
+  const [filterPackage, setFilterPackage] = useState('');
+
+  // 提取所有可用的选项
+  const processOptions = useMemo(() => Array.from(new Set(MOCK_MOLDS.map(m => m.process))), []);
+  const packageOptions = useMemo(() => Array.from(new Set(MOCK_MOLDS.map(m => m.packageType))), []);
+
+  // 过滤并排序模具数据
+  const filteredMolds = useMemo(() => {
+    return MOCK_MOLDS.filter(m => {
+      const matchProcess = !filterProcess || m.process === filterProcess;
+      const matchPackage = !filterPackage || m.packageType === filterPackage;
+      return matchProcess && matchPackage;
+    }).sort((a, b) => b.shotTotal - a.shotTotal);
+  }, [filterProcess, filterPackage]);
+
   // 模拟从 API 获取的数据排序或过滤
-  const sortedMolds = [...MOCK_MOLDS].sort((a, b) => b.shotTotal - a.shotTotal);
+  const sortedMolds = filteredMolds;
 
   // 模拟原始 API 数据 JSON
   const rawApiData = {
@@ -44,6 +60,46 @@ const ShotCountMonitor: React.FC = () => {
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
             API 数据链路正常 (200 OK)
           </div>
+        </div>
+      </div>
+
+      {/* 筛选条 */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-6">
+        <div className="flex items-center gap-3">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">工序</label>
+          <select 
+            value={filterProcess}
+            onChange={(e) => setFilterProcess(e.target.value)}
+            className="bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          >
+            <option value="">全部工序</option>
+            {processOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">产品类型</label>
+          <select 
+            value={filterPackage}
+            onChange={(e) => setFilterPackage(e.target.value)}
+            className="bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          >
+            <option value="">全部类型</option>
+            {packageOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
+        </div>
+
+        {(filterProcess || filterPackage) && (
+          <button 
+            onClick={() => { setFilterProcess(''); setFilterPackage(''); }}
+            className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline"
+          >
+            重置筛选
+          </button>
+        )}
+
+        <div className="ml-auto text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          当前显示: <span className="text-indigo-600">{sortedMolds.length}</span> / {MOCK_MOLDS.length}
         </div>
       </div>
 
