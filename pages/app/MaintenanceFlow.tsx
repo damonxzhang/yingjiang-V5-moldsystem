@@ -270,13 +270,9 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
                </div>
 
                <div className="flex gap-2">
-                  <button className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-200 active:bg-slate-200 transition-colors">
+                  <button className="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-200 active:bg-slate-200 transition-colors">
                     <i className="fas fa-camera"></i>
                     上传现场照片
-                  </button>
-                  <button className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-200 active:bg-slate-200 transition-colors">
-                    <i className="fas fa-file-signature"></i>
-                    电子签名确认
                   </button>
                </div>
             </div>

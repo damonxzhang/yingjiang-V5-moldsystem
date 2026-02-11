@@ -14,6 +14,12 @@ const TransferFlow: React.FC<TransferFlowProps> = ({ onBack }) => {
   const [shotCount, setShotCount] = useState<string>('');
   const [buyoffLoading, setBuyoffLoading] = useState(false);
 
+  // 模拟生产提出的待处理模具清单
+  const pendingTasks = [
+    { type: 'REMOVE', moldId: 'TY71', name: 'QFN-64 上模', reason: '达到保养冲次', machine: 'MC-102' },
+    { type: 'INSTALL', moldId: 'TY101', name: 'QFN-64 新模', reason: '生产计划变更', target: 'MC-102' }
+  ];
+
   const handleScanMold = (id: string) => {
     const mold = MOCK_MOLDS.find(m => m.id === id);
     if (mold) {
@@ -231,8 +237,61 @@ const TransferFlow: React.FC<TransferFlowProps> = ({ onBack }) => {
 
       <div className="flex-1 p-4">
         {mode === 'SELECT' && (
-          <div className="space-y-6 pt-10">
-            <h3 className="text-xl font-bold text-slate-800 text-center mb-8">请选择当前作业类型</h3>
+          <div className="space-y-6 pt-4">
+            {/* 待处理模具清单移到顶部 */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <i className="fas fa-clipboard-list text-indigo-500"></i>
+                生产下发：待处理模具清单
+              </h4>
+              <div className="space-y-3">
+                {pendingTasks.map((task, idx) => (
+                  <button 
+                    key={idx} 
+                    onClick={() => {
+                      setMode(task.type as any);
+                      handleScanMold(task.moldId);
+                    }}
+                    className="w-full bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex items-center justify-between group hover:border-indigo-500 hover:shadow-md transition-all text-left"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${
+                        task.type === 'REMOVE' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'
+                      }`}>
+                        <i className={`fas ${task.type === 'REMOVE' ? 'fa-arrow-up' : 'fa-arrow-down'}`}></i>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-black text-slate-800">{task.moldId}</span>
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
+                            task.type === 'REMOVE' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                          }`}>
+                            {task.type === 'REMOVE' ? '待拆下' : '待安装'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-medium mt-0.5">{task.name} · {task.reason}</p>
+                        <p className="text-[9px] text-indigo-500 font-bold mt-1 uppercase">
+                          <i className="fas fa-microchip mr-1"></i>
+                          {task.type === 'REMOVE' ? `当前机台: ${task.machine}` : `目标机台: ${task.target}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
+                      <i className="fas fa-chevron-right"></i>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative py-4 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200"></div>
+              </div>
+              <span className="relative px-4 bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">或者手动选择</span>
+            </div>
+
+            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest text-center">请选择当前作业类型</h3>
             <div className="grid grid-cols-2 gap-6">
                <button 
                   onClick={() => setMode('REMOVE')}
@@ -253,7 +312,7 @@ const TransferFlow: React.FC<TransferFlowProps> = ({ onBack }) => {
                  <span className="font-bold text-slate-700">模具安装</span>
                </button>
             </div>
-            <div className="bg-blue-50 p-6 rounded-2xl mt-10">
+            <div className="bg-blue-50 p-6 rounded-2xl">
                <p className="text-xs text-blue-800 leading-relaxed italic">
                  <i className="fas fa-info-circle mr-2"></i>
                  提示：若进行模具互换，请先执行“拆下”流程将旧模具归入 backup，再执行“安装”流程安装新模具。
