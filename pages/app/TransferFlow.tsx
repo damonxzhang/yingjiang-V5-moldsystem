@@ -1,0 +1,272 @@
+
+import React, { useState } from 'react';
+import { MOCK_MOLDS } from '../../services/mockData';
+import { Mold, BuyoffStatus, MoldStatus } from '../../types';
+
+interface TransferFlowProps {
+  onBack: () => void;
+}
+
+const TransferFlow: React.FC<TransferFlowProps> = ({ onBack }) => {
+  const [mode, setMode] = useState<'SELECT' | 'REMOVE' | 'INSTALL'>('SELECT');
+  const [step, setStep] = useState(0);
+  const [selectedMold, setSelectedMold] = useState<Mold | null>(null);
+  const [shotCount, setShotCount] = useState<string>('');
+  const [buyoffLoading, setBuyoffLoading] = useState(false);
+
+  const handleScanMold = (id: string) => {
+    const mold = MOCK_MOLDS.find(m => m.id === id);
+    if (mold) {
+      setSelectedMold(mold);
+      setShotCount(mold.shotTotal.toString());
+      setStep(1);
+    } else {
+      alert(`未识别到模具 ID: ${id}！请使用 Mock 数据中的 ID (如 TY101, TY71)`);
+    }
+  };
+
+  const nextStep = () => setStep(s => s + 1);
+
+  // ----------------- 拆下流程步骤 -----------------
+  const renderRemoveFlow = () => {
+    switch(step) {
+      case 0: return (
+        <div className="space-y-6 pt-10 text-center">
+          <div className="bg-slate-900 text-white p-10 rounded-3xl shadow-xl flex flex-col items-center">
+             <i className="fas fa-qrcode text-4xl mb-4 text-blue-400"></i>
+             <h3 className="text-xl font-bold">第1步：扫模具码</h3>
+             <input 
+               type="text" 
+               placeholder="输入模具 ID (TY71)"
+               onKeyDown={(e) => e.key === 'Enter' && handleScanMold((e.target as HTMLInputElement).value)}
+               className="mt-6 w-full bg-slate-800 border-none rounded-xl p-4 text-center text-blue-400 font-mono"
+             />
+          </div>
+          <button onClick={() => handleScanMold('TY71')} className="text-blue-600 font-bold text-sm underline">模拟扫码 TY71</button>
+        </div>
+      );
+      case 1: return (
+        <div className="space-y-6 pt-10 text-center">
+          <div className="bg-slate-900 text-white p-10 rounded-3xl shadow-xl flex flex-col items-center">
+             <i className="fas fa-industry text-4xl mb-4 text-amber-400"></i>
+             <h3 className="text-xl font-bold">第2步：扫机台码</h3>
+             <p className="text-xs text-slate-400 mt-2">确认模具当前所在机台 (MC-102)</p>
+             <input type="text" value="MC-102" disabled className="mt-6 w-full bg-slate-800 border-none rounded-xl p-4 text-center text-amber-400" />
+          </div>
+          <button onClick={nextStep} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg">确认拆下模具</button>
+        </div>
+      );
+      case 2: return (
+        <div className="space-y-6">
+          <div className="bg-red-50 border-2 border-red-200 p-6 rounded-2xl">
+             <div className="flex items-center gap-3 text-red-700 font-bold mb-4">
+               <i className="fas fa-unlink text-xl"></i>
+               <h3>模具和机台已解绑</h3>
+             </div>
+             <div className="bg-red-600 text-white p-4 rounded-xl shadow-lg animate-pulse mb-4">
+               <i className="fas fa-exclamation-circle mr-2"></i>
+               系统强制触发模具保养任务
+             </div>
+             
+             {/* 手动输入 Shot Count */}
+             <div className="bg-white/10 p-4 rounded-xl mb-4 border border-red-200/30">
+               <label className="block text-[10px] font-black text-red-200 uppercase tracking-widest mb-2 text-left">
+                 确认当前 Shot Count (末次生产读数)
+               </label>
+               <div className="relative">
+                 <input 
+                   type="number" 
+                   value={shotCount}
+                   onChange={(e) => setShotCount(e.target.value)}
+                   className="w-full bg-white border-2 border-red-100 rounded-xl px-4 py-3 text-lg font-black text-slate-800 focus:ring-2 focus:ring-red-500 outline-none transition-all shadow-inner"
+                   placeholder="请输入当前累计冲次..."
+                 />
+                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">
+                   Shots
+                 </div>
+               </div>
+               <p className="text-[9px] text-red-300 mt-2 text-left italic">
+                 * 此数值将作为保养任务的起始参考基准
+               </p>
+             </div>
+
+             <p className="text-xs text-red-600 leading-relaxed italic">
+               * 规则：模具拆下入柜或不同机器间互换，强制触发保养，避免由于保养随设备走使模具保养超出周期。
+             </p>
+          </div>
+          <div className="bg-green-600 text-white p-4 rounded-xl text-center font-bold">
+            状态转为：backup
+          </div>
+          <button 
+            onClick={() => {
+              alert(`模具 ${selectedMold?.id} 已成功解绑并同步冲次 (${shotCount})！\n由于系统规则，现在将跳转至保养执行流程。`);
+              onBack(); // 这里模拟跳转回主菜单或直接结束流程
+            }} 
+            className="w-full bg-red-600 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 flex items-center justify-center gap-2"
+          >
+            <i className="fas fa-tools"></i>
+            去保养
+          </button>
+        </div>
+      );
+      case 3: return (
+        <div className="space-y-6 pt-6">
+          <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-xl space-y-4">
+             <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+               <i className="fas fa-warehouse text-blue-400"></i>
+               <h3 className="font-bold">最终步骤：扫模具柜码</h3>
+             </div>
+             <p className="text-xs text-slate-400">请对准模具柜存放位二维码进行扫描</p>
+             <input type="text" placeholder="扫描位置码 (A1-02)" className="w-full bg-slate-800 rounded-xl p-4 text-center" />
+          </div>
+          <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl text-blue-700 text-xs text-center font-bold">
+            动作：模具和模具柜位置绑定成功
+          </div>
+          <button onClick={() => { alert("拆下流程已完结！"); onBack(); }} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg">完成流程</button>
+        </div>
+      );
+      default: return null;
+    }
+  };
+
+  // ----------------- 安装流程步骤 -----------------
+  const renderInstallFlow = () => {
+    switch(step) {
+      case 0: return (
+        <div className="space-y-6 pt-10 text-center">
+          <div className="bg-slate-900 text-white p-10 rounded-3xl shadow-xl flex flex-col items-center">
+             <i className="fas fa-qrcode text-4xl mb-4 text-green-400"></i>
+             <h3 className="text-xl font-bold">第1步：扫模具码</h3>
+             <input 
+               type="text" 
+               placeholder="输入模具 ID (TY101)"
+               onKeyDown={(e) => e.key === 'Enter' && handleScanMold((e.target as HTMLInputElement).value)}
+               className="mt-6 w-full bg-slate-800 border-none rounded-xl p-4 text-center text-green-400 font-mono"
+             />
+          </div>
+          <button onClick={() => handleScanMold('TY101')} className="text-green-600 font-bold text-sm underline">模拟扫码 TY101</button>
+        </div>
+      );
+      case 1: return (
+        <div className="space-y-6 pt-10 text-center">
+          <div className="bg-slate-900 text-white p-10 rounded-3xl shadow-xl flex flex-col items-center">
+             <i className="fas fa-archive text-4xl mb-4 text-blue-400"></i>
+             <h3 className="text-xl font-bold">第2步：扫模具柜码</h3>
+             <p className="text-xs text-slate-400 mt-2">确认取出模具的位置 (A1-02)</p>
+             <input type="text" value="A1-02" disabled className="mt-6 w-full bg-slate-800 border-none rounded-xl p-4 text-center text-blue-400" />
+          </div>
+          <div className="bg-blue-100 text-blue-700 p-3 rounded-lg text-xs font-bold">
+            动作：模具和模具柜位置解绑
+          </div>
+          <button onClick={nextStep} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold">取出模具并下一步</button>
+        </div>
+      );
+      case 2: return (
+        <div className="space-y-6 pt-6">
+          <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-xl space-y-4">
+             <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+               <i className="fas fa-industry text-amber-400"></i>
+               <h3 className="font-bold">第3步：扫机台合模码</h3>
+             </div>
+             <p className="text-xs text-slate-400">请对准目标安装机台二维码</p>
+             <input type="text" placeholder="扫描机台码 (MC-201)" className="w-full bg-slate-800 rounded-xl p-4 text-center" />
+          </div>
+          <div className="bg-indigo-600 text-white p-4 rounded-xl text-center font-bold shadow-lg">
+            动作：模具和机台位置绑定成功
+          </div>
+          <button onClick={nextStep} className="w-full bg-amber-600 text-white py-4 rounded-xl font-bold shadow-lg">下一步：状态验证</button>
+        </div>
+      );
+      case 3: return (
+        <div className="space-y-6">
+          <div className="bg-purple-600 text-white p-5 rounded-2xl shadow-xl text-center font-bold">
+            状态已转为：预 BUYOFF
+          </div>
+          <div className="bg-white border-2 border-slate-100 p-6 rounded-2xl shadow-sm text-center">
+             <h4 className="font-bold text-slate-800 mb-4 flex items-center justify-center gap-2">
+               <i className="fas fa-satellite-dish text-blue-500"></i>
+               外部 BUYOFF 验证
+             </h4>
+             <button 
+               onClick={() => {
+                 setBuyoffLoading(true);
+                 setTimeout(() => { setBuyoffLoading(false); nextStep(); }, 1500);
+               }}
+               className={`w-full py-4 rounded-xl font-bold transition-all shadow-md ${buyoffLoading ? 'bg-slate-100 text-slate-400 animate-pulse' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+             >
+               {buyoffLoading ? '正在请求接口...' : '点击执行 BUYOFF 状态确认'}
+             </button>
+          </div>
+        </div>
+      );
+      case 4: return (
+        <div className="space-y-8 pt-10 text-center">
+           <div className="bg-green-500 text-white w-24 h-24 rounded-full flex items-center justify-center text-4xl mx-auto shadow-xl shadow-green-100 animate-bounce">
+             <i className="fas fa-check"></i>
+           </div>
+           <div className="space-y-2">
+             <h3 className="text-2xl font-bold text-slate-800">BUYOFF 已通过</h3>
+             <p className="text-sm text-slate-500">模具状态正式转为：正常</p>
+           </div>
+           <button onClick={() => { alert("安装及状态同步成功！"); onBack(); }} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95">完成流程并关闭</button>
+        </div>
+      );
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="min-h-full bg-slate-50 flex flex-col">
+      <div className="p-4 bg-white border-b border-slate-200 sticky top-0 z-10 flex items-center gap-3">
+        <button onClick={onBack} className="p-2 -ml-2 text-slate-400">
+          <i className="fas fa-chevron-left"></i>
+        </button>
+        <h2 className="text-lg font-bold text-slate-800">模具转换流程</h2>
+        {mode !== 'SELECT' && (
+          <span className={`ml-auto px-3 py-1 rounded-full text-[10px] font-bold ${mode === 'REMOVE' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+            {mode === 'REMOVE' ? '正在拆下' : '正在安装'}
+          </span>
+        )}
+      </div>
+
+      <div className="flex-1 p-4">
+        {mode === 'SELECT' && (
+          <div className="space-y-6 pt-10">
+            <h3 className="text-xl font-bold text-slate-800 text-center mb-8">请选择当前作业类型</h3>
+            <div className="grid grid-cols-2 gap-6">
+               <button 
+                  onClick={() => setMode('REMOVE')}
+                  className="p-8 bg-white border-2 border-slate-100 rounded-3xl shadow-sm flex flex-col items-center gap-4 active:scale-95 transition-all hover:border-red-500"
+               >
+                 <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-3xl">
+                   <i className="fas fa-arrow-up"></i>
+                 </div>
+                 <span className="font-bold text-slate-700">模具拆下</span>
+               </button>
+               <button 
+                  onClick={() => setMode('INSTALL')}
+                  className="p-8 bg-white border-2 border-slate-100 rounded-3xl shadow-sm flex flex-col items-center gap-4 active:scale-95 transition-all hover:border-green-500"
+               >
+                 <div className="w-16 h-16 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center text-3xl">
+                   <i className="fas fa-arrow-down"></i>
+                 </div>
+                 <span className="font-bold text-slate-700">模具安装</span>
+               </button>
+            </div>
+            <div className="bg-blue-50 p-6 rounded-2xl mt-10">
+               <p className="text-xs text-blue-800 leading-relaxed italic">
+                 <i className="fas fa-info-circle mr-2"></i>
+                 提示：若进行模具互换，请先执行“拆下”流程将旧模具归入 backup，再执行“安装”流程安装新模具。
+               </p>
+            </div>
+          </div>
+        )}
+
+        {mode === 'REMOVE' && renderRemoveFlow()}
+        {mode === 'INSTALL' && renderInstallFlow()}
+      </div>
+    </div>
+  );
+};
+
+export default TransferFlow;

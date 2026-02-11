@@ -1,0 +1,156 @@
+
+import React, { useState } from 'react';
+import { Role } from '../../types';
+import Dashboard from './Dashboard';
+import MoldManagement from './MoldManagement';
+import MaintenanceCenter from './MaintenanceCenter';
+import SparePartManagement from './SparePartManagement';
+import MaintenanceRecords from './MaintenanceRecords';
+import RepairRecords from './RepairRecords';
+import MoldSpareBinding from './MoldSpareBinding';
+import ShotCountMonitor from './ShotCountMonitor';
+import ProductionReadyList from './ProductionReadyList';
+import ToolingDashboard from './ToolingDashboard';
+import MachineDashboard from './MachineDashboard';
+
+interface AdminLayoutProps {
+  userRole: Role;
+}
+
+const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
+  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds' | 'spares' | 'binding' | 'maintenance_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen'>('machine_screen');
+
+  const menuItems = [
+    { id: 'machine_screen', name: '设备生产看板 (主入口)', icon: 'fa-display' },
+    { id: 'dashboard', name: '仪表盘 (智能决策)', icon: 'fa-chart-pie' },
+    { id: 'tooling_screen', name: '模具监控大屏', icon: 'fa-desktop' },
+    { id: 'production_list', name: '可生产产品 LIST', icon: 'fa-list-check' },
+    { id: 'shot_monitor', name: '实时 Shot 数监控', icon: 'fa-wave-square' },
+    { id: 'molds', name: '模具台账', icon: 'fa-cube' },
+    { id: 'spares', name: '备件管理', icon: 'fa-cog' },
+    { id: 'binding', name: '模具配件绑定', icon: 'fa-link' },
+    { id: 'maintenance_confirm', name: '任务中心', icon: 'fa-envelope-open-text' },
+    { id: 'maintenance_logs', name: '保养执行记录', icon: 'fa-clipboard-check' },
+    { id: 'repair_logs', name: '维修执行记录', icon: 'fa-tools' },
+  ];
+
+  const getRoleLabel = (role: Role) => {
+    switch(role) {
+      case Role.Admin: return '系统管理员';
+      case Role.MoldEngineer: return '模具工程师';
+      case Role.MaintenanceEngineer: return '维修工程师';
+      case Role.Operator: return '现场操作员';
+      case Role.ProductionSupervisor: return '生产主管';
+      case Role.WarehouseAdmin: return '仓库管理员';
+      default: return role;
+    }
+  };
+
+  const renderContent = () => {
+    switch(activePage) {
+      case 'dashboard': return <Dashboard />;
+      case 'tooling_screen': return <ToolingDashboard onSwitchView={(view) => setActivePage(view === 'tooling' ? 'tooling_screen' : 'machine_screen')} />;
+      case 'machine_screen': return <MachineDashboard onSwitchView={(view) => setActivePage(view === 'tooling' ? 'tooling_screen' : 'machine_screen')} />;
+      case 'production_list': return <ProductionReadyList />;
+      case 'shot_monitor': return <ShotCountMonitor />;
+      case 'molds': return <MoldManagement />;
+      case 'maintenance_confirm': return <MaintenanceCenter />;
+      case 'spares': return <SparePartManagement />;
+      case 'binding': return <MoldSpareBinding />;
+      case 'maintenance_logs': return <MaintenanceRecords />;
+      case 'repair_logs': return <RepairRecords />;
+      default: return <div className="p-10 text-slate-400 italic">该模块正在开发中...</div>;
+    }
+  };
+
+  const isBigScreen = activePage === 'tooling_screen' || activePage === 'machine_screen';
+
+  return (
+    <div className={`flex min-h-screen ${isBigScreen ? 'bg-[#050a30]' : 'bg-slate-100'}`}>
+      {/* 侧边栏 */}
+      <aside className={`w-64 bg-slate-900 text-slate-300 flex flex-col fixed h-full shadow-2xl z-40 transition-transform ${isBigScreen ? '-translate-x-full' : 'translate-x-0'}`}>
+        <div className="p-6 flex items-center gap-3 border-b border-slate-800">
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+            <i className="fas fa-microchip"></i>
+          </div>
+          <div>
+            <h1 className="font-bold text-white text-lg leading-none">SmartMold</h1>
+            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">后台管理系统</span>
+          </div>
+        </div>
+
+        <nav className="flex-1 py-6 overflow-y-auto">
+          {menuItems.map(item => (
+            <button
+              key={item.id}
+              onClick={() => setActivePage(item.id as any)}
+              className={`w-full flex items-center gap-4 px-6 py-4 transition-all text-left ${activePage === item.id ? 'bg-indigo-600 text-white shadow-lg' : 'hover:bg-slate-800'}`}
+            >
+              <i className={`fas ${item.icon} w-5 text-center`}></i>
+              <span className="font-medium text-sm">{item.name}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="p-6 mt-auto border-t border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-[10px] font-bold">
+              {userRole.slice(0, 2)}
+            </div>
+            <div className="text-xs">
+              <p className="text-white font-bold">{getRoleLabel(userRole)}</p>
+              <p className="text-slate-500">登录用户</p>
+            </div>
+          </div>
+          <button className="mt-4 w-full text-left text-xs text-slate-500 hover:text-white flex items-center gap-2">
+            <i className="fas fa-sign-out-alt"></i>
+            退出系统
+          </button>
+        </div>
+      </aside>
+
+      {/* 主工作区 */}
+      <main className={`flex-1 ${isBigScreen ? 'ml-0' : 'ml-64'} min-h-screen flex flex-col transition-all`}>
+        {!isBigScreen && (
+          <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-30 shadow-sm">
+            <div className="flex items-center gap-2 text-slate-500">
+              <i className="fas fa-home text-xs"></i>
+              <i className="fas fa-chevron-right text-[10px]"></i>
+              <span className="text-sm font-medium capitalize">
+                {menuItems.find(m => m.id === activePage)?.name || activePage}
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="text-slate-400 hover:text-indigo-600 transition-colors">
+                <i className="far fa-bell text-lg"></i>
+              </button>
+              <div className="h-8 w-[1px] bg-slate-200"></div>
+              <button 
+                onClick={() => window.location.reload()}
+                className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors"
+              >
+                刷新数据
+              </button>
+            </div>
+          </header>
+        )}
+
+        {isBigScreen && (
+          <button 
+            onClick={() => setActivePage('dashboard')}
+            className="fixed top-4 left-4 z-50 bg-blue-900/50 hover:bg-blue-800 text-blue-300 w-10 h-10 rounded-full flex items-center justify-center border border-blue-500/30 transition-all group"
+            title="返回后台"
+          >
+            <i className="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+          </button>
+        )}
+
+        <div className={isBigScreen ? '' : 'p-8'}>
+          {renderContent()}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default AdminLayout;

@@ -1,0 +1,7 @@
+{
+  "name": "张英江-模具管理项目 zhangyingjiang-moldsystem-v2",
+  "description": "A comprehensive mold lifecycle management system featuring mobile field execution and centralized web administration. Includes external BUYOFF integration, mandatory maintenance confirmation workflows, and real-time shot-count tracking.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
