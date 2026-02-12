@@ -15,7 +15,7 @@ interface MoldSlot {
 interface ProductConfiguration {
   sku: string;
   name: string;
-  slots: [MoldSlot, MoldSlot, MoldSlot]; // 固定 3 个工位
+  slots: MoldSlot[]; // 动态数量的工位，最多 4 个
 }
 
 interface MachineNode {
@@ -24,7 +24,7 @@ interface MachineNode {
   availableProducts: ProductConfiguration[];
 }
 
-// 模拟多级数据 (增加数据量以展示筛选效果)
+// 模拟多级数据 (包含 2, 3, 4 个工位的配置)
 const MOCK_HIERARCHY: MachineNode[] = [
   {
     id: 'BMD-14',
@@ -37,6 +37,7 @@ const MOCK_HIERARCHY: MachineNode[] = [
           { id: 'P1', moldId: 'M-2024-001', paramReady: true, moldReady: true, buyoffReady: true },
           { id: 'P2', moldId: 'M-2024-002', paramReady: true, moldReady: true, buyoffReady: true },
           { id: 'P3', moldId: 'M-2024-003', paramReady: true, moldReady: true, buyoffReady: true },
+          { id: 'P4', moldId: 'M-2024-022', paramReady: true, moldReady: true, buyoffReady: true },
         ]
       },
       {
@@ -54,7 +55,6 @@ const MOCK_HIERARCHY: MachineNode[] = [
         slots: [
           { id: 'P1', moldId: 'M-2024-007', paramReady: true, moldReady: true, buyoffReady: true },
           { id: 'P2', moldId: 'M-2024-008', paramReady: true, moldReady: true, buyoffReady: true },
-          { id: 'P3', moldId: 'M-2024-009', paramReady: false, moldReady: false, buyoffReady: false },
         ]
       },
       {
@@ -64,6 +64,7 @@ const MOCK_HIERARCHY: MachineNode[] = [
           { id: 'P1', moldId: 'M-2024-010', paramReady: true, moldReady: true, buyoffReady: false },
           { id: 'P2', moldId: 'M-2024-011', paramReady: true, moldReady: true, buyoffReady: false },
           { id: 'P3', moldId: 'M-2024-012', paramReady: true, moldReady: true, buyoffReady: false },
+          { id: 'P4', moldId: 'M-2024-023', paramReady: false, moldReady: true, buyoffReady: false },
         ]
       },
       {
@@ -158,6 +159,19 @@ const ProductionReadyList: React.FC = () => {
   const currentConfig = useMemo(() => 
     currentMachine.availableProducts.find(p => p.sku === activeSku) || currentMachine.availableProducts[0],
   [currentMachine, activeSku]);
+
+  // 计算当前显示的产品中最大的工位数量
+  const maxSlotsCount = useMemo(() => {
+    return Math.max(...currentMachine.availableProducts.map(p => p.slots.length), 0);
+  }, [currentMachine]);
+
+  const slotHeaders = useMemo(() => {
+    const headers = [];
+    for (let i = 1; i <= maxSlotsCount; i++) {
+      headers.push(`P${i}`);
+    }
+    return headers;
+  }, [maxSlotsCount]);
 
   // 切换参数就绪状态
   const toggleParam = (machineId: string, sku: string, slotId: string) => {
@@ -326,23 +340,25 @@ const ProductionReadyList: React.FC = () => {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-slate-900 border-b border-slate-800">
-                <th colSpan={10} className="py-4 text-base font-black text-white uppercase tracking-[0.2em]">
+                <th colSpan={1 + (maxSlotsCount * 3)} className="py-4 text-base font-black text-white uppercase tracking-[0.2em]">
                   {currentMachine.id} (机号)
                 </th>
               </tr>
               <tr className="bg-slate-100/50 border-b border-slate-200">
                 <th className="py-2 px-4 border-r border-slate-200 text-[10px] font-black text-slate-500 uppercase tracking-widest min-w-[120px]">产品</th>
-                <th colSpan={3} className="py-2 px-4 border-r border-slate-200 text-[10px] font-black text-slate-500 uppercase tracking-widest">P1 (模台号)</th>
-                <th colSpan={3} className="py-2 px-4 border-r border-slate-200 text-[10px] font-black text-slate-500 uppercase tracking-widest">P2 (模台号)</th>
-                <th colSpan={3} className="py-2 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">P3 (模台号)</th>
+                {slotHeaders.map((header, idx) => (
+                  <th key={header} colSpan={3} className={`py-2 px-4 ${idx < slotHeaders.length - 1 ? 'border-r border-slate-200' : ''} text-[10px] font-black text-slate-500 uppercase tracking-widest`}>
+                    {header} (模台号)
+                  </th>
+                ))}
               </tr>
               <tr className="bg-slate-50/50 border-b border-slate-200">
                 <th className="py-2 px-4 border-r border-slate-200"></th>
-                {['P1', 'P2', 'P3'].map((p, idx) => (
+                {slotHeaders.map((p, idx) => (
                   <React.Fragment key={p}>
                     <th className="py-2 px-1 text-[9px] font-black text-slate-400 border-r border-slate-100">参数状态</th>
                     <th className="py-2 px-1 text-[9px] font-black text-slate-400 border-r border-slate-100">模具状态</th>
-                    <th className={`py-2 px-1 text-[9px] font-black text-slate-400 ${idx < 2 ? 'border-r border-slate-200' : ''}`}>BUYOFF</th>
+                    <th className={`py-2 px-1 text-[9px] font-black text-slate-400 ${idx < slotHeaders.length - 1 ? 'border-r border-slate-200' : ''}`}>BUYOFF</th>
                   </React.Fragment>
                 ))}
               </tr>
@@ -357,40 +373,56 @@ const ProductionReadyList: React.FC = () => {
                   <td className="py-3 px-4 border-r border-slate-200 font-black text-slate-700 text-sm">
                     {product.sku}
                   </td>
-                  {product.slots.map((slot, idx) => (
-                    <React.Fragment key={slot.id}>
-                      {/* 参数就绪状态 */}
-                      <td 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleParam(currentMachine.id, product.sku, slot.id);
-                        }}
-                        className={`py-3 px-1 text-center border-r border-slate-200 font-black text-sm transition-all cursor-pointer hover:opacity-80 ${slot.paramReady ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
-                      >
-                        {slot.paramReady ? 'V' : 'X'}
-                      </td>
-                      {/* 模具就绪状态 */}
-                      <td 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleMoldStatus(currentMachine.id, product.sku, slot.id);
-                        }}
-                        className={`py-3 px-1 text-center border-r border-slate-200 font-black text-sm transition-all cursor-pointer hover:opacity-80 ${slot.moldReady ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
-                      >
-                        {slot.moldReady ? 'V' : 'X'}
-                      </td>
-                      {/* Buyoff 就绪状态 */}
-                      <td 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleBuyoffStatus(currentMachine.id, product.sku, slot.id);
-                        }}
-                        className={`py-3 px-1 text-center font-black text-sm transition-all cursor-pointer hover:opacity-80 ${idx < 2 ? 'border-r border-slate-200' : ''} ${slot.buyoffReady ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
-                      >
-                        {slot.buyoffReady ? 'V' : 'X'}
-                      </td>
-                    </React.Fragment>
-                  ))}
+                  {/* 根据 maxSlotsCount 渲染列，如果产品没有该 slot 则显示空 */}
+                  {Array.from({ length: maxSlotsCount }).map((_, idx) => {
+                    const slotId = `P${idx + 1}`;
+                    const slot = product.slots.find(s => s.id === slotId);
+                    
+                    if (!slot) {
+                      return (
+                        <React.Fragment key={slotId}>
+                          <td className="py-3 px-1 bg-slate-50/30 border-r border-slate-200"></td>
+                          <td className="py-3 px-1 bg-slate-50/30 border-r border-slate-200"></td>
+                          <td className={`py-3 px-1 bg-slate-50/30 ${idx < maxSlotsCount - 1 ? 'border-r border-slate-200' : ''}`}></td>
+                        </React.Fragment>
+                      );
+                    }
+
+                    return (
+                      <React.Fragment key={slotId}>
+                        {/* 参数就绪状态 */}
+                        <td 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleParam(currentMachine.id, product.sku, slot.id);
+                          }}
+                          className={`py-3 px-1 text-center border-r border-slate-200 font-black text-sm transition-all cursor-pointer hover:opacity-80 ${slot.paramReady ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                        >
+                          {slot.paramReady ? 'V' : 'X'}
+                        </td>
+                        {/* 模具就绪状态 */}
+                        <td 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleMoldStatus(currentMachine.id, product.sku, slot.id);
+                          }}
+                          className={`py-3 px-1 text-center border-r border-slate-200 font-black text-sm transition-all cursor-pointer hover:opacity-80 ${slot.moldReady ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                        >
+                          {slot.moldReady ? 'V' : 'X'}
+                        </td>
+                        {/* Buyoff 就绪状态 */}
+                        <td 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleBuyoffStatus(currentMachine.id, product.sku, slot.id);
+                          }}
+                          className={`py-3 px-1 text-center font-black text-sm transition-all cursor-pointer hover:opacity-80 ${idx < maxSlotsCount - 1 ? 'border-r border-slate-200' : ''} ${slot.buyoffReady ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                        >
+                          {slot.buyoffReady ? 'V' : 'X'}
+                        </td>
+                      </React.Fragment>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
@@ -399,7 +431,10 @@ const ProductionReadyList: React.FC = () => {
       </section>
 
       {/* 详情卡片：模具槽位配置 */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className={`grid grid-cols-1 ${
+        currentConfig.slots.length === 4 ? 'md:grid-cols-4' : 
+        currentConfig.slots.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'
+      } gap-6`}>
         {currentConfig.slots.map(slot => (
           <div key={slot.id} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 relative overflow-hidden group hover:border-indigo-200 transition-all">
             {/* 卡片内容保持不变 */}
