@@ -466,11 +466,22 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                       )}
                     </div>
                     {/* Tiny Progress Bar */}
-                    <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div className={`h-full ${
-                        (mold.maintenanceCountdown / 5000) * 100 > 90 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 
-                        (mold.maintenanceCountdown / 5000) * 100 > 60 ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]' : 'bg-green-500'
-                      }`} style={{ width: `${Math.min(100, (mold.maintenanceCountdown / 5000) * 100)}%` }}></div>
+                    <div className="space-y-1">
+                      <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div className={`h-full ${
+                          (mold.maintenanceCountdown / 5000) * 100 > 90 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 
+                          (mold.maintenanceCountdown / 5000) * 100 > 60 ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]' : 'bg-green-500'
+                        }`} style={{ width: `${Math.min(100, (mold.maintenanceCountdown / 5000) * 100)}%` }}></div>
+                      </div>
+                      <div className="flex justify-between items-center px-0.5">
+                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">Life</span>
+                        <span className={`text-[9px] font-black ${
+                          (mold.maintenanceCountdown / 5000) * 100 > 90 ? 'text-red-400' : 
+                          (mold.maintenanceCountdown / 5000) * 100 > 60 ? 'text-yellow-400' : 'text-green-400'
+                        }`}>
+                          {Math.round(Math.min(100, (mold.maintenanceCountdown / 5000) * 100))}%
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
