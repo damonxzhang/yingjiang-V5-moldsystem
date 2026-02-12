@@ -85,11 +85,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
         };
       };
 
-      const molds = {
-        P1: createMoldData('P1', i),
-        P2: createMoldData('P2', i),
-        P3: createMoldData('P3', i)
-      };
+      const moldCount = [2, 3, 4][Math.floor(Math.random() * 3)];
+      const moldPositions = Array.from({ length: moldCount }, (_, index) => `P${index + 1}`);
+      
+      const molds = moldPositions.reduce((acc, pos, idx) => {
+        acc[pos] = createMoldData(pos, i + idx);
+        return acc;
+      }, {} as any);
 
       // 整体状态逻辑：如果有任何一个超期，则整体边框显红；如果有即将保养，显黄；否则绿
       let machineColorClass = 'border-[3px] border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)]';
@@ -432,10 +434,12 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
               </div>
             </div>
 
-            {/* 3 Molds Row (P1, P2, P3) */}
-            <div className="grid grid-cols-3 gap-1.5 my-2 flex-1">
-              {['P1', 'P2', 'P3'].map(pos => {
-                const mold = (machine.molds as any)[pos];
+            {/* Dynamic Molds Row (2, 3, or 4 molds) */}
+            <div className={`grid ${
+              Object.keys(machine.molds).length === 4 ? 'grid-cols-4' : 
+              Object.keys(machine.molds).length === 2 ? 'grid-cols-2' : 'grid-cols-3'
+            } gap-1.5 my-2 flex-1`}>
+              {Object.entries(machine.molds).map(([pos, mold]: [string, any]) => {
                 return (
                   <div key={pos} className="flex flex-col gap-1.5">
                     <div className="flex justify-between items-center">
