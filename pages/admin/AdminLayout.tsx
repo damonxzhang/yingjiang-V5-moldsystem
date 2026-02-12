@@ -19,7 +19,7 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
-  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds' | 'spares' | 'prediction' | 'binding' | 'maintenance_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen'>('machine_screen');
+  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'maintenance_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen'>('machine_screen');
 
   const menuItems = [
     { id: 'machine_screen', name: '设备生产看板 (主入口)', icon: 'fa-display' },
@@ -27,8 +27,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
     { id: 'tooling_screen', name: '模具监控大屏', icon: 'fa-desktop' },
     { id: 'production_list', name: '可生产产品 LIST', icon: 'fa-list-check' },
     { id: 'shot_monitor', name: '实时 Shot 数监控', icon: 'fa-wave-square' },
-    { id: 'molds', name: '模具台账', icon: 'fa-cube' },
-    { id: 'spares', name: '备件管理', icon: 'fa-cog' },
+    { id: 'molds_big', name: '模具台账 (大材料)', icon: 'fa-cube', department: '大材料' },
+    { id: 'molds_small', name: '模具台账 (小材料)', icon: 'fa-cube', department: '小材料' },
+    { id: 'spares_big', name: '备件管理 (大材料)', icon: 'fa-cog', department: '大材料' },
+    { id: 'spares_small', name: '备件管理 (小材料)', icon: 'fa-cog', department: '小材料' },
     { id: 'prediction', name: '备件购买预测', icon: 'fa-magnifying-glass-chart' },
     { id: 'binding', name: '模具配件绑定', icon: 'fa-link' },
     { id: 'maintenance_confirm', name: '任务中心', icon: 'fa-envelope-open-text' },
@@ -55,9 +57,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
       case 'machine_screen': return <MachineDashboard onSwitchView={(view) => setActivePage(view === 'tooling' ? 'tooling_screen' : 'machine_screen')} />;
       case 'production_list': return <ProductionReadyList />;
       case 'shot_monitor': return <ShotCountMonitor />;
-      case 'molds': return <MoldManagement />;
+      case 'molds_big': return <MoldManagement department="大材料" />;
+      case 'molds_small': return <MoldManagement department="小材料" />;
       case 'maintenance_confirm': return <MaintenanceCenter />;
-      case 'spares': return <SparePartManagement />;
+      case 'spares_big': return <SparePartManagement department="大材料" />;
+      case 'spares_small': return <SparePartManagement department="小材料" />;
       case 'prediction': return <SparePartPrediction />;
       case 'binding': return <MoldSpareBinding />;
       case 'maintenance_logs': return <MaintenanceRecords />;
@@ -80,7 +84,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
             <div className="flex items-center gap-2">
               <h1 className="font-bold text-white text-lg leading-none">SmartMold</h1>
             </div>
-            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase font-mono">V 5.1.20260212.003</span>
+            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase font-mono">V 5.1.20260212.004</span>
           </div>
         </div>
 

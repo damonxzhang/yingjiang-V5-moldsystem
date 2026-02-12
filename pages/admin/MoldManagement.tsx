@@ -4,8 +4,16 @@ import { MOCK_MOLDS } from '../../services/mockData';
 import { STATUS_COLORS, STATUS_LABELS } from '../../constants';
 import { Mold, MoldStatus, BuyoffStatus, MoldComponent } from '../../types';
 
-const MoldManagement: React.FC = () => {
-  const [molds, setMolds] = useState<Mold[]>(MOCK_MOLDS);
+interface MoldManagementProps {
+  department?: '大材料' | '小材料';
+}
+
+const MoldManagement: React.FC<MoldManagementProps> = ({ department }) => {
+  const [molds, setMolds] = useState<Mold[]>(
+    department 
+      ? MOCK_MOLDS.filter(m => m.department === department)
+      : MOCK_MOLDS
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'ADD' | 'EDIT' | 'VIEW'>('ADD');
   const [currentMold, setCurrentMold] = useState<Partial<Mold>>({});
@@ -31,6 +39,11 @@ const MoldManagement: React.FC = () => {
         substrateThickness: currentMold.substrateThickness || '0',
         pinCode: currentMold.pinCode || 'A',
         components: currentMold.components || [],
+        shortName: currentMold.shortName || '',
+        thickness: currentMold.thickness || '',
+        moldCategory: currentMold.moldCategory || '',
+        productType: currentMold.productType || '',
+        department: department || currentMold.department || '大材料',
       };
       setMolds([...molds, newMold]);
     } else if (modalMode === 'EDIT') {
@@ -38,6 +51,12 @@ const MoldManagement: React.FC = () => {
     }
     setIsModalOpen(false);
     setCurrentMold({});
+  };
+
+  const handleDeactivate = (id: string) => {
+    if (confirm('确定要停用该模具吗？停用后将无法在生产看板中查看。')) {
+      setMolds(molds.map(m => m.id === id ? { ...m, status: MoldStatus.Deactivated } : m));
+    }
   };
 
   const renderComponentTable = (components: MoldComponent[]) => {
@@ -85,7 +104,9 @@ const MoldManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">模具档案与 BOM 管理</h2>
+        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+          模具档案与 BOM 管理 {department && <span className="text-indigo-600">({department})</span>}
+        </h2>
         <div className="flex gap-2">
           <button onClick={() => { setModalMode('ADD'); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg">
             + 新增模具档案
@@ -94,11 +115,13 @@ const MoldManagement: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden overflow-x-auto">
-        <table className="w-full text-left min-w-[1000px]">
+        <table className="w-full text-left min-w-[1200px]">
           <thead className="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-widest">
             <tr>
-              <th className="px-4 py-4 font-bold">模具编号/序列号</th>
+              <th className="px-4 py-4 font-bold">模具编号/简名</th>
+              <th className="px-4 py-4 font-bold">分类/产品类型</th>
               <th className="px-4 py-4 font-bold">位置</th>
+              <th className="px-4 py-4 font-bold">厚度</th>
               <th className="px-4 py-4 font-bold">PACKAGE TYPE/SIZE</th>
               <th className="px-4 py-4 font-bold">实时 SHOT COUNT</th>
               <th className="px-4 py-4 font-bold">状态</th>
@@ -110,9 +133,14 @@ const MoldManagement: React.FC = () => {
               <tr key={mold.id} className="hover:bg-slate-50 transition-colors">
                 <td className="px-4 py-4">
                   <p className="text-sm font-bold text-slate-800">{mold.id}</p>
-                  <p className="text-[10px] text-slate-400">{mold.serialNumber}</p>
+                  <p className="text-[10px] text-indigo-500 font-bold">{mold.shortName || '-'}</p>
+                </td>
+                <td className="px-4 py-4">
+                  <p className="text-xs font-bold text-slate-700">{mold.moldCategory || '-'}</p>
+                  <p className="text-[10px] text-slate-400">{mold.productType || '-'}</p>
                 </td>
                 <td className="px-4 py-4 text-xs font-medium text-slate-600">{mold.location}</td>
+                <td className="px-4 py-4 text-xs font-bold text-slate-700">{mold.thickness || '-'}</td>
                 <td className="px-4 py-4 text-xs">
                   <span className="font-bold text-indigo-600">{mold.packageType}</span>
                   <span className="mx-1 text-slate-300">/</span>
@@ -127,9 +155,20 @@ const MoldManagement: React.FC = () => {
                   </span>
                 </td>
                 <td className="px-4 py-4 text-right">
-                  <button onClick={() => { setModalMode('EDIT'); setCurrentMold(mold); setIsModalOpen(true); }} className="text-indigo-600 p-2 hover:bg-indigo-50 rounded-lg transition-colors" title="查看 BOM 详情">
-                    <i className="fas fa-sitemap mr-1"></i> BOM
-                  </button>
+                  <div className="flex justify-end gap-1">
+                    <button onClick={() => { setModalMode('EDIT'); setCurrentMold(mold); setIsModalOpen(true); }} className="text-indigo-600 p-2 hover:bg-indigo-50 rounded-lg transition-colors" title="查看 BOM 详情">
+                      <i className="fas fa-sitemap mr-1"></i> BOM
+                    </button>
+                    {mold.status !== MoldStatus.Deactivated && (
+                      <button 
+                        onClick={() => handleDeactivate(mold.id)} 
+                        className="text-red-500 p-2 hover:bg-red-50 rounded-lg transition-colors" 
+                        title="停用模具"
+                      >
+                        <i className="fas fa-ban mr-1"></i> 停用
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -159,6 +198,24 @@ const MoldManagement: React.FC = () => {
                     <div>
                       <label className="text-[9px] font-bold text-slate-500 uppercase">模具编号 (MOLD ID)</label>
                       <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold" value={currentMold.id || ''} onChange={e => setCurrentMold({...currentMold, id: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-bold text-slate-500 uppercase">模具简名 (SHORT NAME)</label>
+                      <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold" value={currentMold.shortName || ''} onChange={e => setCurrentMold({...currentMold, shortName: e.target.value})} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">模具厚度 (THICKNESS)</label>
+                        <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm" value={currentMold.thickness || ''} onChange={e => setCurrentMold({...currentMold, thickness: e.target.value})} />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">模具分类</label>
+                        <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm" value={currentMold.moldCategory || ''} onChange={e => setCurrentMold({...currentMold, moldCategory: e.target.value})} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-bold text-slate-500 uppercase">产品类型 (PROD TYPE)</label>
+                      <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm" value={currentMold.productType || ''} onChange={e => setCurrentMold({...currentMold, productType: e.target.value})} />
                     </div>
                     <div>
                       <label className="text-[9px] font-bold text-slate-500 uppercase">封装规格 (PKG TYPE)</label>

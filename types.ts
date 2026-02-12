@@ -14,7 +14,8 @@ export enum MoldStatus {
   Maintenance = 'MAINTENANCE',
   Repair = 'REPAIR',
   PendingBuyoff = 'PENDING_BUYOFF',
-  Scrapped = 'SCRAPPED'
+  Scrapped = 'SCRAPPED',
+  Deactivated = 'DEACTIVATED'
 }
 
 export enum MaintenanceStatus {
@@ -63,6 +64,13 @@ export interface Mold {
   substrateThickness: string; // SUBSTRATE THICKNESS
   pinCode: string; // PIN CODE
 
+  // 2026-02-12 新增字段
+  shortName?: string; // 模具简名
+  thickness?: string; // 模具厚度
+  moldCategory?: string; // 模具分类
+  productType?: string; // 产品类型
+  department?: '大材料' | '小材料'; // 所属部门
+
   // 扩展模具组件结构 (BOM)
   components: MoldComponent[];
 }
@@ -101,4 +109,5 @@ export interface SparePart {
   trackShots?: boolean; // 是否追踪冲次
   currentShots?: number; // 当前冲次
   maxShots?: number; // 冲次上限
+  department?: '大材料' | '小材料'; // 所属部门
 }

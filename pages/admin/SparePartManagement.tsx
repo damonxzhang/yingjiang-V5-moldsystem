@@ -3,8 +3,16 @@ import React, { useState } from 'react';
 import { MOCK_SPARES } from '../../services/mockData';
 import { SparePart } from '../../types';
 
-const SparePartManagement: React.FC = () => {
-  const [spares, setSpares] = useState<SparePart[]>(MOCK_SPARES);
+interface SparePartManagementProps {
+  department?: '大材料' | '小材料';
+}
+
+const SparePartManagement: React.FC<SparePartManagementProps> = ({ department }) => {
+  const [spares, setSpares] = useState<SparePart[]>(
+    department 
+      ? MOCK_SPARES.filter(s => s.department === department)
+      : MOCK_SPARES
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAlerts, setFilterAlerts] = useState(false);
   
@@ -64,6 +72,7 @@ const SparePartManagement: React.FC = () => {
       trackShots: selectedSpare.trackShots || false,
       currentShots: selectedSpare.trackShots ? (Number(selectedSpare.currentShots) || 0) : undefined,
       maxShots: selectedSpare.trackShots ? (Number(selectedSpare.maxShots) || 1000000) : undefined,
+      department: department || undefined,
     };
     setSpares([...spares, newPart]);
     setIsModalOpen(false);
@@ -73,7 +82,9 @@ const SparePartManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-slate-800">备件库存管理</h2>
+        <h2 className="text-2xl font-bold text-slate-800">
+          {department ? `${department} - ` : ''}备件库存管理
+        </h2>
         <div className="flex gap-2">
           <button 
             onClick={() => { setModalMode('IMPORT'); setIsModalOpen(true); }}

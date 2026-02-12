@@ -8,6 +8,7 @@ export const STATUS_COLORS = {
   REPAIR: 'bg-red-100 text-red-700 border-red-200',
   PENDING_BUYOFF: 'bg-purple-100 text-purple-700 border-purple-200',
   SCRAPPED: 'bg-slate-100 text-slate-700 border-slate-200',
+  DEACTIVATED: 'bg-gray-100 text-gray-500 border-gray-200',
 };
 
 export const STATUS_LABELS: Record<string, string> = {
@@ -17,6 +18,7 @@ export const STATUS_LABELS: Record<string, string> = {
   REPAIR: '维修中',
   PENDING_BUYOFF: '待BUYOFF',
   SCRAPPED: '已报废',
+  DEACTIVATED: '已停用',
 };
 
 export const BUYOFF_COLORS = {

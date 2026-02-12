@@ -45,6 +45,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
 
   // 固定的24台设备数据，每台设备包含 P1, P2, P3 三套模具
   const allMachines = useMemo(() => {
+    const availableMolds = MOCK_MOLDS.filter(m => m.status !== MoldStatus.Deactivated);
+    
     return Array.from({ length: 24 }).map((_, i) => {
       const machineId = `BMD-${String(i + 1).padStart(2, '0')}`;
       
@@ -84,7 +86,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
           currentShots,
           shotThreshold,
           isShotWarning,
-          moldInfo: MOCK_MOLDS[(index * 3 + (pos === 'P1' ? 0 : pos === 'P2' ? 1 : 2)) % MOCK_MOLDS.length]
+          moldInfo: availableMolds[(index * 3 + (pos === 'P1' ? 0 : pos === 'P2' ? 1 : 2)) % availableMolds.length]
         };
       };
 
@@ -579,17 +581,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                               <p className="text-green-400 font-mono font-bold">{selectedMachine.completedQty.toLocaleString()}</p>
                             </div>
                           </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-[10px] font-bold">
-                              <span className="text-slate-400 uppercase">实时进度</span>
-                              <span className="text-blue-400 font-mono">{Math.floor(selectedMachine.productionProgress)}%</span>
-                            </div>
-                            <div className="h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700 shadow-inner">
-                              <div className="h-full bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.8)] relative" style={{ width: `${selectedMachine.productionProgress}%` }}>
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
-                              </div>
-                            </div>
-                          </div>
                         </div>
                       </div>
 
@@ -604,6 +595,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                         </div>
                         <div className="grid grid-cols-2 gap-y-3 text-xs">
                           <span className="text-slate-400">模具编号:</span> <span className="text-blue-200 font-bold">{mold.id}</span>
+                          <span className="text-slate-400">模具全称:</span> <span className="text-blue-200 font-bold">{mold.moldInfo.name}</span>
+                          <span className="text-slate-400">模具简称:</span> <span className="text-blue-200 font-bold">{mold.moldInfo.shortName || '-'}</span>
                           <span className="text-slate-400">待办任务:</span> <span className="text-indigo-400 font-black">{mold.taskCount} 项</span>
                           <span className="text-slate-400">模具型号:</span> <span className="text-blue-200">{mold.moldInfo.type}</span>
                           <span className="text-slate-400">累计冲次:</span> <span className={`font-bold ${mold.isShotWarning ? 'text-amber-500' : 'text-blue-200'}`}>{mold.currentShots.toLocaleString()}</span>
@@ -642,6 +635,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                           <i className="fas fa-plus-circle"></i> 安装模具
                         </button>
                       </div>
+                      <button onClick={() => handleAction('DEACTIVATE')} className="w-full bg-slate-800/50 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 mt-1">
+                        <i className="fas fa-ban"></i> 模具停用
+                      </button>
                     </div>
                   </div>
                 );
@@ -680,7 +676,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               <div className="grid grid-cols-4 gap-4">
-                {MOCK_MOLDS.map(mold => (
+                {MOCK_MOLDS.filter(mold => mold.status !== MoldStatus.Deactivated).map(mold => (
                   <div key={mold.id} className={`bg-blue-950/50 border ${mold.status === MoldStatus.Idle ? 'border-blue-900 hover:border-blue-500/50' : 'border-slate-800 opacity-70'} rounded-2xl p-4 space-y-3 transition-all group`}>
                     <div className="flex justify-between items-start">
                       <span className="bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">{mold.id}</span>
@@ -933,6 +929,57 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                   className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"
                 >
                   确认并关闭
+                </button>
+              </div>
+            ) : taskType === 'DEACTIVATE' ? (
+              <div className="text-center">
+                <div className="w-20 h-20 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl animate-pulse">
+                  <i className="fas fa-ban"></i>
+                </div>
+                <h2 className="text-xl font-black text-white mb-2 uppercase tracking-widest">确认停用模具</h2>
+                <div className="bg-red-950/20 p-4 rounded-2xl border border-red-900/30 mb-8 text-left space-y-2">
+                  <p className="text-[10px] text-red-400 uppercase font-bold tracking-widest">警告事项</p>
+                  <p className="text-xs text-slate-300">
+                    您正在停用模具: <span className="text-red-400 font-bold">{(selectedMachine?.molds as any)[selectedMoldPos]?.id}</span>
+                  </p>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    停用后，该模具将无法再被安装到任何机台上，且会从生产可用列表中移除。此操作不可逆，请谨慎操作。
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setShowTaskModal(false)}
+                    className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-black text-sm uppercase tracking-widest transition-all"
+                  >
+                    取消
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setTaskType('DEACTIVATE_SUCCESS');
+                    }}
+                    className="flex-1 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-red-900/20"
+                  >
+                    确认停用
+                  </button>
+                </div>
+              </div>
+            ) : taskType === 'DEACTIVATE_SUCCESS' ? (
+              <div className="text-center">
+                <div className="w-20 h-20 bg-slate-500/20 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+                  <i className="fas fa-check-circle"></i>
+                </div>
+                <h2 className="text-xl font-black text-white mb-2 uppercase tracking-widest">模具已停用</h2>
+                <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+                  模具 {(selectedMachine?.molds as any)[selectedMoldPos]?.id} 已标记为“已停用”状态。相关数据已同步至模具台账。
+                </p>
+                <button 
+                  onClick={() => {
+                    setShowTaskModal(false);
+                    setSelectedMachine(null);
+                  }}
+                  className="w-full bg-slate-700 hover:bg-slate-600 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all"
+                >
+                  关闭并返回
                 </button>
               </div>
             ) : (

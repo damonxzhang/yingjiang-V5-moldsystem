@@ -20,6 +20,7 @@ export const MOCK_MOLDS: Mold[] = [
     serialNumber: '#1/6-100597', orderNumber: 'ORD-9921', cabNo: 'A123456', 
     packageType: 'QFN', packageSize: 'HD', packageThickness: '0.8', 
     substrateThickness: '0.3', pinCode: 'A',
+    shortName: 'BGA-01', thickness: '250mm', moldCategory: '大材料模具', productType: 'BGA', department: '大材料',
     components: generateComponents('#1/6-100597')
   },
   { 
@@ -29,6 +30,7 @@ export const MOCK_MOLDS: Mold[] = [
     serialNumber: 'A0155110401', orderNumber: 'ORD-8812', cabNo: 'A321235', 
     packageType: 'BGA', packageSize: 'BIG', packageThickness: '0.7', 
     substrateThickness: '0.3', pinCode: 'B',
+    shortName: 'BGA-STD', thickness: '220mm', moldCategory: '小材料模具', productType: 'BGA', department: '小材料',
     components: generateComponents('A0155110401')
   },
   { 
@@ -38,6 +40,7 @@ export const MOCK_MOLDS: Mold[] = [
     serialNumber: 'ATB-910-52192', orderNumber: 'ORD-7761', cabNo: 'A567894', 
     packageType: 'SOP', packageSize: 'STANDARD', packageThickness: '0.673', 
     substrateThickness: '5mil', pinCode: 'C',
+    shortName: 'QFN-88', thickness: '180mm', moldCategory: '大材料模具', productType: 'QFN', department: '大材料',
     components: generateComponents('ATB-910-52192')
   },
   { 
@@ -47,6 +50,7 @@ export const MOCK_MOLDS: Mold[] = [
     serialNumber: 'A0230290401', orderNumber: 'ORD-5541', cabNo: 'A765234', 
     packageType: 'QFP', packageSize: 'BIG', packageThickness: '0.673', 
     substrateThickness: '10mil', pinCode: 'D',
+    shortName: 'QFN-BIG', thickness: '300mm', moldCategory: '小材料模具', productType: 'QFN', department: '小材料',
     components: generateComponents('A0230290401')
   },
   { 
@@ -56,6 +60,7 @@ export const MOCK_MOLDS: Mold[] = [
     serialNumber: 'BX-900-112', orderNumber: 'ORD-2231', cabNo: 'A8821', 
     packageType: 'QFN', packageSize: 'HD', packageThickness: '0.5', 
     substrateThickness: '0.2', pinCode: 'E',
+    shortName: 'QFN-HF', thickness: '150mm', moldCategory: '大材料模具', productType: 'QFN', department: '大材料',
     components: generateComponents('BX-900-112')
   },
   { 
@@ -65,6 +70,7 @@ export const MOCK_MOLDS: Mold[] = [
     serialNumber: 'SN-QF16-演示', orderNumber: 'ORD-DEMO-01', cabNo: 'C001', 
     packageType: 'QFN', packageSize: 'SMALL', packageThickness: '0.5', 
     substrateThickness: '0.2', pinCode: 'F',
+    shortName: 'DEMO-QF16', thickness: '120mm', moldCategory: '小材料模具', productType: 'QFN', department: '小材料',
     components: generateComponents('SN-QF16-演示')
   },
   { 
@@ -74,6 +80,7 @@ export const MOCK_MOLDS: Mold[] = [
     serialNumber: 'SN-TY101-演示', orderNumber: 'ORD-DEMO-02', cabNo: 'C002', 
     packageType: 'BGA', packageSize: 'MEDIUM', packageThickness: '0.6', 
     substrateThickness: '0.3', pinCode: 'G',
+    shortName: 'DEMO-TY101', thickness: '200mm', moldCategory: '大材料模具', productType: 'BGA', department: '大材料',
     components: generateComponents('SN-TY101-演示')
   },
   { 
@@ -83,6 +90,7 @@ export const MOCK_MOLDS: Mold[] = [
     serialNumber: 'SN-TY71-演示', orderNumber: 'ORD-DEMO-03', cabNo: 'C003', 
     packageType: 'SOP', packageSize: 'STANDARD', packageThickness: '0.7', 
     substrateThickness: '0.4', pinCode: 'H',
+    shortName: 'DEMO-TY71', thickness: '160mm', moldCategory: '小材料模具', productType: 'SOP', department: '小材料',
     components: generateComponents('SN-TY71-演示')
   }
 ];
@@ -228,8 +236,8 @@ export const MOCK_WORK_ORDERS: WorkOrder[] = [
 ];
 
 export const MOCK_SPARES: SparePart[] = [
-  { id: 'SP-001', name: '加热棒 220V', category: '电器件', stock: 15, minStock: 5, trackShots: false },
-  { id: 'SP-002', name: '顶杆 5mm', category: '机械件', stock: 2, minStock: 10, trackShots: false },
-  { id: 'SP-003', name: '精密型腔条 (Cavity Bar)', category: '核心模件', stock: 8, minStock: 5, trackShots: true, currentShots: 850000, maxShots: 1000000 },
-  { id: 'SP-004', name: '柱塞杆 (Plunger)', category: 'Transfer件', stock: 12, minStock: 10, trackShots: true, currentShots: 38000, maxShots: 40000 },
+  { id: 'SP-001', name: '加热棒 220V', category: '电气件', stock: 15, minStock: 5, department: '大材料' },
+  { id: 'SP-002', name: '顶杆 5mm', category: '机械件', stock: 8, minStock: 10, department: '小材料' },
+  { id: 'SP-003', name: '精密 POT (15mm)', category: 'Transfer件', stock: 2, minStock: 5, department: '大材料' },
+  { id: 'SP-SEAL-P', name: 'plunger 密封圈', category: '密封件', stock: 50, minStock: 20, department: '小材料' },
 ];
