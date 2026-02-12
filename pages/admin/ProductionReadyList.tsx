@@ -115,6 +115,11 @@ const ProductionReadyList: React.FC = () => {
   const [activeMachineId, setActiveMachineId] = useState(MOCK_HIERARCHY[0].id);
   const [activeSku, setActiveSku] = useState(MOCK_HIERARCHY[0].availableProducts[0].sku);
   
+  // 管理状态
+  const [isEditing, setIsEditing] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newMoldId, setNewMoldId] = useState('');
+  
   // 筛选状态
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -233,6 +238,63 @@ const ProductionReadyList: React.FC = () => {
     }));
   };
 
+  // 添加工位
+  const addSlot = (machineId: string, sku: string, moldId: string) => {
+    if (!moldId.trim()) return;
+    
+    setMachines(prev => prev.map(m => {
+      if (m.id !== machineId) return m;
+      return {
+        ...m,
+        availableProducts: m.availableProducts.map(p => {
+          if (p.sku !== sku) return p;
+          if (p.slots.length >= 4) return p; // 最多 4 个
+          
+          const nextSlotNum = p.slots.length + 1;
+          const newSlot: MoldSlot = {
+            id: `P${nextSlotNum}`,
+            moldId: moldId.trim(),
+            paramReady: false,
+            moldReady: false,
+            buyoffReady: false
+          };
+          
+          return {
+            ...p,
+            slots: [...p.slots, newSlot]
+          };
+        })
+      };
+    }));
+    setNewMoldId('');
+    setShowAddModal(false);
+  };
+
+  // 删除工位
+  const removeSlot = (machineId: string, sku: string, slotId: string) => {
+    setMachines(prev => prev.map(m => {
+      if (m.id !== machineId) return m;
+      return {
+        ...m,
+        availableProducts: m.availableProducts.map(p => {
+          if (p.sku !== sku) return p;
+          
+          const filteredSlots = p.slots.filter(s => s.id !== slotId);
+          // 重新对 ID 进行编号 (P1, P2, P3...)
+          const renumberedSlots = filteredSlots.map((s, idx) => ({
+            ...s,
+            id: `P${idx + 1}`
+          }));
+          
+          return {
+            ...p,
+            slots: renumberedSlots
+          };
+        })
+      };
+    }));
+  };
+
   const handleMachineChange = (id: string) => {
     setActiveMachineId(id);
     const m = machines.find(mach => mach.id === id);
@@ -277,6 +339,64 @@ const ProductionReadyList: React.FC = () => {
           <div>
             <p className="text-xs font-black uppercase tracking-widest text-indigo-400">Sync Complete</p>
             <p className="text-sm font-bold">配置已同步至边缘机台: {activeMachineId}</p>
+          </div>
+        </div>
+      )}
+
+      {/* 自助管理弹窗 */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-indigo-500/50 rounded-3xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-6 text-white">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-widest">添加新模台</h3>
+                  <p className="text-indigo-100 text-xs mt-1">为产品 {activeSku} 新增一个生产工位</p>
+                </div>
+                <button onClick={() => setShowAddModal(false)} className="text-white/50 hover:text-white transition-colors">
+                  <i className="fas fa-times text-xl"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-8 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">模具编号 (Mold ID)</label>
+                <input 
+                  type="text"
+                  placeholder="例如: M-2024-XXX"
+                  value={newMoldId}
+                  onChange={(e) => setNewMoldId(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-2xl px-6 py-4 text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  autoFocus
+                />
+              </div>
+
+              <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4">
+                <div className="flex gap-3">
+                  <i className="fas fa-info-circle text-indigo-400 mt-1"></i>
+                  <p className="text-xs text-indigo-200 leading-relaxed font-medium">
+                    系统将自动按顺序分配工位编号 (P1-P4)。每个产品最多支持 4 个工位。
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button 
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 px-6 py-4 rounded-2xl border border-slate-700 text-slate-400 text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={() => addSlot(activeMachineId, activeSku, newMoldId)}
+                  disabled={!newMoldId.trim()}
+                  className="flex-1 px-6 py-4 rounded-2xl bg-indigo-600 text-white text-xs font-black uppercase tracking-widest hover:bg-indigo-500 shadow-lg shadow-indigo-900/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  确认添加
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -431,13 +551,55 @@ const ProductionReadyList: React.FC = () => {
       </section>
 
       {/* 详情卡片：模具槽位配置 */}
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+          <i className="fas fa-th-large text-indigo-500"></i>
+          {activeSku} 模台配置详情
+        </h4>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsEditing(!isEditing)}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+              isEditing 
+                ? 'bg-amber-500 text-white border-amber-400 shadow-lg shadow-amber-200' 
+                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <i className={`fas ${isEditing ? 'fa-check-circle' : 'fa-edit'} mr-2`}></i>
+            {isEditing ? '完成管理' : '自助管理'}
+          </button>
+          
+          {isEditing && currentConfig.slots.length < 4 && (
+            <button 
+              onClick={() => setShowAddModal(true)}
+              className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 shadow-lg shadow-indigo-200 transition-all animate-in zoom-in duration-300"
+            >
+              <i className="fas fa-plus mr-2"></i>
+              添加模台
+            </button>
+          )}
+        </div>
+      </div>
+
       <section className={`grid grid-cols-1 ${
         currentConfig.slots.length === 4 ? 'md:grid-cols-4' : 
         currentConfig.slots.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'
       } gap-6`}>
         {currentConfig.slots.map(slot => (
-          <div key={slot.id} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 relative overflow-hidden group hover:border-indigo-200 transition-all">
-            {/* 卡片内容保持不变 */}
+          <div key={slot.id} className={`bg-white rounded-[2.5rem] border shadow-sm p-8 relative overflow-hidden group transition-all ${
+            isEditing ? 'border-amber-300 ring-2 ring-amber-100 animate-pulse-subtle' : 'border-slate-200 hover:border-indigo-200'
+          }`}>
+            {/* 删除按钮 */}
+            {isEditing && (
+              <button 
+                onClick={() => removeSlot(activeMachineId, activeSku, slot.id)}
+                className="absolute top-6 right-6 z-20 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 hover:scale-110 transition-all group/del"
+                title="删除此工位"
+              >
+                <i className="fas fa-trash-alt text-xs"></i>
+              </button>
+            )}
+
             <div className="absolute right-0 top-0 p-8 opacity-5 group-hover:opacity-10 transition-all">
               <i className="fas fa-microchip text-7xl"></i>
             </div>
