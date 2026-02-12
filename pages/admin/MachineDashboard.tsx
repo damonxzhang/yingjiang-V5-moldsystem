@@ -14,6 +14,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showTodoList, setShowTodoList] = useState(false);
   const [todoMachine, setTodoMachine] = useState<any>(null);
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
   const [taskType, setTaskType] = useState<string>('');
   const [maintenanceTimeRange, setMaintenanceTimeRange] = useState({ start: '', end: '' });
   const [showLegendModal, setShowLegendModal] = useState(false);
@@ -166,6 +167,19 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
     e.stopPropagation();
     setTodoMachine(machine);
     setShowTodoList(true);
+  };
+
+  const toggleTaskComplete = (machineId: string, moldId: string, taskType: string) => {
+    const taskId = `${machineId}-${moldId}-${taskType}`;
+    setCompletedTasks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(taskId)) {
+        newSet.delete(taskId);
+      } else {
+        newSet.add(taskId);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -750,20 +764,43 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                       <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{pos}</span>
                       <span className="text-[10px] font-bold text-slate-500">{mold.id}</span>
                     </div>
-                    {tasks.map((task, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5 hover:border-indigo-500/30 transition-all">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-1.5 h-8 rounded-full bg-${task.color}-500`}></div>
-                          <div>
-                            <p className="text-xs font-black text-slate-200">{task.title}</p>
-                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Status: {task.status}</p>
+                    {tasks.map((task, idx) => {
+                      const taskId = `${todoMachine.id}-${mold.id}-${task.type}`;
+                      const isCompleted = completedTasks.has(taskId);
+                      
+                      return (
+                        <div key={idx} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                          isCompleted 
+                            ? 'bg-green-500/10 border-green-500/30' 
+                            : 'bg-white/5 border-white/5 hover:border-indigo-500/30'
+                        }`}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-1.5 h-8 rounded-full ${isCompleted ? 'bg-green-500' : `bg-${task.color}-500`}`}></div>
+                            <div>
+                              <p className={`text-xs font-black ${isCompleted ? 'text-green-400 line-through' : 'text-slate-200'}`}>{task.title}</p>
+                              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
+                                Status: {isCompleted ? '已处理' : task.status}
+                              </p>
+                            </div>
                           </div>
+                          <button 
+                            onClick={() => toggleTaskComplete(todoMachine.id, mold.id, task.type)}
+                            className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
+                              isCompleted
+                                ? 'bg-green-600 text-white border-green-500'
+                                : 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white'
+                            }`}
+                          >
+                            {isCompleted ? (
+                              <span className="flex items-center gap-1">
+                                <i className="fas fa-check-circle"></i>
+                                已完成
+                              </span>
+                            ) : '确认完成'}
+                          </button>
                         </div>
-                        <button className="px-3 py-1 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-[10px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">
-                          去处理
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 );
               })}
