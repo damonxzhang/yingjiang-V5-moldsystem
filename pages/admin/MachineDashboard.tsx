@@ -12,6 +12,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
   const [selectedMoldPos, setSelectedMoldPos] = useState<'P1' | 'P2' | 'P3'>('P1');
   const [showInventory, setShowInventory] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showTodoList, setShowTodoList] = useState(false);
+  const [todoMachine, setTodoMachine] = useState<any>(null);
   const [taskType, setTaskType] = useState<string>('');
   const [maintenanceTimeRange, setMaintenanceTimeRange] = useState({ start: '', end: '' });
   const [showLegendModal, setShowLegendModal] = useState(false);
@@ -158,6 +160,12 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
     }
     setTaskType(type);
     setShowTaskModal(true);
+  };
+
+  const handleShowTodo = (e: React.MouseEvent, machine: any) => {
+    e.stopPropagation();
+    setTodoMachine(machine);
+    setShowTodoList(true);
   };
 
   return (
@@ -468,6 +476,17 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                 );
               })}
             </div>
+
+            {/* Todo Badge in bottom-right corner */}
+            {Object.values(machine.molds).reduce((acc: number, m: any) => acc + m.taskCount, 0) > 0 && (
+              <div 
+                onClick={(e) => handleShowTodo(e, machine)}
+                className="absolute bottom-1 right-1 bg-indigo-600 hover:bg-indigo-500 text-white min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-black shadow-lg shadow-indigo-900/50 transition-all hover:scale-110 border border-indigo-400/50 z-10"
+                title="点击查看待办清单"
+              >
+                {Object.values(machine.molds).reduce((acc: number, m: any) => acc + m.taskCount, 0)}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -674,6 +693,87 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Todo List Modal */}
+      {showTodoList && todoMachine && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-indigo-500/50 rounded-3xl w-full max-w-lg shadow-2xl flex flex-col overflow-hidden">
+            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-indigo-900/20 to-transparent">
+              <div>
+                <h2 className="text-xl font-black text-white flex items-center gap-3">
+                  <i className="fas fa-clipboard-list text-indigo-400"></i>
+                  {todoMachine.id} 待办清单
+                </h2>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Pending Task List</p>
+              </div>
+              <button 
+                onClick={() => setShowTodoList(false)}
+                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-all"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[60vh] space-y-4 custom-scrollbar">
+              {Object.entries(todoMachine.molds).map(([pos, mold]: [string, any]) => {
+                const tasks = [];
+                if (mold.status === 'OVERDUE') tasks.push({ type: 'MAINTENANCE', title: '例行保养', status: '超期', color: 'red' });
+                if (mold.status === 'UPCOMING') tasks.push({ type: 'MAINTENANCE', title: '例行保养', status: '即将到期', color: 'yellow' });
+                if (mold.isOffline) tasks.push({ type: 'REPAIR', title: '模具维修', status: '待处理', color: 'red' });
+                if (mold.status === 'BUYOFF') tasks.push({ type: 'CHECK', title: 'BUYOFF 验证', status: '进行中', color: 'blue' });
+                
+                // Add some dummy tasks if count > 0 but no clear state
+                if (tasks.length === 0 && mold.taskCount > 0) {
+                  tasks.push({ type: 'PART', title: '备件更换', status: '待执行', color: 'indigo' });
+                }
+
+                if (tasks.length === 0) return null;
+
+                return (
+                  <div key={pos} className="space-y-3">
+                    <div className="flex items-center gap-2 border-b border-white/5 pb-1">
+                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{pos}</span>
+                      <span className="text-[10px] font-bold text-slate-500">{mold.id}</span>
+                    </div>
+                    {tasks.map((task, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5 hover:border-indigo-500/30 transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-1.5 h-8 rounded-full bg-${task.color}-500`}></div>
+                          <div>
+                            <p className="text-xs font-black text-slate-200">{task.title}</p>
+                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Status: {task.status}</p>
+                          </div>
+                        </div>
+                        <button className="px-3 py-1 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-[10px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">
+                          去处理
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="p-4 bg-white/5 border-t border-white/5 flex gap-3">
+              <button 
+                onClick={() => setShowTodoList(false)}
+                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+              >
+                关闭
+              </button>
+              <button 
+                onClick={() => {
+                  setShowTodoList(false);
+                  handleMachineClick(todoMachine);
+                }}
+                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-indigo-900/20"
+              >
+                进入指挥中心
+              </button>
             </div>
           </div>
         </div>
