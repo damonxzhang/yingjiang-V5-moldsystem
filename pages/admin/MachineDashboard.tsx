@@ -430,19 +430,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                   <span className="text-[10px] text-slate-500 font-mono leading-tight">{machine.batchNo}</span>
                 </div>
               </div>
-              {/* Production Progress Bar */}
-              <div className="mt-2">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">Progress</span>
-                  <span className="text-[11px] text-blue-400 font-mono">{Math.floor(machine.productionProgress)}%</span>
-                </div>
-                <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" 
-                    style={{ width: `${machine.productionProgress}%` }}
-                  ></div>
-                </div>
-              </div>
             </div>
 
             {/* 3 Molds Row (P1, P2, P3) */}
