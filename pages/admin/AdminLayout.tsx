@@ -79,9 +79,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-bold text-white text-lg leading-none">SmartMold</h1>
-              <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700 font-mono tracking-tighter">V 5.1.20260212.003</span>
             </div>
-            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">后台管理系统</span>
+            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase font-mono">V 5.1.20260212.003</span>
           </div>
         </div>
 
