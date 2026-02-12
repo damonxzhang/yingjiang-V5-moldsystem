@@ -14,12 +14,14 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [taskType, setTaskType] = useState<string>('');
   const [maintenanceTimeRange, setMaintenanceTimeRange] = useState({ start: '', end: '' });
+  const [showLegendModal, setShowLegendModal] = useState(false);
 
   // 筛选状态
   const [filterProduct, setFilterProduct] = useState('');
   const [filterMachine, setFilterMachine] = useState('');
   const [filterMold, setFilterMold] = useState('');
   const [onlyProducible, setOnlyProducible] = useState(false);
+  const [onlyAbnormal, setOnlyAbnormal] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -90,13 +92,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
       };
 
       // 整体状态逻辑：如果有任何一个超期，则整体边框显红；如果有即将保养，显黄；否则绿
-      let machineColorClass = 'border-2 border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)]';
+      let machineColorClass = 'border-[3px] border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)]';
       if (Object.values(molds).some(m => m.status === 'OVERDUE')) {
-        machineColorClass = 'border-2 border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]';
+        machineColorClass = 'border-[3px] border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]';
       } else if (Object.values(molds).some(m => m.status === 'UPCOMING')) {
-        machineColorClass = 'border-2 border-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.4)]';
+        machineColorClass = 'border-[3px] border-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.4)]';
       } else if (Object.values(molds).some(m => m.status === 'BUYOFF')) {
-        machineColorClass = 'border-2 border-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.4)]';
+        machineColorClass = 'border-[3px] border-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.4)]';
       }
 
       const targetQty = 10000 + Math.floor(Math.random() * 20000);
@@ -128,9 +130,12 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
       // 可生产设备定义：所有模具均非下线 且 均非超期
       const matchProducible = !onlyProducible || moldsArray.every(mold => !mold.isOffline && mold.status !== 'OVERDUE');
       
-      return matchProduct && matchMachine && matchMold && matchProducible;
+      // 异常生产设备定义：机台下有任何一个模具处于 OVERDUE 或 UPCOMING 状态，或者处于 OFFLine 状态
+      const matchAbnormal = !onlyAbnormal || moldsArray.some(mold => mold.isOffline || mold.status === 'OVERDUE' || mold.status === 'UPCOMING');
+      
+      return matchProduct && matchMachine && matchMold && matchProducible && matchAbnormal;
     });
-  }, [allMachines, filterProduct, filterMachine, filterMold, onlyProducible]);
+  }, [allMachines, filterProduct, filterMachine, filterMold, onlyProducible, onlyAbnormal]);
 
   const productOptions = Array.from(new Set(allMachines.map(m => m.currentProduct)));
 
@@ -155,11 +160,170 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
 
   return (
     <div className="h-screen bg-[#020617] text-white p-2 font-sans overflow-hidden flex flex-col">
+      {/* 看板说明弹窗 */}
+      {showLegendModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="bg-slate-900 border-2 border-blue-500/30 rounded-[2rem] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_50px_rgba(30,58,138,0.5)]">
+            <div className="p-8 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-blue-900/20 to-transparent">
+              <div>
+                <h2 className="text-2xl font-black text-blue-100 tracking-tighter uppercase flex items-center gap-3">
+                  <i className="fas fa-circle-info text-blue-400"></i>
+                  看板交互与样式说明
+                </h2>
+                <p className="text-blue-500/60 text-[10px] font-bold uppercase tracking-widest mt-1">Dashboard Interaction & Style Legend</p>
+              </div>
+              <button 
+                onClick={() => setShowLegendModal(false)}
+                className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-all group"
+              >
+                <i className="fas fa-times text-xl group-hover:rotate-90 transition-transform"></i>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 grid grid-cols-2 gap-12 custom-scrollbar">
+              {/* 颜色含义 */}
+              <section className="space-y-6">
+                <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest flex items-center gap-2 border-b border-blue-500/20 pb-2">
+                  <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
+                  状态颜色定义
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    { color: 'bg-green-500', title: '正常 (NORMAL)', desc: '模具状态良好，处于安全运行期。' },
+                    { color: 'bg-yellow-500', title: '即将保养 (UPCOMING)', desc: '剩余冲次低于预警阈值，建议近期安排维护。' },
+                    { color: 'bg-red-500', title: '超期/停用 (OVERDUE/OFFLINE)', desc: '已超过保养节点或被标记为下线状态，需立即处理。' },
+                    { color: 'bg-blue-500', title: '验证中 (BUYOFF)', desc: '新模具或大修后模具正在进行生产验证阶段。' }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex gap-4 items-start group">
+                      <div className={`w-3 h-10 rounded-full ${item.color} shadow-[0_0_10px_rgba(0,0,0,0.5)] mt-1`}></div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-100">{item.title}</h4>
+                        <p className="text-[10px] text-slate-500 font-bold leading-relaxed">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 图标含义 */}
+              <section className="space-y-6">
+                <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest flex items-center gap-2 border-b border-blue-500/20 pb-2">
+                  <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
+                  图标与角标
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    { icon: 'fa-bolt text-amber-500', title: '高频波动预警', desc: '表示该模具当前冲次增长异常或触发高频点检提醒。' },
+                    { icon: 'fa-circle text-red-600', title: '物理下线标识', desc: '出现在模具位置左上角，表示模具已物理脱离机台。' },
+                    { icon: 'fa-list-check text-indigo-400', title: '待办任务提醒', desc: '底部的 TASKS 标签表示该机台有未确认的保养或点检工单。' }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex gap-4 items-start">
+                      <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-lg shrink-0">
+                        <i className={`fas ${item.icon}`}></i>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-100">{item.title}</h4>
+                        <p className="text-[10px] text-slate-500 font-bold leading-relaxed">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 进度条说明 */}
+              <section className="col-span-2 space-y-6 pt-4">
+                <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest flex items-center gap-2 border-b border-blue-500/20 pb-2">
+                  <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
+                  进度条含义说明
+                </h3>
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="flex gap-4 items-start bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div className="w-24 shrink-0 space-y-2">
+                      <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500 w-3/4 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>
+                      </div>
+                      <div className="text-[9px] text-center text-blue-400 font-black uppercase">机台主进度条</div>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-100">生产达成率进度条</h4>
+                      <p className="text-[10px] text-slate-500 font-bold leading-relaxed">显示当前批次（LOT）产品的完成情况。蓝色充满表示生产任务即将完成。</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4 items-start bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div className="w-24 shrink-0 space-y-2">
+                      <div className="flex gap-1">
+                        <div className="h-1.5 flex-1 bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-green-500 w-1/2"></div>
+                        </div>
+                        <div className="h-1.5 flex-1 bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-yellow-500 w-4/5"></div>
+                        </div>
+                        <div className="h-1.5 flex-1 bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-red-500 w-full"></div>
+                        </div>
+                      </div>
+                      <div className="text-[9px] text-center text-slate-400 font-black uppercase">模具寿命进度条</div>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-100">模具保养寿命进度条</h4>
+                      <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
+                        显示模具距离下次保养的剩余冲次。
+                        <span className="text-green-500 ml-1">绿色</span>表示安全，
+                        <span className="text-yellow-500 ml-1">黄色</span>表示临界，
+                        <span className="text-red-500 ml-1">红色</span>表示已到期。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* 交互说明 */}
+              <section className="col-span-2 space-y-6 pt-4">
+                <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest flex items-center gap-2 border-b border-blue-500/20 pb-2">
+                  <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
+                  交互操作指南
+                </h3>
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div className="text-blue-400 text-xs font-black mb-2 uppercase">单机详情</div>
+                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">点击任意机台卡片，可进入“设备指挥中心”，查看 P1/P2/P3 模具的详细履历及执行保养/维修申报。</p>
+                  </div>
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div className="text-blue-400 text-xs font-black mb-2 uppercase">多维筛选</div>
+                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">顶部筛选栏支持按产品、机台号、模具 ID 进行实时检索，勾选“仅显示可生产”可快速定位可用资源。</p>
+                  </div>
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div className="text-blue-400 text-xs font-black mb-2 uppercase">任务联动</div>
+                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">在指挥中心发起的保养或维修任务，将实时同步至“任务中心”模块供工程师确认。</p>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div className="p-6 bg-white/5 text-center">
+              <button 
+                onClick={() => setShowLegendModal(false)}
+                className="px-12 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-900/50"
+              >
+                我已了解
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-center mb-1 px-2">
         <div className="flex gap-2">
           <button className="px-4 py-0.5 bg-blue-700 border border-blue-400 rounded text-[10px] font-bold shadow-[0_0_10px_rgba(59,130,246,0.5)]">
             设备看板 (3-MOLD MODE)
+          </button>
+          <button 
+            onClick={() => setShowLegendModal(true)}
+            className="px-4 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-[10px] font-bold transition-all flex items-center gap-2 group"
+          >
+            <i className="fas fa-circle-info text-blue-400 group-hover:scale-110 transition-transform"></i>
+            看板说明
           </button>
         </div>
         <h1 className="text-lg font-black tracking-tighter text-blue-100 flex items-center gap-2">
@@ -220,13 +384,27 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
           <span className={`text-[10px] font-black uppercase ${onlyProducible ? 'text-blue-400' : 'text-slate-500'}`}>仅显示可生产设备</span>
         </label>
 
-        {(filterProduct || filterMachine || filterMold || onlyProducible) && (
+        <label className="flex items-center gap-2 cursor-pointer group">
+          <input 
+            type="checkbox"
+            checked={onlyAbnormal}
+            onChange={(e) => setOnlyAbnormal(e.target.checked)}
+            className="hidden"
+          />
+          <div className={`w-3 h-3 rounded border ${onlyAbnormal ? 'bg-rose-500 border-rose-500' : 'border-slate-600 group-hover:border-rose-500'} flex items-center justify-center transition-colors`}>
+            {onlyAbnormal && <i className="fas fa-check text-[8px] text-white"></i>}
+          </div>
+          <span className={`text-[10px] font-black uppercase ${onlyAbnormal ? 'text-rose-400' : 'text-slate-500'}`}>显示异常生产设备</span>
+        </label>
+
+        {(filterProduct || filterMachine || filterMold || onlyProducible || onlyAbnormal) && (
           <button 
             onClick={() => {
               setFilterProduct('');
               setFilterMachine('');
               setFilterMold('');
               setOnlyProducible(false);
+              setOnlyAbnormal(false);
             }}
             className="ml-auto text-[10px] font-bold text-red-400 hover:text-red-300 transition-colors flex items-center gap-1"
           >
@@ -268,7 +446,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
             </div>
 
             {/* 3 Molds Row (P1, P2, P3) */}
-            <div className="grid grid-cols-3 gap-1.5 my-2">
+            <div className="grid grid-cols-3 gap-1.5 my-2 flex-1">
               {['P1', 'P2', 'P3'].map(pos => {
                 const mold = (machine.molds as any)[pos];
                 return (
@@ -289,29 +467,15 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                       )}
                     </div>
                     {/* Tiny Progress Bar */}
-                    <div className="h-0.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                       <div className={`h-full ${
-                        mold.color === 'red' ? 'bg-red-500' : 
-                        mold.color === 'yellow' ? 'bg-yellow-500' : 'bg-green-500'
+                        (mold.maintenanceCountdown / 5000) * 100 > 90 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 
+                        (mold.maintenanceCountdown / 5000) * 100 > 60 ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]' : 'bg-green-500'
                       }`} style={{ width: `${Math.min(100, (mold.maintenanceCountdown / 5000) * 100)}%` }}></div>
                     </div>
                   </div>
                 );
               })}
-            </div>
-
-            {/* Aggregate Status & Task */}
-            <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-800/50">
-              <div className="flex gap-1.5">
-                {Object.values(machine.molds).some((m: any) => m.taskCount > 0) && (
-                  <span className="bg-indigo-600 text-white text-[11px] px-2 py-0.5 rounded-full font-bold">
-                    TASKS
-                  </span>
-                )}
-              </div>
-              <span className="text-[11px] text-slate-500 font-mono font-bold">
-                MIN: {Math.min(...Object.values(machine.molds).map((m: any) => m.maintenanceCountdown))} shots
-              </span>
             </div>
           </div>
         ))}

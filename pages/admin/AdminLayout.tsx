@@ -72,12 +72,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
     <div className={`flex min-h-screen ${isBigScreen ? 'bg-[#050a30]' : 'bg-slate-100'}`}>
       {/* 侧边栏 */}
       <aside className={`w-64 bg-slate-900 text-slate-300 flex flex-col fixed h-full shadow-2xl z-40 transition-transform ${isBigScreen ? '-translate-x-full' : 'translate-x-0'}`}>
-        <div className="p-6 flex items-center gap-3 border-b border-slate-800">
+        <div className="p-6 flex items-center gap-3 border-b border-slate-800 relative group">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
             <i className="fas fa-microchip"></i>
           </div>
           <div>
-            <h1 className="font-bold text-white text-lg leading-none">SmartMold</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-bold text-white text-lg leading-none">SmartMold</h1>
+              <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700 font-mono tracking-tighter">V5.1.20260212</span>
+            </div>
             <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">后台管理系统</span>
           </div>
         </div>
