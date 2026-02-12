@@ -163,7 +163,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
       {/* 看板说明弹窗 */}
       {showLegendModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
-          <div className="bg-slate-900 border-2 border-blue-500/30 rounded-[2rem] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_50px_rgba(30,58,138,0.5)]">
+          <div className="bg-slate-900 border-[3px] border-blue-500/30 rounded-[2rem] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_50px_rgba(30,58,138,0.5)]">
             <div className="p-8 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-blue-900/20 to-transparent">
               <div>
                 <h2 className="text-2xl font-black text-blue-100 tracking-tighter uppercase flex items-center gap-3">
@@ -419,7 +419,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
           <div 
             key={machine.id} 
             onClick={() => handleMachineClick(machine)}
-            className={`bg-slate-900/40 border-2 ${machine.colorClass} rounded-xl p-2.5 flex flex-col justify-between cursor-pointer hover:bg-slate-800/60 transition-all relative group`}
+            className={`bg-slate-900/40 ${machine.colorClass} rounded-xl p-2.5 flex flex-col justify-between cursor-pointer hover:bg-slate-800/60 transition-all relative group`}
           >
             {/* Machine Header */}
             <div className="flex flex-col mb-2">
