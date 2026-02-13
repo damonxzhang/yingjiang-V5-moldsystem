@@ -676,24 +676,61 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               <div className="grid grid-cols-4 gap-4">
-                {MOCK_MOLDS.filter(mold => mold.status !== MoldStatus.Deactivated).map(mold => (
-                  <div key={mold.id} className={`bg-blue-950/50 border ${mold.status === MoldStatus.Idle ? 'border-blue-900 hover:border-blue-500/50' : 'border-slate-800 opacity-70'} rounded-2xl p-4 space-y-3 transition-all group`}>
-                    <div className="flex justify-between items-start">
-                      <span className="bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">{mold.id}</span>
-                      <span className={`text-[10px] font-bold ${
-                        mold.status === MoldStatus.Idle ? 'text-green-400' :
-                        mold.status === MoldStatus.InProduction ? 'text-blue-400' :
-                        mold.status === MoldStatus.Maintaining ? 'text-amber-400' : 'text-red-400'
-                      }`}>
-                        {mold.status === MoldStatus.Idle ? '闲置中' :
-                         mold.status === MoldStatus.InProduction ? '生产中' :
-                         mold.status === MoldStatus.Maintaining ? '保养中' : '维修中'}
-                      </span>
-                    </div>
+                {MOCK_MOLDS.filter(mold => mold.status !== MoldStatus.Deactivated).map(mold => {
+                  const machine = allMachines.find(m => 
+                    Object.values(m.molds).some((mm: any) => mm.moldInfo.id === mold.id)
+                  );
+                  
+                  return (
+                    <div key={mold.id} className={`bg-blue-950/50 border ${mold.status === MoldStatus.Idle ? 'border-blue-900 hover:border-blue-500/50' : 'border-slate-800 opacity-70'} rounded-2xl p-4 space-y-3 transition-all group`}>
+                      <div className="flex justify-between items-start">
+                        <span className="bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">{mold.id}</span>
+                        <div className="text-right">
+                          <span className={`text-[10px] font-bold block ${
+                            mold.status === MoldStatus.Idle ? 'text-green-400' :
+                            mold.status === MoldStatus.InProduction ? 'text-yellow-400' :
+                            mold.status === MoldStatus.Maintaining ? 'text-amber-400' : 'text-red-400'
+                          }`}>
+                            {mold.status === MoldStatus.Idle ? '闲置中' :
+                             mold.status === MoldStatus.InProduction ? '使用中' :
+                             mold.status === MoldStatus.Maintaining ? '保养中' : '维修中'}
+                          </span>
+                          {mold.status === MoldStatus.InProduction && machine && (
+                            <span className="text-[9px] font-bold text-slate-500 block uppercase tracking-tighter mt-0.5">
+                              设备号: {machine.id}
+                            </span>
+                          )}
+                           {mold.status === MoldStatus.Idle && (
+                             <span className="text-[9px] font-bold text-slate-500 block uppercase tracking-tighter mt-0.5">
+                               柜号: {mold.cabNo || '未入库'}
+                             </span>
+                           )}
+                         </div>
+                       </div>
                     <p className="text-xs font-bold text-blue-100 line-clamp-1">{mold.name}</p>
                     <div className="text-[10px] text-slate-400 space-y-1">
                       <p>位置: {mold.location}</p>
                       <p>Package: {mold.packageType}</p>
+                    </div>
+                    
+                    <div className="pt-2 border-t border-white/5">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">实时 SHOT COUNT</span>
+                        <span className="text-[10px] font-black text-indigo-400">{mold.shotTotal.toLocaleString()}</span>
+                      </div>
+                      <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full transition-all ${
+                            (mold.shotTotal / mold.lifeLimit) > 0.9 ? 'bg-red-500' : 
+                            (mold.shotTotal / mold.lifeLimit) > 0.7 ? 'bg-amber-500' : 'bg-blue-500'
+                          }`}
+                          style={{ width: `${Math.min(100, (mold.shotTotal / mold.lifeLimit * 100))}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-[8px] font-bold text-slate-600 uppercase tracking-tighter">上限: {mold.lifeLimit.toLocaleString()}</span>
+                        <span className="text-[8px] font-bold text-slate-600">{(mold.shotTotal / mold.lifeLimit * 100).toFixed(1)}%</span>
+                      </div>
                     </div>
                     {mold.status === MoldStatus.Idle ? (
                       <button 
@@ -712,7 +749,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                       </div>
                     )}
                   </div>
-                ))}
+                );
+              })}
               </div>
             </div>
           </div>
@@ -771,7 +809,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                             : 'bg-white/5 border-white/5 hover:border-indigo-500/30'
                         }`}>
                           <div className="flex items-center gap-3">
-                            <div className={`w-1.5 h-8 rounded-full ${isCompleted ? 'bg-green-500' : `bg-${task.color}-500`}`}></div>
+                            <div className={`w-1.5 h-8 rounded-full ${isCompleted ? 'bg-green-500' : `bg-${task?.color || 'slate'}-500`}`}></div>
                             <div>
                               <p className={`text-xs font-black ${isCompleted ? 'text-green-400 line-through' : 'text-slate-200'}`}>{task.title}</p>
                               <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">

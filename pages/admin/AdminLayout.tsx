@@ -19,7 +19,7 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
-  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'maintenance_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen'>('machine_screen');
+  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'maintenance_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen'>('machine_screen');
 
   const menuItems = [
     { id: 'machine_screen', name: '设备生产看板 (主入口)', icon: 'fa-display' },
@@ -29,6 +29,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
     { id: 'shot_monitor', name: '实时 Shot 数监控', icon: 'fa-wave-square' },
     { id: 'molds_big', name: '模具台账 (大材料)', icon: 'fa-cube', department: '大材料' },
     { id: 'molds_small', name: '模具台账 (小材料)', icon: 'fa-cube', department: '小材料' },
+    { id: 'molds_audit', name: 'Audit 清单', icon: 'fa-clipboard-list' },
     { id: 'spares_big', name: '备件管理 (大材料)', icon: 'fa-cog', department: '大材料' },
     { id: 'spares_small', name: '备件管理 (小材料)', icon: 'fa-cog', department: '小材料' },
     { id: 'prediction', name: '备件购买预测', icon: 'fa-magnifying-glass-chart' },
@@ -59,6 +60,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
       case 'shot_monitor': return <ShotCountMonitor />;
       case 'molds_big': return <MoldManagement department="大材料" />;
       case 'molds_small': return <MoldManagement department="小材料" />;
+      case 'molds_audit': return <MoldManagement isAuditMode={true} />;
       case 'maintenance_confirm': return <MaintenanceCenter />;
       case 'spares_big': return <SparePartManagement department="大材料" />;
       case 'spares_small': return <SparePartManagement department="小材料" />;

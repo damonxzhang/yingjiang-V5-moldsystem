@@ -6,9 +6,10 @@ import { Mold, MoldStatus, BuyoffStatus, MoldComponent } from '../../types';
 
 interface MoldManagementProps {
   department?: '大材料' | '小材料';
+  isAuditMode?: boolean;
 }
 
-const MoldManagement: React.FC<MoldManagementProps> = ({ department }) => {
+const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode }) => {
   const [molds, setMolds] = useState<Mold[]>(
     department 
       ? MOCK_MOLDS.filter(m => m.department === department)
@@ -105,13 +106,15 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department }) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
-          模具档案与 BOM 管理 {department && <span className="text-indigo-600">({department})</span>}
+          {isAuditMode ? '模具 Audit 清单' : `模具档案与 BOM 管理 ${department ? `(${department})` : ''}`}
         </h2>
-        <div className="flex gap-2">
-          <button onClick={() => { setModalMode('ADD'); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg">
-            + 新增模具档案
-          </button>
-        </div>
+        {!isAuditMode && (
+          <div className="flex gap-2">
+            <button onClick={() => { setModalMode('ADD'); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg">
+              + 新增模具档案
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden overflow-x-auto">
@@ -124,6 +127,8 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department }) => {
               <th className="px-4 py-4 font-bold">厚度</th>
               <th className="px-4 py-4 font-bold">PACKAGE TYPE/SIZE</th>
               <th className="px-4 py-4 font-bold">实时 SHOT COUNT</th>
+              <th className="px-4 py-4 font-bold">SHOT 上限</th>
+              {!isAuditMode && <th className="px-4 py-4 font-bold text-center">状态是否有效</th>}
               <th className="px-4 py-4 font-bold">状态</th>
               <th className="px-4 py-4 text-right">操作</th>
             </tr>
@@ -149,6 +154,22 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department }) => {
                 <td className="px-4 py-4">
                   <p className="text-sm font-bold text-slate-700">{mold.shotTotal.toLocaleString()}</p>
                 </td>
+                <td className="px-4 py-4">
+                  <p className="text-sm font-bold text-indigo-600">{mold.lifeLimit.toLocaleString()}</p>
+                </td>
+                {!isAuditMode && (
+                  <td className="px-4 py-4 text-center">
+                    {mold.status === MoldStatus.Deactivated ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                        <i className="fas fa-times-circle"></i> 已失效
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                        <i className="fas fa-check-circle"></i> 有效
+                      </span>
+                    )}
+                  </td>
+                )}
                 <td className="px-4 py-4">
                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${STATUS_COLORS[mold.status]}`}>
                     {STATUS_LABELS[mold.status]}
