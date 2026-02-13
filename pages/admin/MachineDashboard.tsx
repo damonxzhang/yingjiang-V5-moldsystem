@@ -688,14 +688,14 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                         <div className="text-right">
                           <span className={`text-[10px] font-bold block ${
                             mold.status === MoldStatus.Idle ? 'text-green-400' :
-                            mold.status === MoldStatus.InProduction ? 'text-yellow-400' :
-                            mold.status === MoldStatus.Maintaining ? 'text-amber-400' : 'text-red-400'
+                            mold.status === MoldStatus.InUse ? 'text-yellow-400' :
+                            mold.status === MoldStatus.Maintenance ? 'text-amber-400' : 'text-red-400'
                           }`}>
                             {mold.status === MoldStatus.Idle ? '闲置中' :
-                             mold.status === MoldStatus.InProduction ? '使用中' :
-                             mold.status === MoldStatus.Maintaining ? '保养中' : '维修中'}
+                             mold.status === MoldStatus.InUse ? '使用中' :
+                             mold.status === MoldStatus.Maintenance ? '保养中' : '维修中'}
                           </span>
-                          {mold.status === MoldStatus.InProduction && machine && (
+                          {mold.status !== MoldStatus.Idle && machine && (
                             <span className="text-[9px] font-bold text-slate-500 block uppercase tracking-tighter mt-0.5">
                               设备号: {machine.id}
                             </span>
@@ -745,7 +745,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                       </button>
                     ) : (
                       <div className="w-full bg-slate-800/50 text-slate-500 text-[10px] font-black py-2 rounded-lg text-center uppercase tracking-widest cursor-not-allowed">
-                        不可用 ({mold.status === MoldStatus.InProduction ? '生产中' : '处理中'})
+                        不可用 ({mold.status === MoldStatus.InUse ? '生产中' : '处理中'})
                       </div>
                     )}
                   </div>

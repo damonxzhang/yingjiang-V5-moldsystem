@@ -128,6 +128,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
               <th className="px-4 py-4 font-bold">PACKAGE TYPE/SIZE</th>
               <th className="px-4 py-4 font-bold">实时 SHOT COUNT</th>
               <th className="px-4 py-4 font-bold">SHOT 上限</th>
+              <th className="px-4 py-4 font-bold">所在设备</th>
               {!isAuditMode && <th className="px-4 py-4 font-bold text-center">状态是否有效</th>}
               <th className="px-4 py-4 font-bold">状态</th>
               <th className="px-4 py-4 text-right">操作</th>
@@ -156,6 +157,30 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
                 </td>
                 <td className="px-4 py-4">
                   <p className="text-sm font-bold text-indigo-600">{mold.lifeLimit.toLocaleString()}</p>
+                </td>
+                <td className="px-4 py-4">
+                  {mold.machineId ? (
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <i className="fas fa-microchip text-[10px] text-indigo-500"></i>
+                        <span className="text-xs font-bold text-slate-800">{mold.machineId}</span>
+                      </div>
+                      <span className={`text-[10px] font-bold flex items-center gap-1 ${
+                        mold.status === MoldStatus.InUse ? 'text-green-600' :
+                        mold.status === MoldStatus.Maintenance ? 'text-amber-600' :
+                        mold.status === MoldStatus.Repair ? 'text-red-600' : 'text-slate-500'
+                      }`}>
+                        <span className={`w-1 h-1 rounded-full animate-pulse ${
+                          mold.status === MoldStatus.InUse ? 'bg-green-500' :
+                          mold.status === MoldStatus.Maintenance ? 'bg-amber-500' :
+                          mold.status === MoldStatus.Repair ? 'bg-red-500' : 'bg-slate-400'
+                        }`}></span>
+                        {STATUS_LABELS[mold.status]}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">离线/库房</span>
+                  )}
                 </td>
                 {!isAuditMode && (
                   <td className="px-4 py-4 text-center">
