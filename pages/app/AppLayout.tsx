@@ -27,11 +27,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ userRole }) => {
   const getRoleLabel = (role: Role) => {
     switch(role) {
       case Role.Admin: return '管';
-      case Role.MoldEngineer: return '模';
-      case Role.MaintenanceEngineer: return '修';
+      case Role.MoldEngineerBig: return '大';
+      case Role.MoldEngineerSmall: return '小';
+      case Role.ShiftLeader: return '带';
       case Role.Operator: return '员';
-      case Role.ProductionSupervisor: return '主';
-      case Role.WarehouseAdmin: return '仓';
       default: return 'U';
     }
   };

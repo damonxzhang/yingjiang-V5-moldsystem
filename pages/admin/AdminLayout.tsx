@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { Role } from '../../types';
+import { Role, Permission } from '../../types';
+import { ROLE_PERMISSIONS } from '../../services/mockData';
 import Dashboard from './Dashboard';
 import MoldManagement from './MoldManagement';
 import MaintenanceCenter from './MaintenanceCenter';
@@ -13,40 +14,53 @@ import ProductionReadyList from './ProductionReadyList';
 import ToolingDashboard from './ToolingDashboard';
 import MachineDashboard from './MachineDashboard';
 import SparePartPrediction from './SparePartPrediction';
+import RoleManagement from './RoleManagement';
+import UserManagement from './UserManagement';
 
 interface AdminLayoutProps {
   userRole: Role;
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
-  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'maintenance_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen'>('machine_screen');
+  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'maintenance_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen' | 'role_manage' | 'user_manage'>('machine_screen');
+
+  // 获取当前角色的权限
+  const userPermissions = ROLE_PERMISSIONS.find(rp => rp.role === userRole)?.permissions || [];
+
+  const hasPermission = (permission: Permission) => {
+    return userPermissions.includes(permission);
+  };
 
   const menuItems = [
-    { id: 'machine_screen', name: '设备生产看板 (主入口)', icon: 'fa-display' },
-    { id: 'dashboard', name: '仪表盘 (智能决策)', icon: 'fa-chart-pie' },
-    { id: 'tooling_screen', name: '模具监控大屏', icon: 'fa-desktop' },
-    { id: 'production_list', name: '可生产产品 LIST', icon: 'fa-list-check' },
-    { id: 'shot_monitor', name: '实时 Shot 数监控', icon: 'fa-wave-square' },
-    { id: 'molds_big', name: '模具台账 (大材料)', icon: 'fa-cube', department: '大材料' },
-    { id: 'molds_small', name: '模具台账 (小材料)', icon: 'fa-cube', department: '小材料' },
-    { id: 'molds_audit', name: 'Audit 清单', icon: 'fa-clipboard-list' },
-    { id: 'spares_big', name: '备件管理 (大材料)', icon: 'fa-cog', department: '大材料' },
-    { id: 'spares_small', name: '备件管理 (小材料)', icon: 'fa-cog', department: '小材料' },
-    { id: 'prediction', name: '备件购买预测', icon: 'fa-magnifying-glass-chart' },
-    { id: 'binding', name: '模具配件绑定', icon: 'fa-link' },
-    { id: 'maintenance_confirm', name: '任务中心', icon: 'fa-envelope-open-text' },
-    { id: 'maintenance_logs', name: '保养执行记录', icon: 'fa-clipboard-check' },
-    { id: 'repair_logs', name: '维修执行记录', icon: 'fa-tools' },
+    { id: 'machine_screen', name: '设备生产看板 (主入口)', icon: 'fa-display', permission: Permission.MONITOR_SCREEN_VIEW },
+    { id: 'dashboard', name: '仪表盘 (智能决策)', icon: 'fa-chart-pie', permission: Permission.DASHBOARD_VIEW },
+    { id: 'tooling_screen', name: '模具监控大屏', icon: 'fa-desktop', permission: Permission.MONITOR_SCREEN_VIEW },
+    { id: 'production_list', name: '可生产产品 LIST', icon: 'fa-list-check', permission: Permission.MOLD_VIEW },
+    { id: 'shot_monitor', name: '实时 Shot 数监控', icon: 'fa-wave-square', permission: Permission.MOLD_VIEW },
+    { id: 'molds_big', name: '模具台账 (大材料)', icon: 'fa-cube', department: '大材料', permission: Permission.MOLD_VIEW },
+    { id: 'molds_small', name: '模具台账 (小材料)', icon: 'fa-cube', department: '小材料', permission: Permission.MOLD_VIEW },
+    { id: 'molds_audit', name: 'Audit 清单', icon: 'fa-clipboard-list', permission: Permission.MOLD_AUDIT },
+    { id: 'spares_big', name: '备件管理 (大材料)', icon: 'fa-cog', department: '大材料', permission: Permission.SPARE_VIEW },
+    { id: 'spares_small', name: '备件管理 (小材料)', icon: 'fa-cog', department: '小材料', permission: Permission.SPARE_VIEW },
+    { id: 'prediction', name: '备件购买预测', icon: 'fa-magnifying-glass-chart', permission: Permission.SPARE_PREDICTION },
+    { id: 'binding', name: '模具配件绑定', icon: 'fa-link', permission: Permission.MOLD_EDIT },
+    { id: 'maintenance_confirm', name: '任务中心', icon: 'fa-envelope-open-text', permission: Permission.MAINTENANCE_MANAGE },
+    { id: 'maintenance_logs', name: '保养执行记录', icon: 'fa-clipboard-check', permission: Permission.MAINTENANCE_VIEW },
+    { id: 'repair_logs', name: '维修执行记录', icon: 'fa-tools', permission: Permission.REPAIR_VIEW },
+    { id: 'role_manage', name: '角色权限管理', icon: 'fa-user-shield', permission: Permission.ROLE_MANAGE },
+    { id: 'user_manage', name: '用户账号管理', icon: 'fa-users-gear', permission: Permission.USER_MANAGE },
   ];
+
+  // 过滤出有权限的菜单
+  const visibleMenuItems = menuItems.filter(item => hasPermission(item.permission));
 
   const getRoleLabel = (role: Role) => {
     switch(role) {
       case Role.Admin: return '系统管理员';
-      case Role.MoldEngineer: return '模具工程师';
-      case Role.MaintenanceEngineer: return '维修工程师';
-      case Role.Operator: return '现场操作员';
-      case Role.ProductionSupervisor: return '生产主管';
-      case Role.WarehouseAdmin: return '仓库管理员';
+      case Role.MoldEngineerBig: return '大材料工程师';
+      case Role.MoldEngineerSmall: return '小材料工程师';
+      case Role.ShiftLeader: return '带班';
+      case Role.Operator: return '操作员';
       default: return role;
     }
   };
@@ -68,6 +82,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
       case 'binding': return <MoldSpareBinding />;
       case 'maintenance_logs': return <MaintenanceRecords />;
       case 'repair_logs': return <RepairRecords />;
+      case 'role_manage': return <RoleManagement />;
+      case 'user_manage': return <UserManagement />;
       default: return <div className="p-10 text-slate-400 italic">该模块正在开发中...</div>;
     }
   };
@@ -91,7 +107,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
         </div>
 
         <nav className="flex-1 py-6 overflow-y-auto">
-          {menuItems.map(item => (
+          {visibleMenuItems.map(item => (
             <button
               key={item.id}
               onClick={() => setActivePage(item.id as any)}
@@ -128,7 +144,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
               <i className="fas fa-home text-xs"></i>
               <i className="fas fa-chevron-right text-[10px]"></i>
               <span className="text-sm font-medium capitalize">
-                {menuItems.find(m => m.id === activePage)?.name || activePage}
+                {visibleMenuItems.find(m => m.id === activePage)?.name || activePage}
               </span>
             </div>
             <div className="flex items-center gap-4">

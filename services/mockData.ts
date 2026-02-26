@@ -1,5 +1,97 @@
 
-import { Mold, MoldStatus, BuyoffStatus, SparePart, WorkOrder, MoldComponent } from '../types';
+import { Mold, MoldStatus, BuyoffStatus, SparePart, WorkOrder, MoldComponent, Role, Permission, RolePermission, User } from '../types';
+
+// RBAC 模拟数据
+export const ROLE_PERMISSIONS: RolePermission[] = [
+  {
+    role: Role.Admin,
+    description: '系统管理员，拥有所有操作权限',
+    permissions: Object.values(Permission)
+  },
+  {
+    role: Role.MoldEngineerBig,
+    description: '负责大材料模具全生命周期管理、BOM 维护及分析',
+    permissions: [
+      Permission.DASHBOARD_VIEW, Permission.MONITOR_SCREEN_VIEW,
+      Permission.MOLD_VIEW, Permission.MOLD_CREATE, Permission.MOLD_EDIT, Permission.MOLD_AUDIT,
+      Permission.SPARE_VIEW, Permission.MAINTENANCE_VIEW, Permission.REPAIR_VIEW
+    ]
+  },
+  {
+    role: Role.MoldEngineerSmall,
+    description: '负责小材料模具全生命周期管理、BOM 维护及分析',
+    permissions: [
+      Permission.DASHBOARD_VIEW, Permission.MONITOR_SCREEN_VIEW,
+      Permission.MOLD_VIEW, Permission.MOLD_CREATE, Permission.MOLD_EDIT, Permission.MOLD_AUDIT,
+      Permission.SPARE_VIEW, Permission.MAINTENANCE_VIEW, Permission.REPAIR_VIEW
+    ]
+  },
+  {
+    role: Role.ShiftLeader,
+    description: '带班组长，负责现场协调与任务中心管理',
+    permissions: [
+      Permission.MONITOR_SCREEN_VIEW, Permission.MOLD_VIEW,
+      Permission.MAINTENANCE_MANAGE, Permission.MAINTENANCE_VIEW, Permission.REPAIR_VIEW,
+      Permission.SPARE_VIEW
+    ]
+  },
+  {
+    role: Role.Operator,
+    description: '现场操作员，负责上线前检查及状态反馈',
+    permissions: [
+      Permission.MONITOR_SCREEN_VIEW, Permission.MOLD_VIEW
+    ]
+  }
+];
+
+export const MOCK_USERS: User[] = [
+  {
+    id: 'U-001',
+    username: 'admin_damon',
+    name: '张经理 (Damon)',
+    role: Role.Admin,
+    department: '数字化中心',
+    email: 'zhx703@163.com',
+    lastLogin: '2026-02-25 10:30',
+    status: 'active'
+  },
+  {
+    id: 'U-002',
+    username: 'mold_eng_big_01',
+    name: '李工 (大材料)',
+    role: Role.MoldEngineerBig,
+    department: '大材料事业部',
+    lastLogin: '2026-02-25 09:15',
+    status: 'active'
+  },
+  {
+    id: 'U-003',
+    username: 'mold_eng_small_01',
+    name: '陈工 (小材料)',
+    role: Role.MoldEngineerSmall,
+    department: '小材料事业部',
+    lastLogin: '2026-02-24 16:20',
+    status: 'active'
+  },
+  {
+    id: 'U-004',
+    username: 'shift_leader_01',
+    name: '王带班',
+    role: Role.ShiftLeader,
+    department: '生产现场',
+    lastLogin: '2026-02-25 08:00',
+    status: 'active'
+  },
+  {
+    id: 'U-005',
+    username: 'operator_01',
+    name: '张操作',
+    role: Role.Operator,
+    department: '生产现场',
+    lastLogin: '2026-02-24 20:00',
+    status: 'active'
+  }
+];
 
 const generateComponents = (snPrefix: string): MoldComponent[] => [
   { category: '上模件', name: '上模盒', isSpare: false, sn: snPrefix, lifeLimit: 'N/A' },

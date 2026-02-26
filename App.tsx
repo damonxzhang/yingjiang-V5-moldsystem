@@ -30,11 +30,10 @@ const App: React.FC = () => {
           className="px-3 py-1 rounded-full text-xs bg-white border border-slate-300 outline-none"
         >
           <option value={Role.Admin}>管理员</option>
-          <option value={Role.MoldEngineer}>模具工程师</option>
-          <option value={Role.MaintenanceEngineer}>维修工程师</option>
-          <option value={Role.Operator}>现场操作员</option>
-          <option value={Role.ProductionSupervisor}>生产主管</option>
-          <option value={Role.WarehouseAdmin}>仓库管理员</option>
+          <option value={Role.MoldEngineerBig}>大材料工程师</option>
+          <option value={Role.MoldEngineerSmall}>小材料工程师</option>
+          <option value={Role.ShiftLeader}>带班</option>
+          <option value={Role.Operator}>操作员</option>
         </select>
       </div>
 

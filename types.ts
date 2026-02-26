@@ -1,11 +1,57 @@
 
 export enum Role {
   Admin = 'ADMIN',
-  MoldEngineer = 'MOLD_ENGINEER',
-  MaintenanceEngineer = 'MAINTENANCE_ENGINEER',
-  Operator = 'OPERATOR',
-  ProductionSupervisor = 'PROD_SUPERVISOR',
-  WarehouseAdmin = 'WH_ADMIN'
+  MoldEngineerBig = 'MOLD_ENGINEER_BIG',
+  MoldEngineerSmall = 'MOLD_ENGINEER_SMALL',
+  ShiftLeader = 'SHIFT_LEADER',
+  Operator = 'OPERATOR'
+}
+
+// RBAC 权限定义
+export enum Permission {
+  // 看板与仪表盘
+  DASHBOARD_VIEW = 'dashboard:view',
+  MONITOR_SCREEN_VIEW = 'monitor:view',
+  
+  // 模具管理
+  MOLD_VIEW = 'mold:view',
+  MOLD_CREATE = 'mold:create',
+  MOLD_EDIT = 'mold:edit',
+  MOLD_DELETE = 'mold:delete',
+  MOLD_AUDIT = 'mold:audit',
+  
+  // 备件管理
+  SPARE_VIEW = 'spare:view',
+  SPARE_MANAGE = 'spare:manage',
+  SPARE_PREDICTION = 'spare:prediction',
+  
+  // 维保管理
+  MAINTENANCE_MANAGE = 'maintenance:manage',
+  MAINTENANCE_VIEW = 'maintenance:view',
+  REPAIR_VIEW = 'repair:view',
+  
+  // 系统管理 (RBAC)
+  USER_MANAGE = 'user:manage',
+  ROLE_MANAGE = 'role:manage',
+  PERMISSION_MANAGE = 'permission:manage'
+}
+
+export interface RolePermission {
+  role: Role;
+  permissions: Permission[];
+  description: string;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  name: string;
+  role: Role;
+  department?: string;
+  avatar?: string;
+  email?: string;
+  lastLogin?: string;
+  status: 'active' | 'inactive';
 }
 
 export enum MoldStatus {

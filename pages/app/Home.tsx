@@ -9,10 +9,10 @@ interface HomeProps {
 
 const Home: React.FC<HomeProps> = ({ userRole, onNavigate }) => {
   const actions = [
-    { id: 'inquiry', name: '模具查询', icon: 'fa-search', color: 'bg-indigo-500', roles: [Role.Admin, Role.MoldEngineer, Role.Operator] },
-    { id: 'transfer', name: '模具转换', icon: 'fa-exchange-alt', color: 'bg-green-500', roles: [Role.Admin, Role.Operator, Role.MoldEngineer] },
-    { id: 'maintenance', name: '保养执行', icon: 'fa-tools', color: 'bg-amber-500', roles: [Role.Admin, Role.MaintenanceEngineer] },
-    { id: 'repair', name: '维修执行', icon: 'fa-wrench', color: 'bg-red-500', roles: [Role.Admin, Role.MaintenanceEngineer] },
+    { id: 'inquiry', name: '模具查询', icon: 'fa-search', color: 'bg-indigo-500', roles: [Role.Admin, Role.MoldEngineerBig, Role.MoldEngineerSmall, Role.Operator, Role.ShiftLeader] },
+    { id: 'transfer', name: '模具转换', icon: 'fa-exchange-alt', color: 'bg-green-500', roles: [Role.Admin, Role.Operator, Role.MoldEngineerBig, Role.MoldEngineerSmall, Role.ShiftLeader] },
+    { id: 'maintenance', name: '保养执行', icon: 'fa-tools', color: 'bg-amber-500', roles: [Role.Admin, Role.ShiftLeader, Role.MoldEngineerBig, Role.MoldEngineerSmall] },
+    { id: 'repair', name: '维修执行', icon: 'fa-wrench', color: 'bg-red-500', roles: [Role.Admin, Role.ShiftLeader, Role.MoldEngineerBig, Role.MoldEngineerSmall] },
   ];
 
   const filteredActions = actions.filter(a => a.roles.includes(userRole));
