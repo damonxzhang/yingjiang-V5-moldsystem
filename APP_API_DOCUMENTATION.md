@@ -6,7 +6,7 @@
 
 ### 1.1 获取当前用户信息
 *   **用途**: 页面顶部显示用户角色标签。
-*   **接口**: `GET /api/user/profile`
+*   **接口**: `POST /api/user/profile`
 *   **返回数据**:
     ```json
     {
@@ -22,7 +22,7 @@
 
 ### 2.1 获取首页概览数据
 *   **用途**: 显示“在线模具”和“待处理任务”数量。
-*   **接口**: `GET /api/app/dashboard/summary`
+*   **接口**: `POST /api/app/dashboard/summary`
 *   **返回数据**:
     ```json
     {
@@ -33,7 +33,7 @@
 
 ### 2.2 获取通知与预警
 *   **用途**: 显示寿命极限预警或其他系统通知。
-*   **接口**: `GET /api/app/notifications/alerts`
+*   **接口**: `POST /api/app/notifications/alerts`
 *   **返回数据**:
     ```json
     [
@@ -49,7 +49,7 @@
 
 ### 2.3 获取最近活动动态
 *   **用途**: 显示最近的操作日志。
-*   **接口**: `GET /api/app/activities/recent`
+*   **接口**: `POST /api/app/activities/recent`
 *   **返回数据**:
     ```json
     [
@@ -69,7 +69,13 @@
 
 ### 3.1 搜索模具列表
 *   **用途**: 根据 ID 或名称搜索模具。
-*   **接口**: `GET /api/app/molds/search?q={searchTerm}`
+*   **接口**: `POST /api/app/molds/search`
+*   **请求体**:
+    ```json
+    {
+      "q": "{searchTerm}"
+    }
+    ```
 *   **返回数据**:
     ```json
     [
@@ -89,7 +95,7 @@
 
 ### 3.2 获取模具流转历史
 *   **用途**: 查看模具的历史维保和转换记录。
-*   **接口**: `GET /api/app/molds/{id}/history`
+*   **接口**: `POST /api/app/molds/{id}/history`
 *   **返回数据**:
     ```json
     [
@@ -106,7 +112,7 @@
 
 ### 3.3 获取模具 BOM 结构
 *   **用途**: 查看模具的全量 BOM 及核心组件寿命。
-*   **接口**: `GET /api/app/molds/{id}/bom`
+*   **接口**: `POST /api/app/molds/{id}/bom`
 *   **返回数据**:
     ```json
     {
@@ -129,7 +135,13 @@
 
 ### 4.1 获取待办任务列表
 *   **用途**: 显示分配给当前用户的保养/维修任务。
-*   **接口**: `GET /api/app/work-orders/pending?type={MAINTENANCE|REPAIR}`
+*   **接口**: `POST /api/app/work-orders/pending`
+*   **请求体**:
+    ```json
+    {
+      "type": "MAINTENANCE" // 或 REPAIR
+    }
+    ```
 *   **返回数据**:
     ```json
     [
@@ -144,7 +156,7 @@
 
 ### 4.2 获取维保标准内容
 *   **用途**: 选择已执行的保养/维修项。
-*   **接口**: `GET /api/app/config/maintenance-items`
+*   **接口**: `POST /api/app/config/maintenance-items`
 *   **返回数据**: `["型腔清洁", "导柱润滑", "水路检查", ...]`
 
 ### 4.3 提交维保结果
@@ -169,7 +181,14 @@
 
 ### 5.1 验证 BUYOFF 状态
 *   **用途**: 安装前必须通过外部 BUYOFF 系统验证。
-*   **接口**: `GET /api/external/buyoff/verify?moldId={id}&machineId={mid}`
+*   **接口**: `POST /api/external/buyoff/verify`
+*   **请求体**:
+    ```json
+    {
+      "moldId": "{id}",
+      "machineId": "{mid}"
+    }
+    ```
 *   **返回数据**:
     ```json
     {
@@ -230,5 +249,6 @@
 ---
 
 **说明**: 
-1. 所有 `POST` 接口建议返回操作成功后的模具最新状态对象。
-2. 异常处理需包含：模具 ID 不存在、权限不足、BUYOFF 验证失败、模具状态冲突（如：已报废模具禁止安装）等。
+1. 所有接口均采用 `POST` 形式，包括原有的查询接口。
+2. 对于带查询参数的接口（如搜索、过滤），参数已移入请求体（Request Body）。
+3. 异常处理需包含：模具 ID 不存在、权限不足、BUYOFF 验证失败、模具状态冲突（如：已报废模具禁止安装）等。
