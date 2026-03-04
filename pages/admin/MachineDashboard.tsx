@@ -51,6 +51,11 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
       const machineId = `BMD-${String(i + 1).padStart(2, '0')}`;
       
       const createMoldData = (pos: string, index: number) => {
+        // 获取模拟模具数据，确保即使 MOCK_MOLDS 为空也能有兜底
+        const moldInfo = availableMolds.length > 0 
+          ? availableMolds[(index * 3 + (pos === 'P1' ? 0 : pos === 'P2' ? 1 : 2)) % availableMolds.length]
+          : { id: `M-TEMP-${index}`, name: '临时占位模具', type: '未知', vendor: 'N/A', shotTotal: 0, lifeLimit: 100000, status: MoldStatus.Idle, location: 'N/A', buyoffStatus: BuyoffStatus.NotInitiated };
+
         const statusSeed = Math.random();
         let status = 'NORMAL';
         let statusText = '正常';
@@ -86,7 +91,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
           currentShots,
           shotThreshold,
           isShotWarning,
-          moldInfo: availableMolds[(index * 3 + (pos === 'P1' ? 0 : pos === 'P2' ? 1 : 2)) % availableMolds.length]
+          moldInfo
         };
       };
 
@@ -147,8 +152,16 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
   const productOptions = Array.from(new Set(allMachines.map(m => m.currentProduct)));
 
   const handleMachineClick = (machine: any) => {
+    if (!machine || !machine.id || !machine.molds || Object.keys(machine.molds).length === 0) {
+      alert(`设备 ${machine?.id || '未知'} 当前无模具生产数据，无法查看详情`);
+      return;
+    }
     setSelectedMachine(machine);
-    setSelectedMoldPos('P1');
+    // 确保默认选中的位置是有模具的
+    const availablePos = Object.keys(machine.molds);
+    if (availablePos.length > 0) {
+      setSelectedMoldPos(availablePos[0] as any);
+    }
   };
 
   const handleAction = (type: string) => {
