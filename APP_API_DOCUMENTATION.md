@@ -100,12 +100,13 @@
       "q": "TY71" // 搜索关键词
     }
     ```
-    *   `q`: String - 搜索关键词。
+    *   `q`: String - 搜索关键词（模具编号或名称）。
 *   **返回数据**:
     ```json
     [
       {
-        "id": "TY71",
+        "moldId": "UUID-TY71-001",
+        "moldCode": "TY71",
         "name": "QFN-64 上模",
         "status": "IN_PRODUCTION", 
         "location": "MC-102",
@@ -118,7 +119,8 @@
       }
     ]
     ```
-    *   `id`: String - 模具唯一编号。
+    *   `moldId`: String - 模具系统唯一 ID。
+    *   `moldCode`: String - 模具显示编号（如 TY71）。
     *   `name`: String - 模具名称。
     *   `status`: Enum - 状态 (IN_PRODUCTION, MAINTENANCE, REPAIR, BACKUP, SCRAPPED)。
     *   `location`: String - 当前机台或柜位编号。
@@ -177,14 +179,15 @@
 *   **请求体**:
     ```json
     {
-      "moldId": "TY71"
+      "moldId": "UUID-TY71-001"
     }
     ```
-    *   `moldId`: String - 模具 ID。
+    *   `moldId`: String - 模具系统唯一 ID。
 *   **返回数据**:
     ```json
     {
-      "moldId": "TY71",
+      "moldId": "UUID-TY71-001",
+      "moldCode": "TY71",
       "components": [
         {
           "name": "上模核心针",
@@ -196,7 +199,8 @@
       ]
     }
     ```
-    *   `moldId`: String - 模具 ID。
+    *   `moldId`: String - 模具系统唯一 ID。
+    *   `moldCode`: String - 模具显示编号。
     *   `components`: Array[Object] - 组件列表。
         *   `name`: String - 组件名称。
         *   `sn`: String - 序列号。
@@ -218,7 +222,23 @@
     }
     ```
     *   `type`: Enum - 任务类型 (MAINTENANCE: 保养, REPAIR: 维修)。
-*   **返回数据**: 工单对象列表，包含模具 ID、紧急程度等。
+*   **返回数据**: 
+    ```json
+    [
+      {
+        "workOrderId": "WO_2001",
+        "moldId": "UUID-TY71-001",
+        "moldCode": "TY71",
+        "priority": "HIGH",
+        "status": "PENDING"
+      }
+    ]
+    ```
+    *   `workOrderId`: String - 工单唯一 ID。
+    *   `moldId`: String - 模具系统 ID。
+    *   `moldCode`: String - 模具编号。
+    *   `priority`: Enum - 优先级 (HIGH, MEDIUM, LOW)。
+    *   `status`: String - 任务状态。
 
 ### 4.2 验证扫码模具
 *   **用途**: 流程中扫描模具二维码进行校验，并获取模具当前状态和位置。
@@ -226,22 +246,30 @@
 *   **请求体**:
     ```json
     {
-      "moldId": "TY71",
+      "moldId": "UUID-TY71-001",
       "flowType": "MAINTENANCE" 
     }
     ```
-    *   `moldId`: String - 扫描到的模具 ID。
+    *   `moldId`: String - 扫描到的模具系统 ID。
     *   `flowType`: Enum - 流程类型 (MAINTENANCE, REPAIR, TRANSFER, INSTALLATION)。
 *   **返回数据**:
     ```json
     {
       "isValid": true,
-      "mold": { "id": "TY71", "name": "...", "location": "MC-102", "sourceType": "MACHINE" },
+      "mold": { 
+        "moldId": "UUID-TY71-001", 
+        "moldCode": "TY71",
+        "name": "QFN-64 上模", 
+        "location": "MC-102", 
+        "sourceType": "MACHINE" 
+      },
       "message": ""
     }
     ```
-    *   `isValid`: Boolean - 扫码是否有效（是否符合当前流程）。
+    *   `isValid`: Boolean - 扫码是否有效。
     *   `mold`: Object - 模具基础信息。
+        *   `moldId`: String - 模具系统 ID。
+        *   `moldCode`: String - 模具编号。
     *   `message`: String - 错误提示信息。
 
 ### 4.3 确认取模位置 (解绑)
@@ -349,12 +377,25 @@
 *   **返回数据**:
     ```json
     [
-      { "type": "REMOVE", "moldId": "TY71", "machine": "MC-102", "reason": "达到保养冲次" },
-      { "type": "INSTALL", "moldId": "TY101", "target": "MC-102", "reason": "生产计划变更" }
+      { 
+        "type": "REMOVE", 
+        "moldId": "UUID-TY71-001", 
+        "moldCode": "TY71", 
+        "machine": "MC-102", 
+        "reason": "达到保养冲次" 
+      },
+      { 
+        "type": "INSTALL", 
+        "moldId": "UUID-TY101-002", 
+        "moldCode": "TY101", 
+        "target": "MC-102", 
+        "reason": "生产计划变更" 
+      }
     ]
     ```
     *   `type`: Enum - 任务类型 (REMOVE: 拆下, INSTALL: 安装)。
-    *   `moldId`: String - 模具 ID。
+    *   `moldId`: String - 模具系统唯一 ID。
+    *   `moldCode`: String - 模具编号。
     *   `machine/target`: String - 机台编号。
     *   `reason`: String - 操作原因。
 
@@ -407,10 +448,16 @@
 *   **事件**: `machine:shot_update`
 *   **Payload**: 
     ```json
-    { "machineId": "MC-102", "moldId": "TY71", "currentShots": 450012 }
+    { 
+      "machineId": "MC-102", 
+      "moldId": "UUID-TY71-001", 
+      "moldCode": "TY71", 
+      "currentShots": 450012 
+    }
     ```
     *   `machineId`: String - 机台 ID。
-    *   `moldId`: String - 模具 ID。
+    *   `moldId`: String - 模具系统 ID。
+    *   `moldCode`: String - 模具显示编号。
     *   `currentShots`: Number - 实时累计冲次。
 
 ---
