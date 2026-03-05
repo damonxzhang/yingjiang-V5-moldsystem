@@ -61,14 +61,14 @@
       "onlineMoldCount": 12,
       "pendingTaskCount": 3,
       "displayButtons": [
-        { "id": "inquiry", "name": "模具查询", "icon": "fa-search", "color": "bg-indigo-500", "enabled": true },
-        { "id": "transfer", "name": "模具转换", "icon": "fa-exchange-alt", "color": "bg-green-500", "enabled": true },
-        { "id": "maintenance", "name": "保养执行", "icon": "fa-tools", "color": "bg-amber-500", "enabled": true },
-        { "id": "repair", "name": "维修执行", "icon": "fa-wrench", "color": "bg-red-500", "enabled": true }
+        { "id": "inquiry", "name": "模具查询", "icon": "fa-search", "color": "bg-indigo-500", "enabled": true, "badge": 0 },
+        { "id": "transfer", "name": "模具转换", "icon": "fa-exchange-alt", "color": "bg-green-500", "enabled": true, "badge": 2 },
+        { "id": "maintenance", "name": "保养执行", "icon": "fa-tools", "color": "bg-amber-500", "enabled": true, "badge": 5 },
+        { "id": "repair", "name": "维修执行", "icon": "fa-wrench", "color": "bg-red-500", "enabled": true, "badge": 1 }
       ]
     }
     ```
-*   **逻辑说明**: 后端需根据 `userId` 关联的 `role` 和 `department` 过滤按钮。例如，普通生产人员可能看不到“维修执行”按钮。
+*   **逻辑说明**: 后端需根据 `userId` 关联的 `role` 和 `department` 过滤按钮，并实时计算各模块的待办数量作为 `badge` 返回。
 
 ### 2.2 获取最近活动动态
 *   **用途**: 显示最近的操作日志。
