@@ -45,7 +45,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
     { id: 'molds_audit', name: 'Audit 清单（单独账号）', icon: 'fa-clipboard-list', permission: Permission.MOLD_AUDIT },
     { id: 'spares_big', name: '备件管理 (大材料)', icon: 'fa-cog', department: '大材料', permission: Permission.SPARE_VIEW },
     { id: 'spares_small', name: '备件管理 (小材料)', icon: 'fa-cog', department: '小材料', permission: Permission.SPARE_VIEW },
-    { id: 'prediction', name: '备件购买预测', icon: 'fa-magnifying-glass-chart', permission: Permission.SPARE_PREDICTION },
+    { id: 'prediction', name: '备件购买预测（待定）', icon: 'fa-magnifying-glass-chart', permission: Permission.SPARE_PREDICTION },
     { id: 'binding', name: '模具配件绑定', icon: 'fa-link', permission: Permission.MOLD_EDIT },
     { id: 'maintenance_confirm', name: '保养任务中心', icon: 'fa-calendar-check', permission: Permission.MAINTENANCE_MANAGE },
     { id: 'repair_confirm', name: '维修任务中心', icon: 'fa-screwdriver-wrench', permission: Permission.REPAIR_MANAGE },
