@@ -226,18 +226,45 @@
 ---
 
 ## 8. 模具配件绑定 (Mold-Spare Binding)
+*   **业务逻辑**: 用于建立模具与常用备件之间的关联关系。在维保领料或备件预警时，系统将根据此绑定关系及“建议装配量”自动计算缺口。
 
 ### 8.1 获取模具绑定配件列表
 *   **接口**: `POST /api/admin/mold/spare-bindings/list`
 *   **请求体**: `{ "moldId": "MOLD-001" }`
+*   **返回数据**:
+    ```json
+    [
+      {
+        "spareId": "SP-001",
+        "spareName": "上模顶针",
+        "quantity": 2, 
+        "currentStock": 15,
+        "minStock": 5
+      }
+    ]
+    ```
+*   **说明**: `quantity` 为建议装配量/安全装配数量。
 
 ### 8.2 保存/更新绑定关系
 *   **接口**: `POST /api/admin/mold/spare-bindings/save`
-*   **请求体**: `{ "moldId": "MOLD-001", "spareId": "SP-001", "quantity": 2 }`
+*   **请求体**: 
+    ```json
+    { 
+      "moldId": "MOLD-001", 
+      "spareId": "SP-001", 
+      "quantity": 2 
+    }
+    ```
+*   **说明**: 如果已存在绑定关系则更新 `quantity`，不存在则新增。
 
 ### 8.3 解除绑定
 *   **接口**: `POST /api/admin/mold/spare-bindings/remove`
 *   **请求体**: `{ "moldId": "MOLD-001", "spareId": "SP-001" }`
+
+### 8.4 获取可绑定的备件候选项
+*   **接口**: `POST /api/admin/mold/spare-bindings/available-spares`
+*   **请求体**: `{ "moldId": "MOLD-001", "keyword": "" }`
+*   **返回数据**: 返回尚未与该模具绑定的备件列表，用于下拉选择。
 
 ---
 
