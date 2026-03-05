@@ -368,19 +368,41 @@
     ```json
     {
       "workOrderId": "WO_2001",
-      "selectedItems": ["型腔清洁", "导柱润滑"],
+      "selectedItems": ["item_1", "item_2"],
       "remark": "...",
       "isFinished": true, 
       "destination": "CABINET", 
-      "photos": []
+      "photos": ["https://.../img1.jpg"]
     }
     ```
     *   `workOrderId`: String - 工单 ID。
-    *   `selectedItems`: Array[String] - 已勾选的维保项目。
+    *   `selectedItems`: Array[String] - 已勾选的维保项目 ID 列表。
     *   `remark`: String - 备注。
     *   `isFinished`: Boolean - 是否完成所有维保步骤。
     *   `destination`: Enum - 模具去向 (CABINET: 入柜, MACHINE: 回装机台)。
-    *   `photos`: Array[String] - 图片 URL 列表。
+    *   `photos`: Array[String] - 图片 URL 列表（由接口 1.3 生成）。
+
+### 4.7 绑定模具至柜位 (入库)
+*   **用途**: 当维保完成且去向为 `CABINET` 时，扫描柜位二维码将模具绑定到特定存储位置。
+*   **接口**: `POST /api/app/flow/bind-to-cabinet`
+*   **请求体**:
+    ```json
+    {
+      "moldId": "UUID-TY71-001",
+      "cabinetCode": "CAB-A-01",
+      "userId": "EMP001"
+    }
+    ```
+    *   `moldId`: String - 模具系统唯一 ID。
+    *   `cabinetCode`: String - 柜位编号（扫码获取）。
+    *   `userId`: String - 操作用户 ID。
+*   **返回数据**:
+    ```json
+    {
+      "success": true,
+      "message": "模具 TY71 已成功绑定至柜位 CAB-A-01"
+    }
+    ```
 
 ---
 
