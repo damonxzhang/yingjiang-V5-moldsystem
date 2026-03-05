@@ -87,36 +87,6 @@
         *   `enabled`: Boolean - 按钮是否对该用户可用。
         *   `badge`: Number - 该功能模块下的待办任务数。
 
-### 2.2 获取首页详情列表
-*   **用途**: 根据类型获取“在线模具”或“待处理任务”的具体列表。
-*   **接口**: `POST /api/app/dashboard/details`
-*   **请求体**:
-    ```json
-    {
-      "userId": "EMP001",
-      "type": "ONLINE" // ONLINE 或 PENDING
-    }
-    ```
-    *   `userId`: String - 用户 ID。
-    *   `type`: Enum - 列表类型 (ONLINE: 在线模具, PENDING: 待处理任务)。
-*   **返回数据**:
-    ```json
-    [
-      {
-        "id": "TY71",
-        "name": "QFN-64 上模",
-        "status": "IN_PRODUCTION",
-        "location": "MC-102",
-        "info": "当前冲次: 450,012" 
-      }
-    ]
-    ```
-    *   `id`: String - 模具或任务 ID。
-    *   `name`: String - 显示名称。
-    *   `status`: String - 当前状态。
-    *   `location`: String - 当前位置 (机台/柜位)。
-    *   `info`: String - 附加信息说明。
-
 ---
 
 ## 3. 模具查询 (Mold Inquiry)
