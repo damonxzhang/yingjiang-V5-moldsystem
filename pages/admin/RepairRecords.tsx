@@ -102,7 +102,6 @@ const RepairRecords: React.FC = () => {
               <div>
                 <div className="flex items-center gap-3">
                    <h3 className="font-black text-xl tracking-tight">维修执行鉴定书</h3>
-                   <span className="bg-indigo-600 text-[10px] px-2 py-0.5 rounded font-black tracking-widest uppercase">Verified by SmartMold</span>
                 </div>
                 <p className="text-[10px] text-slate-400 font-bold mt-1">工单编号: {selectedRecord.id} | 模具: {selectedRecord.moldId}</p>
               </div>
