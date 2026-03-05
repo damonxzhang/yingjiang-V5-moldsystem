@@ -115,22 +115,37 @@
     }
     ```
 
-### 3.2 创建维保/报修任务
-*   **用途**: 执行“创建保养任务”或“创建报修任务”操作。
-*   **接口**: `POST /api/admin/tasks/create`
+### 3.2 创建保养任务 (Maintenance)
+*   **用途**: 在看板中点击“创建保养任务”，并设置保养时间范围。
+*   **接口**: `POST /api/admin/tasks/maintenance/create`
 *   **请求体**:
     ```json
     {
-      "type": "MAINTENANCE", // MAINTENANCE (保养), REPAIR (报修)
       "machineId": "BMD-01",
       "moldId": "UUID-T100-01",
       "userId": "ADM001",
-      "description": "系统自动生成或手动输入备注"
+      "startTime": "2026-03-05T03:19", // 保养开始时间
+      "endTime": "2026-03-05T07:19",   // 保养结束时间
+      "description": "例行保养"
     }
     ```
-*   **返回数据**: `{ "success": true, "taskId": "TASK-2026-001" }`
+*   **返回数据**: `{ "success": true, "taskId": "MT-2026-001" }`
 
-### 3.3 模具安装/卸载操作
+### 3.3 创建报修任务 (Repair)
+*   **用途**: 点击“创建报修任务”手动上报故障。
+*   **接口**: `POST /api/admin/tasks/repair/create`
+*   **请求体**:
+    ```json
+    {
+      "machineId": "BMD-01",
+      "moldId": "UUID-T100-01",
+      "userId": "ADM001",
+      "description": "发现模具边缘磨损，需紧急修复"
+    }
+    ```
+*   **返回数据**: `{ "success": true, "taskId": "RT-2026-001" }`
+
+### 3.4 模具安装/卸载操作
 *   **用途**: 执行“安装模具”或“卸载模具”操作。
 *   **接口**: `POST /api/admin/machine/mold-action`
 *   **请求体**:
@@ -145,7 +160,7 @@
     ```
 *   **返回数据**: `{ "success": true }`
 
-### 3.4 模具停用操作
+### 3.5 模具停用操作
 *   **用途**: 执行“模具停用”操作。
 *   **接口**: `POST /api/admin/mold/disable`
 *   **请求体**:
