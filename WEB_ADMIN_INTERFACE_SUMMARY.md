@@ -118,21 +118,41 @@
     }
     ```
 
-### 4.2 新增/编辑模具档案
+### 4.2 新增/编辑模具档案 (含基本参数与 BOM)
 *   **接口**: `POST /api/admin/mold/save` (统一新增与编辑)
 *   **请求体**: 
     ```json
     {
-      "moldId": "TY71", "name": "...", "type": "注塑模", "maxShots": 500000, 
+      "moldId": "MD-2024-001", 
+      "shortName": "BGA-01",
+      "thickness": "250mm",
+      "moldCategory": "大材料模具",
+      "productType": "BGA",
+      "packageType": "QFN",
+      "pinCode": "A",
       "department": "大材料",
-      "components": [{ "name": "核心针", "sn": "SN001", "lifeLimit": 100000 }]
+      "lifeLimit": 500000,
+      "components": [
+        { 
+          "category": "上模件", 
+          "name": "上模盒", 
+          "sn": "#1/6-100597", 
+          "isSpare": false, 
+          "lifeLimit": "N/A" 
+        }
+      ]
     }
     ```
 
-### 4.3 获取模具 BOM 详情
-*   **接口**: `POST /api/admin/mold/bom`
-*   **请求体**: `{ "moldId": "TY71" }`
-*   **返回数据**: `{ "moldId": "TY71", "components": [...] }`
+### 4.3 获取模具完整详情 (含 BOM)
+*   **接口**: `POST /api/admin/mold/detail`
+*   **请求体**: `{ "moldId": "MD-2024-001" }`
+*   **返回数据**: 同上述保存请求体结构，增加 `shotTotal` (当前冲次) 等实时字段。
+
+### 4.4 停用模具
+*   **用途**: 在模具台账页面对模具进行停用处理。
+*   **接口**: `POST /api/admin/mold/deactivate`
+*   **请求体**: `{ "moldId": "MD-2024-001", "reason": "..." }`
 
 ---
 
