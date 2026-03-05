@@ -47,15 +47,28 @@
 ## 2. 首页 (Dashboard)
 
 ### 2.1 获取首页概览数据
-*   **用途**: 显示“在线模具”和“待处理任务”数量。
+*   **用途**: 根据用户 ID 判定其部门与权限，返回首页显示的概览数值及当前用户可操作的按钮列表。
 *   **接口**: `POST /api/app/dashboard/summary`
+*   **请求体**:
+    ```json
+    {
+      "userId": "EMP001"
+    }
+    ```
 *   **返回数据**:
     ```json
     {
       "onlineMoldCount": 12,
-      "pendingTaskCount": 3
+      "pendingTaskCount": 3,
+      "displayButtons": [
+        { "id": "inquiry", "name": "模具查询", "icon": "fa-search", "color": "bg-indigo-500", "enabled": true },
+        { "id": "transfer", "name": "模具转换", "icon": "fa-exchange-alt", "color": "bg-green-500", "enabled": true },
+        { "id": "maintenance", "name": "保养执行", "icon": "fa-tools", "color": "bg-amber-500", "enabled": true },
+        { "id": "repair", "name": "维修执行", "icon": "fa-wrench", "color": "bg-red-500", "enabled": true }
+      ]
     }
     ```
+*   **逻辑说明**: 后端需根据 `userId` 关联的 `role` 和 `department` 过滤按钮。例如，普通生产人员可能看不到“维修执行”按钮。
 
 ### 2.2 获取通知与预警
 *   **用途**: 显示寿命极限预警或其他系统通知。
