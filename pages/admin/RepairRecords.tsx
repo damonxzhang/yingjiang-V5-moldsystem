@@ -127,38 +127,6 @@ const RepairRecords: React.FC = () => {
                 </section>
 
                 {/* 2. 执行动作项 */}
-                <section>
-                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <i className="fas fa-wrench text-indigo-500"></i>
-                    Step 2: APP 现场执行维修动作
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {selectedRecord.actions?.map((action, i) => (
-                      <div key={i} className="flex items-center gap-3 bg-white border border-slate-100 p-3 rounded-xl shadow-sm">
-                        <div className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-[10px] font-black">
-                          {i + 1}
-                        </div>
-                        <span className="text-xs font-bold text-slate-800">{action}</span>
-                      </div>
-                    ))}
-                    {(!selectedRecord.actions || selectedRecord.actions.length === 0) && (
-                       <p className="text-xs text-slate-400 col-span-2 italic">无勾选标准动作项</p>
-                    )}
-                  </div>
-                </section>
-
-                {/* 3. 设备影响判定 */}
-                <section className="bg-slate-900 text-white p-6 rounded-3xl flex items-center justify-between shadow-xl">
-                  <div>
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">机台产力判定 (App Decision)</h4>
-                    <p className="text-lg font-black italic">
-                      {selectedRecord.machineStatusAfter === 'RECOVERED' ? '设备可平衡生产 [已还机]' : '设备产力丧失 [已触发借机流程]'}
-                    </p>
-                  </div>
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-lg ${selectedRecord.machineStatusAfter === 'RECOVERED' ? 'bg-green-500' : 'bg-red-500'}`}>
-                    <i className={`fas ${selectedRecord.machineStatusAfter === 'RECOVERED' ? 'fa-check-circle' : 'fa-exclamation-triangle'}`}></i>
-                  </div>
-                </section>
               </div>
 
               {/* 右侧：备件与流向状态 */}
