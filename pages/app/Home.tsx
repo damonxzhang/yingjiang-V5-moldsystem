@@ -53,17 +53,6 @@ const Home: React.FC<HomeProps> = ({ userRole, onNavigate }) => {
         </div>
       </div>
 
-      {/* 通知与预警 */}
-      <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
-        <div className="flex items-center gap-3 mb-2">
-          <i className="fas fa-exclamation-triangle text-amber-500"></i>
-          <h3 className="font-bold text-amber-800 text-sm">寿命极限预警</h3>
-        </div>
-        <p className="text-xs text-amber-700">
-          模具 <b>MOLD-002</b> 已达到 98% 的设计寿命，请立即安排更换或大修。
-        </p>
-      </div>
-
       {/* 最近动态 */}
       <div>
         <h2 className="text-slate-700 font-bold mb-3">最近活动</h2>
