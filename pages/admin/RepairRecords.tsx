@@ -238,12 +238,6 @@ const RepairRecords: React.FC = () => {
               >
                 关闭预览
               </button>
-              <button 
-                onClick={() => window.print()}
-                className="px-8 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl shadow-xl hover:bg-black flex items-center gap-2"
-              >
-                <i className="fas fa-print"></i> 打印鉴定书 (PDF)
-              </button>
             </div>
           </div>
         </div>
