@@ -16,13 +16,15 @@ import MachineDashboard from './MachineDashboard';
 import SparePartPrediction from './SparePartPrediction';
 import RoleManagement from './RoleManagement';
 import UserManagement from './UserManagement';
+import MaintenanceOptionManagement from './MaintenanceOptionManagement';
+import RepairOptionManagement from './RepairOptionManagement';
 
 interface AdminLayoutProps {
   userRole: Role;
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
-  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'maintenance_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen' | 'role_manage' | 'user_manage'>('machine_screen');
+  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'maintenance_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen' | 'role_manage' | 'user_manage' | 'maintenance_option_manage' | 'repair_option_manage'>('machine_screen');
 
   // 获取当前角色的权限
   const userPermissions = ROLE_PERMISSIONS.find(rp => rp.role === userRole)?.permissions || [];
@@ -47,6 +49,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
     { id: 'maintenance_confirm', name: '任务中心', icon: 'fa-envelope-open-text', permission: Permission.MAINTENANCE_MANAGE },
     { id: 'maintenance_logs', name: '保养执行记录', icon: 'fa-clipboard-check', permission: Permission.MAINTENANCE_VIEW },
     { id: 'repair_logs', name: '维修执行记录', icon: 'fa-tools', permission: Permission.REPAIR_VIEW },
+    { id: 'maintenance_option_manage', name: '保养选项管理', icon: 'fa-wrench', permission: Permission.MAINTENANCE_OPTION_MANAGE },
+    { id: 'repair_option_manage', name: '维修选项管理', icon: 'fa-screwdriver-wrench', permission: Permission.REPAIR_OPTION_MANAGE },
     { id: 'role_manage', name: '角色权限管理', icon: 'fa-user-shield', permission: Permission.ROLE_MANAGE },
     { id: 'user_manage', name: '用户账号管理', icon: 'fa-users-gear', permission: Permission.USER_MANAGE },
   ];
@@ -82,6 +86,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
       case 'binding': return <MoldSpareBinding />;
       case 'maintenance_logs': return <MaintenanceRecords />;
       case 'repair_logs': return <RepairRecords />;
+      case 'maintenance_option_manage': return <MaintenanceOptionManagement />;
+      case 'repair_option_manage': return <RepairOptionManagement />;
       case 'role_manage': return <RoleManagement />;
       case 'user_manage': return <UserManagement />;
       default: return <div className="p-10 text-slate-400 italic">该模块正在开发中...</div>;

@@ -14,7 +14,8 @@ export const ROLE_PERMISSIONS: RolePermission[] = [
     permissions: [
       Permission.DASHBOARD_VIEW, Permission.MONITOR_SCREEN_VIEW,
       Permission.MOLD_VIEW, Permission.MOLD_CREATE, Permission.MOLD_EDIT, Permission.MOLD_AUDIT,
-      Permission.SPARE_VIEW, Permission.MAINTENANCE_VIEW, Permission.REPAIR_VIEW
+      Permission.SPARE_VIEW, Permission.MAINTENANCE_VIEW, Permission.REPAIR_VIEW,
+      Permission.MAINTENANCE_OPTION_MANAGE, Permission.REPAIR_OPTION_MANAGE
     ]
   },
   {
@@ -23,7 +24,8 @@ export const ROLE_PERMISSIONS: RolePermission[] = [
     permissions: [
       Permission.DASHBOARD_VIEW, Permission.MONITOR_SCREEN_VIEW,
       Permission.MOLD_VIEW, Permission.MOLD_CREATE, Permission.MOLD_EDIT, Permission.MOLD_AUDIT,
-      Permission.SPARE_VIEW, Permission.MAINTENANCE_VIEW, Permission.REPAIR_VIEW
+      Permission.SPARE_VIEW, Permission.MAINTENANCE_VIEW, Permission.REPAIR_VIEW,
+      Permission.MAINTENANCE_OPTION_MANAGE, Permission.REPAIR_OPTION_MANAGE
     ]
   },
   {
@@ -333,3 +335,20 @@ export const MOCK_SPARES: SparePart[] = [
   { id: 'SP-003', name: '精密 POT (15mm)', category: 'Transfer件', stock: 2, minStock: 5, department: '大材料' },
   { id: 'SP-SEAL-P', name: 'plunger 密封圈', category: '密封件', stock: 50, minStock: 20, department: '小材料' },
 ];
+
+// 保养选项 (Maintenance Options)
+export const MOCK_MAINTENANCE_OPTIONS = [
+  { id: 'MO-001', name: '清洁模腔', category: '常规保养', description: '使用专用清洁剂清理模腔残留' },
+  { id: 'MO-002', name: '润滑导柱', category: '常规保养', description: '对导柱和导套进行油脂润滑' },
+  { id: 'MO-003', name: '检查加热棒', category: '电气保养', description: '测量加热棒阻值是否正常' },
+  { id: 'MO-004', name: '紧固螺栓', category: '机械保养', description: '检查并紧固模具外部紧固螺栓' },
+];
+
+// 维修选项 (Repair Options)
+export const MOCK_REPAIR_OPTIONS = [
+  { id: 'RO-001', name: '更换加热棒', category: '电气故障', description: '拆卸并安装新的加热棒' },
+  { id: 'RO-002', name: '修补模面', category: '模面损伤', description: '对压伤或划伤处进行烧焊或研磨' },
+  { id: 'RO-003', name: '更换顶针', category: '顶出故障', description: '更换弯曲或断裂的顶针' },
+  { id: 'RO-004', name: '清理异物', category: '合模异常', description: '清除模具内部卡住的废料或异物' },
+];
+

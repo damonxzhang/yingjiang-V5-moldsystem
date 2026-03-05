@@ -33,7 +33,11 @@ export enum Permission {
   // 系统管理 (RBAC)
   USER_MANAGE = 'user:manage',
   ROLE_MANAGE = 'role:manage',
-  PERMISSION_MANAGE = 'permission:manage'
+  PERMISSION_MANAGE = 'permission:manage',
+  
+  // 维保选项管理 (CRUD)
+  MAINTENANCE_OPTION_MANAGE = 'maintenance_option:manage',
+  REPAIR_OPTION_MANAGE = 'repair_option:manage'
 }
 
 export interface RolePermission {
