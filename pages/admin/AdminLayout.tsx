@@ -36,7 +36,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
   const menuItems = [
     { id: 'machine_screen', name: '设备生产看板 (主入口)', icon: 'fa-display', permission: Permission.MONITOR_SCREEN_VIEW },
     { id: 'dashboard', name: '仪表盘 (待定)', icon: 'fa-chart-pie', permission: Permission.DASHBOARD_VIEW },
-    { id: 'tooling_screen', name: '模具监控大屏', icon: 'fa-desktop', permission: Permission.MONITOR_SCREEN_VIEW },
+    { id: 'tooling_screen', name: '模具监控大屏（待定）', icon: 'fa-desktop', permission: Permission.MONITOR_SCREEN_VIEW },
     { id: 'production_list', name: '可生产产品 LIST', icon: 'fa-list-check', permission: Permission.MOLD_VIEW },
     { id: 'shot_monitor', name: '实时 Shot 数监控', icon: 'fa-wave-square', permission: Permission.MOLD_VIEW },
     { id: 'molds_big', name: '模具台账 (大材料)', icon: 'fa-cube', department: '大材料', permission: Permission.MOLD_VIEW },
@@ -46,7 +46,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
     { id: 'spares_small', name: '备件管理 (小材料)', icon: 'fa-cog', department: '小材料', permission: Permission.SPARE_VIEW },
     { id: 'prediction', name: '备件购买预测', icon: 'fa-magnifying-glass-chart', permission: Permission.SPARE_PREDICTION },
     { id: 'binding', name: '模具配件绑定', icon: 'fa-link', permission: Permission.MOLD_EDIT },
-    { id: 'maintenance_confirm', name: '【任务中心（待定）】', icon: 'fa-envelope-open-text', permission: Permission.MAINTENANCE_MANAGE },
+    { id: 'maintenance_confirm', name: '任务中心（待定）', icon: 'fa-envelope-open-text', permission: Permission.MAINTENANCE_MANAGE },
     { id: 'maintenance_logs', name: '保养执行记录', icon: 'fa-clipboard-check', permission: Permission.MAINTENANCE_VIEW },
     { id: 'repair_logs', name: '维修执行记录', icon: 'fa-tools', permission: Permission.REPAIR_VIEW },
     { id: 'maintenance_option_manage', name: '保养选项管理', icon: 'fa-wrench', permission: Permission.MAINTENANCE_OPTION_MANAGE },
