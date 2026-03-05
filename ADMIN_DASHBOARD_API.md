@@ -72,7 +72,95 @@
 
 ---
 
-## 3. 实时通信 (Real-time)
+## 3. 设备详情与操作 (Machine Details & Operations)
+
+### 3.1 获取机台及模具槽位详细信息
+*   **用途**: 点击左侧机台列表（如 P1, P2...）或切换机台时，加载右侧生产概况及模具详细状态。
+*   **接口**: `POST /api/admin/machine/detail`
+*   **请求体**:
+    ```json
+    {
+      "machineId": "BMD-01",
+      "slot": "P1" // 可选，指定查看某个槽位的模具
+    }
+    ```
+*   **返回数据**:
+    ```json
+    {
+      "machineId": "BMD-01",
+      "production": {
+        "planned": 24288,
+        "completed": 8368
+      },
+      "slots": [
+        { "slot": "P1", "moldCode": "T100", "status": "NORMAL" },
+        { "slot": "P2", "moldCode": "T104", "status": "NORMAL" },
+        { "slot": "P3", "moldCode": "T108", "status": "CRITICAL" },
+        { "slot": "P4", "moldCode": "T111", "status": "NORMAL" }
+      ],
+      "currentMold": {
+        "moldId": "UUID-T100-01",
+        "moldCode": "T100",
+        "fullName": "精密 BGA 注塑模",
+        "shortName": "BGA-01",
+        "type": "注塑模",
+        "pendingTasks": 0,
+        "currentShots": 329769,
+        "warningThreshold": 800000,
+        "maintenanceStatus": "NORMAL",
+        "remainingLife": 2314,
+        "totalLife": 5000,
+        "healthPercent": 46.28
+      }
+    }
+    ```
+
+### 3.2 创建维保/报修任务
+*   **用途**: 执行“创建保养任务”或“创建报修任务”操作。
+*   **接口**: `POST /api/admin/tasks/create`
+*   **请求体**:
+    ```json
+    {
+      "type": "MAINTENANCE", // MAINTENANCE (保养), REPAIR (报修)
+      "machineId": "BMD-01",
+      "moldId": "UUID-T100-01",
+      "userId": "ADM001",
+      "description": "系统自动生成或手动输入备注"
+    }
+    ```
+*   **返回数据**: `{ "success": true, "taskId": "TASK-2026-001" }`
+
+### 3.3 模具安装/卸载操作
+*   **用途**: 执行“安装模具”或“卸载模具”操作。
+*   **接口**: `POST /api/admin/machine/mold-action`
+*   **请求体**:
+    ```json
+    {
+      "action": "INSTALL", // INSTALL (安装), UNINSTALL (卸载)
+      "machineId": "BMD-01",
+      "slot": "P1",
+      "moldId": "UUID-T100-01",
+      "userId": "ADM001"
+    }
+    ```
+*   **返回数据**: `{ "success": true }`
+
+### 3.4 模具停用操作
+*   **用途**: 执行“模具停用”操作。
+*   **接口**: `POST /api/admin/mold/disable`
+*   **请求体**:
+    ```json
+    {
+      "moldId": "UUID-T100-01",
+      "reason": "手动触发停用",
+      "userId": "ADM001"
+    }
+    ```
+*   **返回数据**: `{ "success": true }`
+
+---
+
+## 4. 实时通信 (Real-time)
 
 ### 3.1 Socket.io 实时推送事件
 *   **用途**: 看板页面通过 Socket.io 订阅事件，实现无需刷新的自动更新。
