@@ -70,22 +70,6 @@
     ```
 *   **逻辑说明**: 后端需根据 `userId` 关联的 `role` 和 `department` 过滤按钮，并实时计算各模块的待办数量作为 `badge` 返回。
 
-### 2.2 获取最近活动动态
-*   **用途**: 显示最近的操作日志。
-*   **接口**: `POST /api/app/activities/recent`
-*   **返回数据**:
-    ```json
-    [
-      {
-        "id": "ACT_001",
-        "title": "转换流程完成",
-        "description": "MOLD-001 已从仓库安装至 MC-202 机台",
-        "time": "2026-02-14 10:00:00",
-        "iconType": "CHECK"
-      }
-    ]
-    ```
-
 ---
 
 ## 3. 模具查询 (Mold Inquiry)
