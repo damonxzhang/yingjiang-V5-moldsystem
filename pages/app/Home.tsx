@@ -53,32 +53,6 @@ const Home: React.FC<HomeProps> = ({ userRole, onNavigate }) => {
         </div>
       </div>
 
-      {/* 最近动态 */}
-      <div>
-        <h2 className="text-slate-700 font-bold mb-3">最近活动</h2>
-        <div className="space-y-3">
-          <div className="flex gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 shrink-0">
-              <i className="fas fa-check"></i>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-800">转换流程完成</p>
-              <p className="text-[10px] text-slate-500">MOLD-001 已从仓库安装至 MC-202 机台</p>
-              <p className="text-[10px] text-slate-400 mt-1">2 小时前</p>
-            </div>
-          </div>
-          <div className="flex gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 shrink-0">
-              <i className="fas fa-tools"></i>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-800">强制保养触发</p>
-              <p className="text-[10px] text-slate-500">MOLD-004 拆卸入柜，系统已自动触发保养任务</p>
-              <p className="text-[10px] text-slate-400 mt-1">5 小时前</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
