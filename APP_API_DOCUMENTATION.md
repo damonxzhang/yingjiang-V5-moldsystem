@@ -316,16 +316,31 @@
     *   `canProduce`: Boolean - 是否还机 (true: 还机, false: 停机/借机)。
 
 ### 4.5 获取维保内容配置
-*   **用途**: 获取保养或维修的标准勾选项列表。
+*   **用途**: 根据模具 ID 获取该模具对应的保养或维修标准检查项清单。
 *   **接口**: `POST /api/app/config/maintenance-items`
 *   **请求体**:
     ```json
     {
-      "moldType": "QFN"
+      "moldId": "UUID-TY71-001"
     }
     ```
-    *   `moldType`: String - 模具类型（用于匹配不同的检查清单）。
-*   **返回数据**: Array[String] - 维保项目字符串列表。
+    *   `moldId`: String - 模具系统唯一 ID。
+*   **返回数据**: 
+    ```json
+    {
+      "moldId": "UUID-TY71-001",
+      "items": [
+        { "id": "item_1", "label": "型腔清洁", "required": true },
+        { "id": "item_2", "label": "导柱润滑", "required": true },
+        { "id": "item_3", "label": "紧固件检查", "required": false }
+      ]
+    }
+    ```
+    *   `moldId`: String - 模具系统唯一 ID。
+    *   `items`: Array[Object] - 维保项目清单。
+        *   `id`: String - 项目唯一标识。
+        *   `label`: String - 项目名称/描述。
+        *   `required`: Boolean - 是否为必选项。
 
 ### 4.6 提交维保记录 (暂存/完成)
 *   **用途**: 提交维保作业内容，决定模具去向。
