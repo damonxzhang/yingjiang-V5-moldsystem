@@ -226,14 +226,16 @@
 ## 4. 维保执行流程 (Maintenance & Repair Flow)
 
 ### 4.1 获取待办维保任务
-*   **用途**: 列表展示分配给当前用户的保养/维修任务。
+*   **用途**: 列表展示分配给当前用户的保养/维修任务。系统将根据 `userId` 关联的用户部门自动筛选对应的待办工单。
 *   **接口**: `POST /api/app/work-orders/pending`
 *   **请求体**:
     ```json
     {
+      "userId": "EMP001",
       "type": "MAINTENANCE" // 或 REPAIR
     }
     ```
+    *   `userId`: String - 用户 ID。
     *   `type`: Enum - 任务类型 (MAINTENANCE: 保养, REPAIR: 维修)。
 *   **返回数据**: 
     ```json
