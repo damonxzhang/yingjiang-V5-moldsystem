@@ -185,7 +185,7 @@
   ```
 * **返回数据**: `{ "success": true, "taskId": "MT-2026-001" }` // success: 是否创建成功, taskId: 生成的任务工单号
 
-### 3.3 创建报修任务 (Repair)
+### 3.4 创建报修任务 (Repair)
 
 * **用途**: 点击“创建报修任务”手动上报故障。
 * **接口**: `POST /api/admin/tasks/repair/create`
@@ -201,7 +201,7 @@
   ```
 * **返回数据**: `{ "success": true, "taskId": "RT-2026-001" }` // success: 是否创建成功, taskId: 生成的报修工单号
 
-### 3.4 模具安装/卸载操作
+### 3.5 模具安装/卸载操作
 
 * **用途**: 执行“安装模具”或“卸载模具”操作。
 * **接口**: `POST /api/admin/machine/mold-action`
@@ -218,7 +218,7 @@
   ```
 * **返回数据**: `{ "success": true, "message": "操作成功" }` // success: 是否执行成功, message: 结果反馈消息
 
-### 3.5 模具停用操作
+### 3.6 模具停用操作
 
 * **用途**: 执行“模具停用”操作。
 * **接口**: `POST /api/admin/mold/disable`

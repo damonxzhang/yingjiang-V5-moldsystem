@@ -60,8 +60,11 @@ const MaintenanceRecords: React.FC = () => {
           <thead className="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-widest">
             <tr>
               <th className="px-6 py-4 font-bold">工单编号</th>
+              <th className="px-6 py-4 font-bold">任务来源</th>
               <th className="px-6 py-4 font-bold">模具对象</th>
               <th className="px-6 py-4 font-bold">执行人员</th>
+              <th className="px-6 py-4 font-bold">保养结果</th>
+              <th className="px-6 py-4 font-bold">验收状态</th>
               <th className="px-6 py-4 font-bold">执行项数</th>
               <th className="px-6 py-4 font-bold">完成时间</th>
               <th className="px-6 py-4 font-bold">归位</th>
@@ -72,8 +75,41 @@ const MaintenanceRecords: React.FC = () => {
             {records.map(record => (
               <tr key={record.id} className="hover:bg-slate-50 group transition-colors">
                 <td className="px-6 py-4 text-sm font-bold text-slate-700">{record.id}</td>
+                <td className="px-6 py-4">
+                  {(record as any).taskSource === 'SCHEDULED' ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                      <i className="fas fa-clock"></i> 定时任务
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                      <i className="fas fa-hand-pointer"></i> 临时添加
+                    </span>
+                  )}
+                </td>
                 <td className="px-6 py-4 text-sm text-indigo-600 font-black">{record.moldId}</td>
                 <td className="px-6 py-4 text-sm text-slate-600 font-bold">{record.operator}</td>
+                <td className="px-6 py-4">
+                  {(record as any).maintenanceResult === 'OK' ? (
+                    <span className="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded font-black tracking-widest uppercase">OK</span>
+                  ) : (record as any).maintenanceResult === 'NG' ? (
+                    <span className="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded font-black tracking-widest uppercase">NG</span>
+                  ) : (
+                    <span className="text-[10px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded font-black tracking-widest uppercase">WAIT</span>
+                  )}
+                </td>
+                <td className="px-6 py-4">
+                  {(record as any).buyoffStatus === 'PASSED' ? (
+                    <span className="text-[10px] text-green-600 font-black flex items-center gap-1 uppercase">
+                      <i className="fas fa-check-double"></i> Passed
+                    </span>
+                  ) : (record as any).buyoffStatus === 'FAILED' ? (
+                    <span className="text-[10px] text-red-600 font-black flex items-center gap-1 uppercase">
+                      <i className="fas fa-times-circle"></i> Failed
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-black uppercase">None</span>
+                  )}
+                </td>
                 <td className="px-6 py-4">
                   <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full font-bold text-slate-500">
                     {record.actions?.length || 0} 项动作
@@ -130,6 +166,45 @@ const MaintenanceRecords: React.FC = () => {
                 </section>
 
                 {/* 2. APP 勾选动作项 */}
+                <section>
+                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <i className="fas fa-tasks text-indigo-500"></i>
+                    Step 2: 保养执行项目鉴定
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedRecord.actions?.map((action, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-white border border-slate-100 p-4 rounded-2xl shadow-sm">
+                        <i className="fas fa-check-circle text-green-500"></i>
+                        <span className="text-xs font-bold text-slate-700">{action}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* 3. 保养结论与验收 */}
+                <section className="bg-slate-900 rounded-[2rem] p-8 text-white">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Step 3: 保养质量鉴定结论</h4>
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase">保养结论 Maintenance Result</p>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-2xl font-black ${(selectedRecord as any).maintenanceResult === 'OK' ? 'text-green-400' : (selectedRecord as any).maintenanceResult === 'NG' ? 'text-red-400' : 'text-slate-400'}`}>
+                          {(selectedRecord as any).maintenanceResult || 'PENDING'}
+                        </span>
+                        <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-bold">最终鉴定</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase">验收状态 Buyoff Status</p>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-2xl font-black ${(selectedRecord as any).buyoffStatus === 'PASSED' ? 'text-green-400' : (selectedRecord as any).buyoffStatus === 'FAILED' ? 'text-red-400' : 'text-slate-400'}`}>
+                          {(selectedRecord as any).buyoffStatus || 'NONE'}
+                        </span>
+                        <i className={`fas ${(selectedRecord as any).buyoffStatus === 'PASSED' ? 'fa-check-double text-green-400' : (selectedRecord as any).buyoffStatus === 'FAILED' ? 'fa-times-circle text-red-400' : 'fa-clock text-slate-400'} text-xl`}></i>
+                      </div>
+                    </div>
+                  </div>
+                </section>
               </div>
 
               {/* 右侧：备件与流向 */}

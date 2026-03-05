@@ -263,60 +263,166 @@
 
 ---
 
-## 4. 维保执行流程 (Maintenance & Repair Flow)
+## 4. 维保执行流程 (Maintenance Flow)
 
-### 4.1 获取待办维保任务
+### 4.1 获取待办保养任务
 
-* **用途**: 列表展示分配给当前用户的保养/维修任务。系统将根据 `userId` 关联的用户部门自动筛选对应的待办工单。
-* **接口**: `POST /api/app/work-orders/pending`
+* **用途**: 列表展示分配给当前用户的保养任务。
+* **接口**: `POST /api/app/maintenance/pending`
 * **请求体**:
   
   ```json
   {
-    "userId": "EMP001",
-    "type": "MAINTENANCE" // 或 REPAIR
+    "userId": "EMP001" // 用户唯一标识
   }
   ```
-  * `userId`: String - 用户 ID。
-  * `type`: Enum - 任务类型 (MAINTENANCE: 保养, REPAIR: 维修)。
 * **返回数据**: 
   
   ```json
   [
     {
-      "workOrderId": "WO_2001",
-      "moldId": "UUID-TY71-001",
-      "moldCode": "TY71",
-      "priority": "HIGH",
-      "status": "PENDING"
+      "orderId": 101, // 维保工单 ID
+      "orderNo": "PM-20260305001", // 维保单号
+      "moldId": "UUID-TY71-001", // 模具系统 ID
+      "moldCode": "TY71", // 模具编号
+      "priority": "HIGH", // 优先级 (HIGH, MEDIUM, LOW)
+      "status": "PENDING" // 状态
     }
   ]
   ```
-  * `workOrderId`: String - 工单唯一 ID。
-  * `moldId`: String - 模具系统 ID。
-  * `moldCode`: String - 模具编号。
-  * `priority`: Enum - 优先级 (HIGH, MEDIUM, LOW)。
-  * `status`: String - 任务状态。
 
-### 4.2 验证扫码模具
+### 4.2 获取保养项目配置
 
-* **用途**: 流程中扫描模具二维码进行校验，并获取模具当前状态和位置。
+* **用途**: 根据模具 ID 获取该模具对应的保养标准检查项清单。
+* **接口**: `POST /api/app/maintenance/config-items`
+* **请求体**:
+  
+  ```json
+  {
+    "moldId": "UUID-TY71-001" // 模具系统唯一 ID
+  }
+  ```
+* **返回数据**: 
+  
+  ```json
+  {
+    "moldId": "UUID-TY71-001", // 模具系统唯一 ID
+    "items": [ // 检查项清单
+      { "id": 1, "label": "型腔清洁", "required": true },
+      { "id": 2, "label": "导柱润滑", "required": true }
+    ]
+  }
+  ```
+
+### 4.3 提交保养记录 (暂存/完成)
+
+* **用途**: 提交保养作业内容。
+* **接口**: `POST /api/app/maintenance/submit`
+* **请求体**:
+  
+  ```json
+  {
+    "orderId": 101, // 维保工单 ID
+    "selectedItems": [1, 2], // 已勾选的项目 ID 列表
+    "remark": "保养完成，状况良好", // 执行备注
+    "isFinished": true, // 是否正式完成
+    "destination": "CABINET", // 模具去向 (CABINET: 入柜, MACHINE: 回装机台)
+    "photos": ["https://.../img1.jpg"] // 现场照片 URL 列表
+  }
+  ```
+
+---
+
+## 5. 维修执行流程 (Repair Flow)
+
+### 5.1 获取待办维修任务
+
+* **用途**: 列表展示分配给当前用户的维修任务。
+* **接口**: `POST /api/app/repair/pending`
+* **请求体**:
+  
+  ```json
+  {
+    "userId": "EMP001" // 用户唯一标识
+  }
+  ```
+* **返回数据**: 
+  
+  ```json
+  [
+    {
+      "orderId": 201, // 维修工单 ID
+      "orderNo": "RE-20260305001", // 维修单号
+      "moldId": "UUID-TY71-001", // 模具系统 ID
+      "moldCode": "TY71", // 模具编号
+      "faultDescription": "顶针复位不良", // 故障描述
+      "priority": "URGENT", // 优先级
+      "status": "IN_PROGRESS" // 状态
+    }
+  ]
+  ```
+
+### 5.2 获取维修检查项配置
+
+* **用途**: 获取针对该维修任务的检查或常见故障处理清单。
+* **接口**: `POST /api/app/repair/config-items`
+* **请求体**:
+  
+  ```json
+  {
+    "orderId": 201 // 维修工单 ID
+  }
+  ```
+* **返回数据**: 
+  
+  ```json
+  {
+    "orderId": 201, // 维修工单 ID
+    "items": [ // 故障/检查项
+      { "id": 10, "label": "检查顶针弹簧", "required": true },
+      { "id": 11, "label": "更换易损件", "required": false }
+    ]
+  }
+  ```
+
+### 5.3 提交维修记录 (暂存/完成)
+
+* **用途**: 提交维修处理结果。
+* **接口**: `POST /api/app/repair/submit`
+* **请求体**:
+  
+  ```json
+  {
+    "orderId": 201, // 维修工单 ID
+    "selectedItems": [10], // 已处理的项目 ID
+    "remark": "已更换弹簧，测试正常", // 维修备注
+    "isFinished": true, // 是否正式完成
+    "destination": "CABINET", // 模具去向
+    "photos": ["https://.../img2.jpg"] // 现场照片 URL
+  }
+  ```
+
+---
+
+## 6. 模具通用流转校验 (Common Flow Logic)
+
+### 6.1 验证扫码模具
+
+* **用途**: 流程中扫描模具二维码进行校验。
 * **接口**: `POST /api/app/flow/scan-mold`
 * **请求体**:
   
   ```json
   {
-    "moldId": "UUID-TY71-001",
-    "flowType": "MAINTENANCE" 
+    "moldId": "UUID-TY71-001", // 扫描到的模具 ID
+    "flowType": "MAINTENANCE" // 流程类型 (MAINTENANCE, REPAIR, TRANSFER, INSTALLATION)
   }
   ```
-  * `moldId`: String - 扫描到的模具系统 ID。
-  * `flowType`: Enum - 流程类型 (MAINTENANCE, REPAIR, TRANSFER, INSTALLATION)。
 * **返回数据**:
   
   ```json
   {
-    "isValid": true,
+    "isValid": true, // 扫码是否有效
     "mold": { 
       "moldId": "UUID-TY71-001", 
       "moldCode": "TY71",
@@ -324,16 +430,11 @@
       "location": "MC-102", 
       "sourceType": "MACHINE" 
     },
-    "message": ""
+    "message": "" // 错误提示
   }
   ```
-  * `isValid`: Boolean - 扫码是否有效。
-  * `mold`: Object - 模具基础信息。
-    * `moldId`: String - 模具系统 ID。
-    * `moldCode`: String - 模具编号。
-  * `message`: String - 错误提示信息。
 
-### 4.3 确认取模位置 (解绑)
+### 6.2 确认取模位置 (解绑)
 
 * **用途**: 确认模具已从机台或柜位取出。
 * **接口**: `POST /api/app/flow/confirm-source`
@@ -341,16 +442,13 @@
   
   ```json
   {
-    "moldId": "TY71",
-    "sourceType": "MACHINE", 
-    "sourceCode": "MC-102"
+    "moldId": "TY71", // 模具 ID
+    "sourceType": "MACHINE", // 来源类型 (MACHINE: 机台, CABINET: 柜位)
+    "sourceCode": "MC-102" // 具体编号
   }
   ```
-  * `moldId`: String - 模具 ID。
-  * `sourceType`: Enum - 来源类型 (MACHINE: 机台, CABINET: 柜位)。
-  * `sourceCode`: String - 具体编号。
 
-### 4.4 机台生产能力判定 (还机/借机)
+### 6.3 机台生产能力判定 (还机/借机)
 
 * **用途**: 拆下模具后，确认机台是否可继续生产。
 * **接口**: `POST /api/app/flow/machine-status-update`
@@ -358,96 +456,16 @@
   
   ```json
   {
-    "machineId": "MC-102",
-    "canProduce": true 
-  }
-  ```
-  * `machineId`: String - 机台 ID。
-  * `canProduce`: Boolean - 是否还机 (true: 还机, false: 停机/借机)。
-
-### 4.5 获取维保内容配置
-
-* **用途**: 根据模具 ID 获取该模具对应的保养或维修标准检查项清单。
-* **接口**: `POST /api/app/config/maintenance-items`
-* **请求体**:
-  
-  ```json
-  {
-    "moldId": "UUID-TY71-001"
-  }
-  ```
-  * `moldId`: String - 模具系统唯一 ID。
-* **返回数据**: 
-  
-  ```json
-  {
-    "moldId": "UUID-TY71-001",
-    "items": [
-      { "id": "item_1", "label": "型腔清洁", "required": true },
-      { "id": "item_2", "label": "导柱润滑", "required": true },
-      { "id": "item_3", "label": "紧固件检查", "required": false }
-    ]
-  }
-  ```
-  * `moldId`: String - 模具系统唯一 ID。
-  * `items`: Array[Object] - 维保项目清单。
-    * `id`: String - 项目唯一标识。
-    * `label`: String - 项目名称/描述。
-    * `required`: Boolean - 是否为必选项。
-
-### 4.6 提交维保记录 (暂存/完成)
-
-* **用途**: 提交维保作业内容，决定模具去向。
-* **接口**: `POST /api/app/flow/submit-work-order`
-* **请求体**:
-  
-  ```json
-  {
-    "workOrderId": "WO_2001",
-    "selectedItems": ["item_1", "item_2"],
-    "remark": "...",
-    "isFinished": true, 
-    "destination": "CABINET", 
-    "photos": ["https://.../img1.jpg"]
-  }
-  ```
-  * `workOrderId`: String - 工单 ID。
-  * `selectedItems`: Array[String] - 已勾选的维保项目 ID 列表。
-  * `remark`: String - 备注。
-  * `isFinished`: Boolean - 是否完成所有维保步骤。
-  * `destination`: Enum - 模具去向 (CABINET: 入柜, MACHINE: 回装机台)。
-  * `photos`: Array[String] - 图片 URL 列表（由接口 1.3 生成）。
-
-### 4.7 绑定模具至柜位 (入库)
-
-* **用途**: 当维保完成且去向为 `CABINET` 时，扫描柜位二维码将模具绑定到特定存储位置。
-* **接口**: `POST /api/app/flow/bind-to-cabinet`
-* **请求体**:
-  
-  ```json
-  {
-    "moldId": "UUID-TY71-001",
-    "cabinetCode": "CAB-A-01",
-    "userId": "EMP001"
-  }
-  ```
-  * `moldId`: String - 模具系统唯一 ID。
-  * `cabinetCode`: String - 柜位编号（扫码获取）。
-  * `userId`: String - 操作用户 ID。
-* **返回数据**:
-  
-  ```json
-  {
-    "success": true,
-    "message": "模具 TY71 已成功绑定至柜位 CAB-A-01"
+    "machineId": "MC-102", // 机台 ID
+    "canProduce": true // 是否还机 (true: 还机, false: 停机/借机)
   }
   ```
 
 ---
 
-## 5. 模具安装与 BUYOFF (Installation & Buyoff)
+## 7. 模具安装与 BUYOFF (Installation & Buyoff)
 
-### 5.1 发起/验证 BUYOFF 状态
+### 7.1 发起/验证 BUYOFF 状态
 
 * **用途**: 模具安装或回装机台时，验证外部系统 BUYOFF 结果。
 * **接口**: `POST /api/external/buyoff/verify`
@@ -455,15 +473,20 @@
   
   ```json
   {
-    "moldId": "TY101",
-    "machineId": "MC-201"
+    "moldId": "TY101", // 模具 ID
+    "machineId": "MC-201" // 安装的目标机台 ID
   }
   ```
-  * `moldId`: String - 模具 ID。
-  * `machineId`: String - 安装的目标机台 ID。
-* **返回数据**: `{ "status": "PASS", "message": "..." }`
+* **返回数据**: 
+  
+  ```json
+  { 
+    "status": "PASS", // 验证状态 (PASS, FAIL, PENDING)
+    "message": "首件检查已通过" // 提示消息
+  }
+  ```
 
-### 5.2 提交安装检查清单
+### 7.2 提交安装检查清单
 
 * **用途**: 模具安装至机台后，提交人工检查清单并正式上线。
 * **接口**: `POST /api/app/flow/complete-installation`
@@ -471,20 +494,17 @@
   
   ```json
   {
-    "moldId": "TY101",
-    "machineId": "MC-201",
-    "checkList": ["螺栓紧固", "水路测试"]
+    "moldId": "TY101", // 模具 ID
+    "machineId": "MC-201", // 机台 ID
+    "checkList": ["螺栓紧固", "水路测试"] // 检查项目文字列表
   }
   ```
-  * `moldId`: String - 模具 ID。
-  * `machineId`: String - 机台 ID。
-  * `checkList`: Array[String] - 检查项目。
 
 ---
 
-## 6. 模具转换流程 (Transfer Flow)
+## 8. 模具转换流程 (Transfer Flow)
 
-### 6.1 获取生产待处理清单
+### 8.1 获取生产待处理清单
 
 * **用途**: 获取生产部门下发的模具拆下或安装任务。
 * **接口**: `POST /api/app/transfer/pending-tasks`
@@ -494,28 +514,16 @@
   ```json
   [
     { 
-      "type": "REMOVE", 
-      "moldId": "UUID-TY71-001", 
-      "moldCode": "TY71", 
-      "machine": "MC-102", 
-      "reason": "达到保养冲次" 
-    },
-    { 
-      "type": "INSTALL", 
-      "moldId": "UUID-TY101-002", 
-      "moldCode": "TY101", 
-      "target": "MC-102", 
-      "reason": "生产计划变更" 
+      "type": "REMOVE", // 任务类型 (REMOVE: 拆下, INSTALL: 安装)
+      "moldId": "UUID-TY71-001", // 模具 ID
+      "moldCode": "TY71", // 模具编号
+      "machine": "MC-102", // 来源/目标机台
+      "reason": "达到保养冲次" // 操作原因
     }
   ]
   ```
-  * `type`: Enum - 任务类型 (REMOVE: 拆下, INSTALL: 安装)。
-  * `moldId`: String - 模具系统唯一 ID。
-  * `moldCode`: String - 模具编号。
-  * `machine/target`: String - 机台编号。
-  * `reason`: String - 操作原因。
 
-### 6.2 模具拆下并同步冲次
+### 8.2 模具拆下并同步冲次
 
 * **用途**: 拆下模具时，记录最终冲次并自动触发保养。
 * **接口**: `POST /api/app/transfer/remove-mold`
@@ -523,16 +531,13 @@
   
   ```json
   {
-    "moldId": "TY71",
-    "machineId": "MC-102",
-    "finalShotCount": 450012
+    "moldId": "TY71", // 模具 ID
+    "machineId": "MC-102", // 机台 ID
+    "finalShotCount": 450012 // 最终确认的累计冲次
   }
   ```
-  * `moldId`: String - 模具 ID。
-  * `machineId`: String - 机台 ID。
-  * `finalShotCount`: Number - 最终确认的累计冲次。
 
-### 6.3 模具位置绑定 (入柜)
+### 8.3 模具位置绑定 (入柜)
 
 * **用途**: 扫描模具柜位置码进行绑定。
 * **接口**: `POST /api/app/transfer/location-bind`
@@ -540,18 +545,16 @@
   
   ```json
   {
-    "moldId": "TY71",
-    "locationCode": "A1-02"
+    "moldId": "TY71", // 模具 ID
+    "locationCode": "A1-02" // 柜位编号
   }
   ```
-  * `moldId`: String - 模具 ID。
-  * `locationCode`: String - 柜位编号。
 
 ---
 
-## 7. 实时数据接口 (Real-time & Sync)
+## 9. 实时数据接口 (Real-time & Sync)
 
-### 7.1 获取机台当前冲次 (API 轮询备份)
+### 9.1 获取机台当前冲次 (API 轮询备份)
 
 * **用途**: 若 Socket 断开，通过 POST 接口获取最新冲次。
 * **接口**: `POST /api/app/machine/current-shots`
@@ -559,13 +562,18 @@
   
   ```json
   {
-    "machineId": "MC-102"
+    "machineId": "MC-102" // 机台 ID
   }
   ```
-  * `machineId`: String - 机台 ID。
-* **返回数据**: `{ "currentShots": 450012 }`
+* **返回数据**: 
+  
+  ```json
+  { 
+    "currentShots": 450012 // 当前累计冲次
+  }
+  ```
 
-### 7.2 Socket.io 实时推送
+### 9.2 Socket.io 实时推送
 
 * **用途**: 实时同步冲次。
 * **事件**: `machine:shot_update`
@@ -573,20 +581,17 @@
   
   ```json
   { 
-    "machineId": "MC-102", 
-    "moldId": "UUID-TY71-001", 
-    "moldCode": "TY71", 
-    "currentShots": 450012 
+    "machineId": "MC-102", // 机台 ID
+    "moldId": "UUID-TY71-001", // 模具 ID
+    "moldCode": "TY71", // 模具编号
+    "currentShots": 450012, // 实时累计冲次
+    "timestamp": "2026-03-05T08:15:00Z" // 时间戳
   }
   ```
-  * `machineId`: String - 机台 ID。
-  * `moldId`: String - 模具系统 ID。
-  * `moldCode`: String - 模具显示编号。
-  * `currentShots`: Number - 实时累计冲次。
 
 ---
 
-## 8. 异常与通用逻辑说明
+## 10. 异常与通用逻辑说明
 
 1. **POST 规范**: 所有查询类接口均需将参数放入 JSON 请求体中。
 2. **状态流转约束**: 

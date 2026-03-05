@@ -5,6 +5,7 @@ import { ROLE_PERMISSIONS } from '../../services/mockData';
 import Dashboard from './Dashboard';
 import MoldManagement from './MoldManagement';
 import MaintenanceCenter from './MaintenanceCenter';
+import RepairCenter from './RepairCenter';
 import SparePartManagement from './SparePartManagement';
 import MaintenanceRecords from './MaintenanceRecords';
 import RepairRecords from './RepairRecords';
@@ -24,7 +25,7 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
-  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'maintenance_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen' | 'role_manage' | 'user_manage' | 'maintenance_option_manage' | 'repair_option_manage'>('machine_screen');
+  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'maintenance_confirm' | 'repair_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen' | 'role_manage' | 'user_manage' | 'maintenance_option_manage' | 'repair_option_manage'>('machine_screen');
 
   // 获取当前角色的权限
   const userPermissions = ROLE_PERMISSIONS.find(rp => rp.role === userRole)?.permissions || [];
@@ -46,11 +47,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
     { id: 'spares_small', name: '备件管理 (小材料)', icon: 'fa-cog', department: '小材料', permission: Permission.SPARE_VIEW },
     { id: 'prediction', name: '备件购买预测', icon: 'fa-magnifying-glass-chart', permission: Permission.SPARE_PREDICTION },
     { id: 'binding', name: '模具配件绑定', icon: 'fa-link', permission: Permission.MOLD_EDIT },
-    { id: 'maintenance_confirm', name: '任务中心（待定）', icon: 'fa-envelope-open-text', permission: Permission.MAINTENANCE_MANAGE },
+    { id: 'maintenance_confirm', name: '保养任务中心', icon: 'fa-calendar-check', permission: Permission.MAINTENANCE_MANAGE },
+    { id: 'repair_confirm', name: '维修任务中心', icon: 'fa-screwdriver-wrench', permission: Permission.REPAIR_MANAGE },
     { id: 'maintenance_logs', name: '保养执行记录', icon: 'fa-clipboard-check', permission: Permission.MAINTENANCE_VIEW },
     { id: 'repair_logs', name: '维修执行记录', icon: 'fa-tools', permission: Permission.REPAIR_VIEW },
     { id: 'maintenance_option_manage', name: '保养选项管理', icon: 'fa-wrench', permission: Permission.MAINTENANCE_OPTION_MANAGE },
-    { id: 'repair_option_manage', name: '维修选项管理', icon: 'fa-screwdriver-wrench', permission: Permission.REPAIR_OPTION_MANAGE },
+    { id: 'repair_option_manage', name: '维修选项管理', icon: 'fa-toolbox', permission: Permission.REPAIR_OPTION_MANAGE },
     { id: 'role_manage', name: '角色权限管理', icon: 'fa-user-shield', permission: Permission.ROLE_MANAGE },
     { id: 'user_manage', name: '用户账号管理', icon: 'fa-users-gear', permission: Permission.USER_MANAGE },
   ];
@@ -80,6 +82,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
       case 'molds_small': return <MoldManagement department="小材料" />;
       case 'molds_audit': return <MoldManagement isAuditMode={true} />;
       case 'maintenance_confirm': return <MaintenanceCenter />;
+      case 'repair_confirm': return <RepairCenter />;
       case 'spares_big': return <SparePartManagement department="大材料" />;
       case 'spares_small': return <SparePartManagement department="小材料" />;
       case 'prediction': return <SparePartPrediction />;

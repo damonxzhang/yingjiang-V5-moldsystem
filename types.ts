@@ -28,6 +28,7 @@ export enum Permission {
   // 维保管理
   MAINTENANCE_MANAGE = 'maintenance:manage',
   MAINTENANCE_VIEW = 'maintenance:view',
+  REPAIR_MANAGE = 'repair:manage',
   REPAIR_VIEW = 'repair:view',
   
   // 系统管理 (RBAC)
@@ -121,6 +122,10 @@ export interface Mold {
   productType?: string; // 产品类型
   department?: '大材料' | '小材料'; // 所属部门
 
+  // 2026-03-05 新增字段
+  maintenanceCycle?: string; // 模具保养周期
+  maintenanceStartTime?: string; // 开始保养时间
+
   // 扩展模具组件结构 (BOM)
   components: MoldComponent[];
 }
@@ -131,10 +136,9 @@ export interface WorkOrderSpare {
   quantity: number;
 }
 
-export interface WorkOrder {
+export interface BaseWorkOrder {
   id: string;
   moldId: string;
-  type: 'MAINTENANCE' | 'REPAIR' | 'INSTALL';
   status: string;
   operator: string;
   createdAt: string;
@@ -142,13 +146,36 @@ export interface WorkOrder {
   description?: string;
   
   // 扩展 APP 执行过程数据
-  actions?: string[]; // 执行的维修/保养动作项
-  sparesUsed?: WorkOrderSpare[]; // 耗用备件
-  machineStatusAfter?: 'RECOVERED' | 'DOWN'; // 设备后续判定：已还机/已停机
-  destination?: 'CABINET' | 'MACHINE'; // 模具去向
-  locationCode?: string; // 最终位置码（柜位号或机台号）
-  photos?: string[]; // 现场照片 URL（模拟）
+  actions?: string[]; 
+  sparesUsed?: WorkOrderSpare[]; 
+  machineStatusAfter?: 'RECOVERED' | 'DOWN'; 
+  destination?: 'CABINET' | 'MACHINE'; 
+  locationCode?: string; 
+  photos?: string[]; 
 }
+
+export interface MaintenanceWorkOrder extends BaseWorkOrder {
+  type: 'MAINTENANCE';
+  taskSource?: 'SCHEDULED' | 'MANUAL'; // 任务来源：定时任务 或 手工添加
+  maintenanceResult?: 'OK' | 'NG' | 'WAIT'; // 保养结果
+  buyoffStatus?: 'NONE' | 'PASSED' | 'FAILED'; // 验收状态
+}
+
+export interface RepairWorkOrder extends BaseWorkOrder {
+  type: 'REPAIR';
+  faultDescription?: string;
+  repairType?: 'NORMAL' | 'URGENT' | 'EXTERNAL';
+  repairCategory?: string; // 维修类别 (小修/中修/大修/紧急)
+  repairMethod?: string; // 维修方式 (内部维修/外委维修/更换备件)
+  rootCause?: string; // 故障原因
+  buyoffBy?: string; // 验收人
+}
+
+export interface InstallWorkOrder extends BaseWorkOrder {
+  type: 'INSTALL';
+}
+
+export type WorkOrder = MaintenanceWorkOrder | RepairWorkOrder | InstallWorkOrder;
 
 export interface SparePart {
   id: string;

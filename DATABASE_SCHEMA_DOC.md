@@ -108,6 +108,8 @@
 | Vendor | NVARCHAR(100) | - | 供应商 |
 | CabinetCode | NVARCHAR(50) | - | 存放库柜编号 |
 | Location | NVARCHAR(100) | - | 具体存放位置 |
+| MaintenanceCycle | NVARCHAR(50) | - | 模具保养周期 (如：30天/50K) |
+| MaintenanceStartTime | DATE | - | 开始保养时间 |
 | CreatedAt | DATETIME | DEFAULT GETDATE() | 入库日期 |
 | UpdatedAt | DATETIME | DEFAULT GETDATE() | 最后更新日期 |
 
@@ -175,57 +177,126 @@
 
 ---
 
-### 2.12 维保检查项配置 (CheckItems)
-预定义的维保或维修检查标准。
+### 2.12 保养检查项配置 (MaintenanceItems)
+针对模具保养业务预定义的标准检查项。
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
 | ItemID | INT | PK, IDENTITY | 检查项 ID |
-| Type | NVARCHAR(20) | NOT NULL | 类型 (MAINTENANCE:维保 / REPAIR:维修) |
-| Label | NVARCHAR(200) | NOT NULL | 检查项内容描述 |
+| Label | NVARCHAR(200) | NOT NULL | 检查项内容描述 (如：型腔清洁) |
 | IsRequired | BIT | DEFAULT 1 | 是否必填 |
 | CreatedAt | DATETIME | DEFAULT GETDATE() | 创建时间 |
 
 ---
 
-### 2.13 维保/维修工单表 (WorkOrders)
-记录模具的维保和维修任务历史。
+### 2.13 维修故障项配置 (RepairItems)
+针对模具维修业务预定义的常见故障及检查项。
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| WorkOrderID | INT | PK, IDENTITY | 工单 ID |
-| WorkOrderNo | NVARCHAR(50) | NOT NULL, UNIQUE | 工单编号 (系统自动生成) |
-| Type | NVARCHAR(20) | NOT NULL | 任务类型 (MAINTENANCE/REPAIR) |
-| Priority | NVARCHAR(20) | DEFAULT 'MEDIUM' | 优先级 (LOW/MEDIUM/HIGH/URGENT) |
+| ItemID | INT | PK, IDENTITY | 检查项 ID |
+| Label | NVARCHAR(200) | NOT NULL | 故障/检查项内容描述 (如：顶针断裂) |
+| IsRequired | BIT | DEFAULT 1 | 是否必填 |
+| CreatedAt | DATETIME | DEFAULT GETDATE() | 创建时间 |
+
+---
+
+### 2.14 保养工单表 (MaintenanceOrders)
+记录模具的定期保养、预防性维护任务。
+
+| 字段名 | 数据类型 | 约束 | 说明 |
+| :--- | :--- | :--- | :--- |
+| OrderID | INT | PK, IDENTITY | 工单 ID |
+| OrderNo | NVARCHAR(50) | NOT NULL, UNIQUE | 保养单号 (如 PM-20260305001) |
+| Priority | NVARCHAR(20) | DEFAULT 'MEDIUM' | 优先级 (LOW/MEDIUM/HIGH) |
 | Status | NVARCHAR(20) | DEFAULT 'PENDING' | 状态 (PENDING/IN_PROGRESS/COMPLETED/AUDITED) |
-| MachineID | INT | FK (Machines) | 关联机台 ID (可选) |
+| TaskSource | NVARCHAR(20) | DEFAULT 'MANUAL' | 任务来源 (SCHEDULED: 定时任务, MANUAL: 手工添加) |
+| MaintenanceResult | NVARCHAR(50) | - | 保养结果 (OK/NG/WAIT) |
+| BuyoffStatus | NVARCHAR(20) | DEFAULT 'NONE' | 验收状态 (NONE/PASSED/FAILED) |
 | MoldID | INT | FK (Molds) | 关联模具 ID |
 | CreatorID | INT | FK (Users) | 创建人 ID |
 | ExecutorID | INT | FK (Users) | 执行人 ID |
-| StartTime | DATETIME | - | 任务开始时间 |
-| EndTime | DATETIME | - | 任务结束时间 |
-| Description | NVARCHAR(MAX) | - | 故障描述或任务要求 |
+| StartTime | DATETIME | - | 保养开始时间 |
+| EndTime | DATETIME | - | 保养结束时间 |
 | Remark | NVARCHAR(MAX) | - | 执行备注 |
 | AuditUserID | INT | FK (Users) | 审核人 ID |
-| AuditRemark | NVARCHAR(MAX) | - | 审核意见 |
 | AuditTime | DATETIME | - | 审核时间 |
 | CreatedAt | DATETIME | DEFAULT GETDATE() | 创建时间 |
-| UpdatedAt | DATETIME | DEFAULT GETDATE() | 更新时间 |
 
 ---
 
-### 2.14 工单执行明细 (WorkOrderItems)
-工单与检查项的勾选关联。
+### 2.15 维修工单表 (RepairOrders)
+记录模具的报修、紧急维修及故障处理任务。
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| WorkOrderID | INT | PK, FK (WorkOrders) | 工单 ID |
-| ItemID | INT | PK, FK (CheckItems) | 检查项 ID |
-| IsSelected | BIT | DEFAULT 0 | 是否已核对/完成 |
+| OrderID | INT | PK, IDENTITY | 工单 ID |
+| OrderNo | NVARCHAR(50) | NOT NULL, UNIQUE | 维修单号 (如 RE-20260305001) |
+| Priority | NVARCHAR(20) | DEFAULT 'HIGH' | 优先级 (LOW/MEDIUM/HIGH/URGENT) |
+| Status | NVARCHAR(20) | DEFAULT 'PENDING' | 状态 (PENDING/IN_PROGRESS/COMPLETED/AUDITED) |
+| RepairCategory | NVARCHAR(50) | - | 维修类别 (小修/中修/大修/紧急) |
+| RepairMethod | NVARCHAR(50) | - | 维修方式 (内部维修/外委维修/更换备件) |
+| RootCause | NVARCHAR(MAX) | - | 故障根本原因 |
+| MachineID | INT | FK (Machines) | 报修时的机台 ID |
+| MoldID | INT | FK (Molds) | 关联模具 ID |
+| FaultDescription | NVARCHAR(MAX) | - | 故障现象描述 |
+| CreatorID | INT | FK (Users) | 报修人 ID |
+| ExecutorID | INT | FK (Users) | 维修人 ID |
+| StartTime | DATETIME | - | 维修开始时间 |
+| EndTime | DATETIME | - | 维修结束时间 |
+| Remark | NVARCHAR(MAX) | - | 维修执行备注 |
+| AuditUserID | INT | FK (Users) | 审核人 ID |
+| AuditTime | DATETIME | - | 审核时间 |
+| BuyoffBy | INT | FK (Users) | 验收人 (QA或工程师) |
+| CreatedAt | DATETIME | DEFAULT GETDATE() | 创建时间 |
 
 ---
 
-### 2.15 出入库记录 (StockRecords)
+### 2.16 保养执行明细 (MaintenanceOrderDetails)
+保养工单与保养项的勾选关联。
+
+| 字段名 | 数据类型 | 约束 | 说明 |
+| :--- | :--- | :--- | :--- |
+| OrderID | INT | PK, FK (MaintenanceOrders) | 保养工单 ID |
+| ItemID | INT | PK, FK (MaintenanceItems) | 保养项 ID |
+| IsSelected | BIT | DEFAULT 0 | 是否已完成 |
+
+---
+
+### 2.17 维修执行明细 (RepairOrderDetails)
+维修工单与故障/检查项的勾选关联。
+
+| 字段名 | 数据类型 | 约束 | 说明 |
+| :--- | :--- | :--- | :--- |
+| OrderID | INT | PK, FK (RepairOrders) | 维修工单 ID |
+| ItemID | INT | PK, FK (RepairItems) | 故障/检查项 ID |
+| IsSelected | BIT | DEFAULT 0 | 是否已处理 |
+
+---
+
+### 2.18 保养备件消耗记录 (MaintenanceOrderSpares)
+记录保养过程中消耗的备件及数量。
+
+| 字段名 | 数据类型 | 约束 | 说明 |
+| :--- | :--- | :--- | :--- |
+| OrderID | INT | PK, FK (MaintenanceOrders) | 保养工单 ID |
+| SpareID | INT | PK, FK (SpareParts) | 备件 ID |
+| Quantity | INT | DEFAULT 1 | 消耗数量 |
+
+---
+
+### 2.19 维修备件消耗记录 (RepairOrderSpares)
+记录维修过程中消耗的备件及数量。
+
+| 字段名 | 数据类型 | 约束 | 说明 |
+| :--- | :--- | :--- | :--- |
+| OrderID | INT | PK, FK (RepairOrders) | 维修工单 ID |
+| SpareID | INT | PK, FK (SpareParts) | 备件 ID |
+| Quantity | INT | DEFAULT 1 | 消耗数量 |
+
+---
+
+### 2.20 出入库记录 (StockRecords)
 备件库存变更的流水日志。
 
 | 字段名 | 数据类型 | 约束 | 说明 |
@@ -233,14 +304,14 @@
 | RecordID | INT | PK, IDENTITY | 记录 ID |
 | SpareID | INT | FK (SpareParts) | 备件 ID |
 | Type | NVARCHAR(20) | NOT NULL | 类型 (IN:入库 / OUT:出库 / ADJUST:调整) |
-| Amount | INT | NOT NULL | 变更数量 |
+| Amount | INT | NOT NULL | 记录数量 |
 | Remark | NVARCHAR(MAX) | - | 变更原因/备注 |
 | UserID | INT | FK (Users) | 操作人 ID |
 | CreatedAt | DATETIME | DEFAULT GETDATE() | 操作时间 |
 
 ---
 
-### 2.16 模具流转/生命周期日志 (MoldHistory)
+### 2.21 模具流转/生命周期日志 (MoldHistory)
 记录模具在整个生命周期中的关键节点（上下机、状态变更等）。
 
 | 字段名 | 数据类型 | 约束 | 说明 |
@@ -256,7 +327,7 @@
 
 ---
 
-### 2.17 文件/图片上传记录 (Uploads)
+### 2.22 文件/图片上传记录 (Uploads)
 系统内附件、模具照片、维修凭证等的统一管理。
 
 | 字段名 | 数据类型 | 约束 | 说明 |

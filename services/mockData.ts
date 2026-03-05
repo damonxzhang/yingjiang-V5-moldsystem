@@ -14,7 +14,7 @@ export const ROLE_PERMISSIONS: RolePermission[] = [
     permissions: [
       Permission.DASHBOARD_VIEW, Permission.MONITOR_SCREEN_VIEW,
       Permission.MOLD_VIEW, Permission.MOLD_CREATE, Permission.MOLD_EDIT, Permission.MOLD_AUDIT,
-      Permission.SPARE_VIEW, Permission.MAINTENANCE_VIEW, Permission.REPAIR_VIEW,
+      Permission.SPARE_VIEW, Permission.MAINTENANCE_MANAGE, Permission.MAINTENANCE_VIEW, Permission.REPAIR_MANAGE, Permission.REPAIR_VIEW,
       Permission.MAINTENANCE_OPTION_MANAGE, Permission.REPAIR_OPTION_MANAGE
     ]
   },
@@ -24,7 +24,7 @@ export const ROLE_PERMISSIONS: RolePermission[] = [
     permissions: [
       Permission.DASHBOARD_VIEW, Permission.MONITOR_SCREEN_VIEW,
       Permission.MOLD_VIEW, Permission.MOLD_CREATE, Permission.MOLD_EDIT, Permission.MOLD_AUDIT,
-      Permission.SPARE_VIEW, Permission.MAINTENANCE_VIEW, Permission.REPAIR_VIEW,
+      Permission.SPARE_VIEW, Permission.MAINTENANCE_MANAGE, Permission.MAINTENANCE_VIEW, Permission.REPAIR_MANAGE, Permission.REPAIR_VIEW,
       Permission.MAINTENANCE_OPTION_MANAGE, Permission.REPAIR_OPTION_MANAGE
     ]
   },
@@ -33,7 +33,7 @@ export const ROLE_PERMISSIONS: RolePermission[] = [
     description: '带班组长，负责现场协调与任务中心管理',
     permissions: [
       Permission.MONITOR_SCREEN_VIEW, Permission.MOLD_VIEW,
-      Permission.MAINTENANCE_MANAGE, Permission.MAINTENANCE_VIEW, Permission.REPAIR_VIEW,
+      Permission.MAINTENANCE_MANAGE, Permission.REPAIR_MANAGE, Permission.MAINTENANCE_VIEW, Permission.REPAIR_VIEW,
       Permission.SPARE_VIEW
     ]
   },
@@ -115,6 +115,7 @@ export const MOCK_MOLDS: Mold[] = [
     packageType: 'QFN', packageSize: 'HD', packageThickness: '0.8', 
     substrateThickness: '0.3', pinCode: 'A',
     shortName: 'BGA-01', thickness: '250mm', moldCategory: '大材料模具', productType: 'BGA', department: '大材料',
+    maintenanceCycle: '30天', maintenanceStartTime: '2026-01-01',
     components: generateComponents('#1/6-100597')
   },
   { 
@@ -125,6 +126,7 @@ export const MOCK_MOLDS: Mold[] = [
     packageType: 'BGA', packageSize: 'BIG', packageThickness: '0.7', 
     substrateThickness: '0.3', pinCode: 'B',
     shortName: 'BGA-STD', thickness: '220mm', moldCategory: '小材料模具', productType: 'BGA', department: '小材料',
+    maintenanceCycle: '10000冲次', maintenanceStartTime: '2026-02-15',
     components: generateComponents('A0155110401')
   },
   { 
@@ -200,6 +202,9 @@ export const MOCK_WORK_ORDERS: WorkOrder[] = [
     createdAt: '2024-05-01 08:30', 
     confirmedAt: '2024-05-01 10:15', 
     description: '季度常规PM：型腔清洁与核心配合检查。',
+    taskSource: 'SCHEDULED',
+    maintenanceResult: 'OK',
+    buyoffStatus: 'PASSED',
     actions: ['模具化学清洁', '模具物理清洁'],
     sparesUsed: [],
     machineStatusAfter: 'RECOVERED',
@@ -215,6 +220,9 @@ export const MOCK_WORK_ORDERS: WorkOrder[] = [
     createdAt: '2024-05-05 13:00', 
     confirmedAt: '2024-05-05 14:45', 
     description: '高频消耗部件预防性更换。',
+    taskSource: 'MANUAL',
+    maintenanceResult: 'OK',
+    buyoffStatus: 'PASSED',
     actions: ['模具深度清洁', '更换plunger密封圈', '更换pot&plunger'],
     sparesUsed: [
       { id: 'SP-SEAL-P', name: 'plunger 密封圈', quantity: 2 },
@@ -233,6 +241,9 @@ export const MOCK_WORK_ORDERS: WorkOrder[] = [
     createdAt: '2024-05-20 08:00',
     confirmedAt: '2024-05-20 09:30',
     description: '例行周保养。',
+    taskSource: 'SCHEDULED',
+    maintenanceResult: 'OK',
+    buyoffStatus: 'PASSED',
     actions: ['模具化学清洁', '涂防锈油'],
     sparesUsed: [],
     machineStatusAfter: 'RECOVERED',
@@ -249,6 +260,12 @@ export const MOCK_WORK_ORDERS: WorkOrder[] = [
     createdAt: '2024-05-10 09:00',
     confirmedAt: '2024-05-10 11:30',
     description: '温控异常告警：3号区加热棒失效。',
+    faultDescription: '温控异常告警：3号区加热棒失效。',
+    repairType: 'NORMAL',
+    repairCategory: '小修',
+    repairMethod: '内部维修',
+    rootCause: '加热棒自然老化',
+    buyoffBy: '李工',
     actions: ['更换加热棒', '温控系统校准', '清理接线端子'],
     sparesUsed: [
       { id: 'SP-001', name: '加热棒 220V', quantity: 1 }
@@ -266,6 +283,12 @@ export const MOCK_WORK_ORDERS: WorkOrder[] = [
     createdAt: '2024-05-12 15:20',
     confirmedAt: '2024-05-12 17:45',
     description: '顶出不畅：5号顶杆弯曲变形。',
+    faultDescription: '顶出不畅：5号顶杆弯曲变形。',
+    repairType: 'URGENT',
+    repairCategory: '中修',
+    repairMethod: '内部维修',
+    rootCause: '顶出板润滑不足',
+    buyoffBy: '陈工',
     actions: ['拆卸顶出板', '更换弯曲顶杆', '导柱润滑'],
     sparesUsed: [
       { id: 'SP-002', name: '顶杆 5mm', quantity: 1 }
@@ -283,6 +306,12 @@ export const MOCK_WORK_ORDERS: WorkOrder[] = [
     createdAt: '2024-05-15 10:10',
     confirmedAt: '2024-05-15 12:00',
     description: '模面压伤：发现异物导致局部变形。',
+    faultDescription: '模面压伤：发现异物导致局部变形。',
+    repairType: 'NORMAL',
+    repairCategory: '大修',
+    repairMethod: '外委维修',
+    rootCause: '合模压力异常',
+    buyoffBy: '张经理',
     actions: ['模面精修', '抛光处理', '合模线检查'],
     sparesUsed: [],
     machineStatusAfter: 'RECOVERED',

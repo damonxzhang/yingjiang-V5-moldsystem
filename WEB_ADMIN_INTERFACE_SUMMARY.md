@@ -138,38 +138,44 @@
   }
   ```
 
-### 3.3 创建保养/报修任务
+### 3.3 创建保养任务
 
-* **用途**: 在看板页面直接对机台或模具发起保养或报修申请。
-* **接口**: 
-  * 保养: `POST /api/admin/tasks/maintenance/create`
-  * 报修: `POST /api/admin/tasks/repair/create`
+* **用途**: 在看板页面直接对机台或模具发起保养申请。
+* **接口**: `POST /api/admin/tasks/maintenance/create`
 * **请求体**:
   
   ```json
   {
     "machineId": "BMD-01",  // 机台唯一 ID
     "moldId": "M1",         // 模具唯一 ID
-    "userId": "ADM001",     // 发起人/操作员 ID
-    "startTime": "2026-03-05T03:19", // 计划开始时间 (ISO 8601 格式)
-    "endTime": "2026-03-05T07:19",   // 计划结束时间 (ISO 8601 格式)
-    "description": "例行季度保养"     // 任务描述或故障现象
+    "userId": "ADM001",     // 发起人 ID
+    "startTime": "2026-03-05T03:19", // 计划开始时间
+    "endTime": "2026-03-05T07:19",   // 计划结束时间
+    "description": "例行季度保养"     // 任务描述
   }
   ```
-* **返回数据**:
+* **返回数据**: `{ "success": true, "taskId": "MT-20260305-001" }`
+
+### 3.4 创建报修任务
+
+* **用途**: 在看板页面直接对机台或模具发起报修申请。
+* **接口**: `POST /api/admin/tasks/repair/create`
+* **请求体**:
   
   ```json
   {
-    "success": true, // 操作是否成功
-    "taskId": "MT-20260305-001", // 系统生成的唯一任务单号
-    "message": "任务创建成功" // 返回的提示消息
+    "machineId": "BMD-01",  // 机台唯一 ID
+    "moldId": "M1",         // 模具唯一 ID
+    "userId": "ADM001",     // 发起人 ID
+    "description": "顶针复位异常"     // 故障现象描述
   }
   ```
+* **返回数据**: `{ "success": true, "taskId": "RT-20260305-001" }`
 
-### 3.4 模具安装/卸载/停用
+### 3.5 模具安装/卸载
 
-* **用途**: 在看板上执行模具的上机、下机或紧急停用操作。
-* **接口 (安装/卸载)**: `POST /api/admin/machine/mold-action`
+* **用途**: 在看板上执行模具的上机、下机操作。
+* **接口**: `POST /api/admin/machine/mold-action`
 * **请求体**: 
   
   ```json
@@ -180,7 +186,12 @@
     "moldId": "M1" // 模具唯一 ID
   }
   ```
-* **接口 (停用)**: `POST /api/admin/mold/disable`
+* **返回数据**: `{ "success": true, "message": "操作执行成功" }`
+
+### 3.6 模具停用
+
+* **用途**: 在看板上执行模具的紧急停用操作。
+* **接口**: `POST /api/admin/mold/disable`
 * **请求体**: 
   
   ```json
@@ -190,16 +201,9 @@
     "userId": "ADM001" // 操作人 ID
   }
   ```
-* **返回数据**:
-  
-  ```json
-  {
-    "success": true, // 操作是否成功
-    "message": "操作执行成功" // 返回的提示消息
-  }
-  ```
+* **返回数据**: `{ "success": true, "message": "操作执行成功" }`
 
-### 3.5 模具库查询 (安装选择用)
+### 3.7 模具库查询 (安装选择用)
 
 * **用途**: 模具上机操作时，弹出对话框查询可用的空闲模具。
 * **接口**: `POST /api/admin/mold/library`
@@ -207,23 +211,23 @@
   
   ```json
   { 
-    "keyword": "BGA",   // 模糊搜索关键词 (支持编号或名称)
-    "status": "IDLE",    // 筛选状态：IDLE(空闲), ALL(全部)
-    "page": 1, // 当前页码
-    "pageSize": 20 // 每页记录数
+    "keyword": "BGA",   // 模糊搜索关键词
+    "status": "IDLE",    // 筛选状态
+    "page": 1, 
+    "pageSize": 20 
   }
   ```
 * **返回数据**:
   
   ```json
   {
-    "total": 45, // 符合条件的模具总数
-    "list": [ // 模具简要信息列表
+    "total": 45,
+    "list": [
       {
-        "moldId": "M1", // 模具唯一 ID
-        "moldCode": "T100", // 模具编号
-        "shortName": "BGA-01", // 模具简称
-        "status": "IDLE" // 模具当前状态
+        "moldId": "M1",
+        "moldCode": "T100",
+        "shortName": "BGA-01",
+        "status": "IDLE"
       }
     ]
   }
@@ -373,60 +377,85 @@
 
 ## 5. 维保与任务中心 (Maintenance & Tasks)
 
-### 5.1 获取维保任务/记录列表
+### 5.1 获取保养记录列表
 
-* **用途**: 用于“任务中心”、“保养执行记录”、“维修执行记录”，支持分类分页。
-* **接口**: `POST /api/admin/tasks/list`
+* **用途**: 用于“任务中心”、“保养执行记录”页面。
+* **接口**: `POST /api/admin/tasks/maintenance/list`
 * **请求体**: 
   
   ```json
   { 
-    "type": "MAINTENANCE", // 任务类型：MAINTENANCE(保养), REPAIR(维修), ALL(全部)
     "status": "PENDING",   // 任务状态：PENDING(待执行), COMPLETED(已完成), ALL(全部)
-    "page": 1, // 当前页码
-    "pageSize": 10 // 每页记录数
+    "page": 1, 
+    "pageSize": 10 
   }
   ```
 * **返回数据**:
   
   ```json
   {
-    "total": 50, // 符合条件的任务总数
-    "list": [ // 任务记录列表
+    "total": 50,
+    "list": [
       {
-        "taskId": "MT-2026-001", // 任务单号
-        "type": "MAINTENANCE", // 任务类型
-        "machineId": "BMD-01", // 关联机台 ID
-        "moldCode": "T100", // 关联模具编号
-        "startTime": "2026-03-05 08:00", // 计划开始时间
-        "status": "PENDING", // 当前状态
-        "operator": "张工" // 执行人/负责人姓名
+        "taskId": "MT-2026-001", 
+        "orderNo": "PM-20260305001",
+        "machineId": "BMD-01", 
+        "moldCode": "T100", 
+        "startTime": "2026-03-05 08:00", 
+        "status": "PENDING", 
+        "operator": "张工" 
       }
     ]
   }
   ```
 
-### 5.2 任务审核与验收
+### 5.2 获取维修记录列表
 
-* **用途**: 管理员对已完成的维保任务进行审核确认。
-* **接口**: `POST /api/admin/tasks/verify`
+* **用途**: 用于“任务中心”、“维修执行记录”页面。
+* **接口**: `POST /api/admin/tasks/repair/list`
 * **请求体**: 
   
   ```json
   { 
-    "taskId": "MT-2026-001", // 待审核的任务单号
-    "status": "APPROVED", // 审核结果：APPROVED(通过), REJECTED(驳回)
-    "remark": "保养到位，可以投产" // 审核备注/评价
+    "status": "PENDING",   // 任务状态
+    "page": 1, 
+    "pageSize": 10 
   }
   ```
 * **返回数据**:
   
   ```json
   {
-    "success": true, // 操作是否成功
-    "message": "任务审核已完成" // 返回的提示消息
+    "total": 20,
+    "list": [
+      {
+        "taskId": "RT-2026-001", 
+        "orderNo": "RE-20260305001",
+        "machineId": "BMD-01", 
+        "moldCode": "T100", 
+        "faultDescription": "顶针复位不良",
+        "status": "IN_PROGRESS", 
+        "operator": "李工" 
+      }
+    ]
   }
   ```
+
+### 5.3 任务审核与验收
+
+* **用途**: 管理员对已完成的保养或维修任务进行审核确认。
+* **接口**: `POST /api/admin/tasks/verify`
+* **请求体**: 
+  
+  ```json
+  { 
+    "taskId": "MT-2026-001", // 任务单号
+    "taskType": "MAINTENANCE", // 任务类型 (MAINTENANCE, REPAIR)
+    "status": "APPROVED", // 审核结果：APPROVED(通过), REJECTED(驳回)
+    "remark": "保养到位，可以投产" // 审核备注
+  }
+  ```
+* **返回数据**: `{ "success": true, "message": "任务审核已完成" }`
 
 ---
 
@@ -715,191 +744,39 @@
 
 ## 9. 系统管理与配置 (System Admin & Config)
 
-### 9.1 选项管理 (保养/维修)
+### 9.1 保养项目配置管理
 
-* **用途**: 管理员自定义保养或维修的任务选项。
-* **获取列表**: `POST /api/admin/system/options/list`
-* **请求体**: `{ "type": "MAINTENANCE" }` // 选项类型：MAINTENANCE(保养), REPAIR(报修)
-* **返回数据**:
-  
-  ```json
-  {
-    "type": "MAINTENANCE", // 选项类型
-    "options": [ // 预定义的检查项/操作项列表
-      { "id": "OPT-001", "label": "检查气路", "isRequired": true } // id: 选项 ID, label: 显示文字, isRequired: 是否必填/必做
-    ]
-  }
-  ```
-* **保存选项**: `POST /api/admin/system/options/save`
-* **请求体**: 
-  
-  ```json
-  { 
-    "type": "MAINTENANCE", // 选项类型
-    "option": { "id": "OPT-001", "label": "检查气路", "isRequired": true } // 待保存的选项对象
-  }
-  ```
-* **删除选项**: `POST /api/admin/system/options/delete`
-* **请求体**: `{ "id": "OPT-001" }` // 待删除选项的 ID
+* **用途**: 管理员自定义保养的任务选项。
+* **获取列表**: `POST /api/admin/system/maintenance-items/list`
+* **新增/编辑**: `POST /api/admin/system/maintenance-items/save`
+* **删除**: `POST /api/admin/system/maintenance-items/delete`
 
-### 9.2 角色权限管理
+### 9.2 维修故障项配置管理
 
-* **用途**: 定义不同角色的功能权限。
-* **获取列表**: `POST /api/admin/system/roles/list`
-* **请求体**: `{}` // 获取所有角色
-* **返回数据**:
+* **用途**: 管理员自定义维修的任务选项。
+* **获取列表**: `POST /api/admin/system/repair-items/list`
+* **新增/编辑**: `POST /api/admin/system/repair-items/save`
+* **删除**: `POST /api/admin/system/repair-items/delete`
+
+### 9.3 字典数据管理 (通用)
+
+* **用途**: 管理机台列表、槽位定义、部门、模具类别等基础数据。
+* **接口**: `POST /api/admin/system/dict/list`
+* **请求体**: `{ "type": "MACHINE_LIST" }`
+* **返回数据**: 
   
   ```json
   [
-    { 
-      "role": "MAINTAINER", // 角色代码/标识符
-      "description": "维保人员", // 角色描述名称
-      "permissions": ["TASK_EXECUTE", "SPARE_VIEW"] // 该角色拥有的权限点代码列表
-    }
+    { "label": "BMD-01", "value": "BMD-01" },
+    { "label": "BMD-02", "value": "BMD-02" }
   ]
   ```
-* **保存角色**: `POST /api/admin/system/roles/save`
-* **请求体**: 
-  
-  ```json
-  { 
-    "role": "MAINTAINER", // 角色标识
-    "permissions": ["TASK_EXECUTE", "SPARE_VIEW", "SPARE_MOVE"], // 更新后的权限点列表
-    "description": "维保人员(含出入库权限)" // 角色描述
-  }
-  ```
-
-### 9.3 用户账号管理
-
-* **用途**: 管理系统登录账号。
-* **获取列表**: `POST /api/admin/system/users/list`
-* **请求体**: `{ "page": 1, "pageSize": 20 }` // 分页参数
-* **返回数据**:
-  
-  ```json
-  {
-    "total": 5, // 总用户数
-    "list": [ // 用户账号信息列表
-      { 
-        "userId": "U001", // 用户唯一 ID (工号)
-        "userName": "张工", // 用户姓名
-        "role": "MAINTAINER", // 所属角色
-        "status": "ACTIVE" // 账号状态：ACTIVE(正常), INACTIVE(禁用)
-      }
-    ]
-  }
-  ```
-* **保存用户**: `POST /api/admin/system/users/save`
-* **请求体**: 
-  
-  ```json
-  { 
-    "userId": "U001", // 用户唯一 ID (新增时可为空)
-    "userName": "张工", // 用户姓名
-    "password": "...", // 登录密码 (新增或重置时必填)
-    "role": "MAINTAINER" // 分配的角色
-  }
-  ```
-* **删除用户**: `POST /api/admin/system/users/delete`
-* **请求体**: `{ "userId": "U001" }` // 待删除用户的 ID
 
 ---
 
-## 10. 统计分析 (Report & Analysis)
+## 10. 异常与说明 (Exceptions & Notes)
 
-### 10.1 获取 OEE/效率统计
-
-* **用途**: 获取指定时间段内，机台或模具的生产效率、稼动率及 OEE 数据。
-* **接口**: `POST /api/admin/reports/efficiency`
-* **请求体**: 
-  
-  ```json
-  { 
-    "dateRange": ["2026-01-01", "2026-03-01"], // 查询日期范围 [开始日期, 结束日期]
-    "machineId": "BMD-01" // 可选：机台 ID。不传则返回全厂全局统计
-  }
-  ```
-* **返回数据**:
-  
-  ```json
-  {
-    "period": "2026-01-01 to 2026-03-01", // 统计周期描述
-    "oee": 85.5, // 综合设备效率 (OEE) 百分比
-    "availability": 92.0, // 稼动率/可用率百分比
-    "performance": 95.0, // 表现效率百分比
-    "quality": 98.5, // 质量合格率百分比
-    "chartData": [ // 用于绘制趋势图的数据点列表
-      { "date": "2026-01-01", "value": 84.2 } // date: 日期, value: 对应数值 (通常指 OEE)
-    ]
-  }
-  ```
-
-### 10.2 导出报表
-
-* **用途**: 将台账、维保记录或寿命监控数据导出为文件。
-* **接口**: `POST /api/admin/reports/export`
-* **请求体**: 
-  
-  ```json
-  { 
-    "reportType": "MOLD_LIFE", // 报表类型：MOLD_LIFE(寿命), MAINTENANCE_LOG(维保日志), SPARE_STOCK(备件库存)
-    "format": "EXCEL",         // 导出格式：EXCEL, PDF
-    "filters": { "department": "大材料" } // 导出时的筛选条件对象
-  }
-  ```
-* **返回数据**:
-  
-  ```json
-  {
-    "success": true, // 导出任务是否成功触发
-    "downloadUrl": "http://.../reports/mold_life_20260305.xlsx", // 生成文件的下载链接
-    "message": "报表生成成功，请点击链接下载" // 返回的提示消息
-  }
-  ```
-
----
-
-## 11. 实时通信 (Real-time Events)
-
-通过 **Socket.io** 进行实时数据推送，前端需监听以下事件：
-
-### 11.1 设备状态变更
-
-* **事件名**: `machine:status_change`
-* **推送数据**:
-  
-  ```json
-  {
-    "machineId": "BMD-01", // 发生状态变更的机台 ID
-    "newStatus": "CRITICAL", // 变更后的新状态
-    "reason": "紧急停机按钮被按下", // 状态变更的原因描述
-    "timestamp": "2026-03-05T08:15:00Z" // 事件发生的 UTC 时间戳
-  }
-  ```
-
-### 11.2 实时冲次同步
-
-* **事件名**: `mold:shot_update`
-* **推送数据**:
-  
-  ```json
-  {
-    "moldId": "M1",
-    "currentShots": 450123,
-    "increment": 1 // 本次推送增加的冲次
-  }
-  ```
-
-### 11.3 维保预警通知
-
-* **事件名**: `task:new_alert`
-* **推送数据**:
-  
-  ```json
-  {
-    "alertType": "MAINTENANCE_DUE", // 保养到期
-    "moldCode": "T100",
-    "message": "模具 T100 冲次已达 495,000，建议立即安排保养",
-    "priority": "HIGH"
-  }
-  ```
+1. **Token 过期**: 返回 HTTP 401，前端需自动跳转至登录页。
+2. **操作冲突**: 如模具已被他人占用，返回 HTTP 409 及具体错误消息。
+3. **数据校验**: 所有请求体字段均需进行后端校验，失败返回 HTTP 400。
+4. **实时性**: 看板接口数据由缓存/实时数据库支撑，更新频率为秒级。

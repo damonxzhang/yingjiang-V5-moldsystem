@@ -45,6 +45,8 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         moldCategory: currentMold.moldCategory || '',
         productType: currentMold.productType || '',
         department: department || currentMold.department || '大材料',
+        maintenanceCycle: currentMold.maintenanceCycle || '',
+        maintenanceStartTime: currentMold.maintenanceStartTime || '',
       };
       setMolds([...molds, newMold]);
     } else if (modalMode === 'EDIT') {
@@ -128,6 +130,8 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
               <th className="px-4 py-4 font-bold">PACKAGE TYPE/SIZE</th>
               <th className="px-4 py-4 font-bold">实时 SHOT COUNT</th>
               <th className="px-4 py-4 font-bold">SHOT 上限</th>
+              <th className="px-4 py-4 font-bold">保养周期</th>
+              <th className="px-4 py-4 font-bold">开始时间</th>
               <th className="px-4 py-4 font-bold">所在设备</th>
               {!isAuditMode && <th className="px-4 py-4 font-bold text-center">状态是否有效</th>}
               <th className="px-4 py-4 font-bold">状态</th>
@@ -157,6 +161,12 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
                 </td>
                 <td className="px-4 py-4">
                   <p className="text-sm font-bold text-indigo-600">{mold.lifeLimit.toLocaleString()}</p>
+                </td>
+                <td className="px-4 py-4">
+                  <p className="text-xs font-medium text-slate-600">{mold.maintenanceCycle || '-'}</p>
+                </td>
+                <td className="px-4 py-4 text-xs font-medium text-slate-600">
+                  {mold.maintenanceStartTime || '-'}
                 </td>
                 <td className="px-4 py-4">
                   {mold.machineId ? (
@@ -270,6 +280,16 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
                     <div>
                       <label className="text-[9px] font-bold text-slate-500 uppercase">PIN CODE</label>
                       <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-mono font-bold" value={currentMold.pinCode || ''} onChange={e => setCurrentMold({...currentMold, pinCode: e.target.value})} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">保养周期 (MAINT CYCLE)</label>
+                        <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm" value={currentMold.maintenanceCycle || ''} placeholder="如: 30天/50K" onChange={e => setCurrentMold({...currentMold, maintenanceCycle: e.target.value})} />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">开始保养时间 (START TIME)</label>
+                        <input type="date" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm" value={currentMold.maintenanceStartTime || ''} onChange={e => setCurrentMold({...currentMold, maintenanceStartTime: e.target.value})} />
+                      </div>
                     </div>
                   </div>
                 </div>

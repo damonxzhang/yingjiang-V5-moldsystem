@@ -55,6 +55,9 @@ const RepairRecords: React.FC = () => {
               <th className="px-6 py-4 font-bold">工单编号</th>
               <th className="px-6 py-4 font-bold">模具对象</th>
               <th className="px-6 py-4 font-bold">主修人</th>
+              <th className="px-6 py-4 font-bold">维修类别</th>
+              <th className="px-6 py-4 font-bold">维修方式</th>
+              <th className="px-6 py-4 font-bold">验收人</th>
               <th className="px-6 py-4 font-bold">维修项目数</th>
               <th className="px-6 py-4 font-bold">停机影响</th>
               <th className="px-6 py-4 font-bold">最终归位</th>
@@ -67,6 +70,17 @@ const RepairRecords: React.FC = () => {
                 <td className="px-6 py-4 text-sm font-bold text-slate-700">{record.id}</td>
                 <td className="px-6 py-4 text-sm text-indigo-600 font-black">{record.moldId}</td>
                 <td className="px-6 py-4 text-sm text-slate-600 font-bold">{record.operator}</td>
+                <td className="px-6 py-4">
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${(record as any).repairCategory === '紧急' ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                    {(record as any).repairCategory || '-'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-xs text-slate-500 font-medium">
+                  {(record as any).repairMethod || '-'}
+                </td>
+                <td className="px-6 py-4 text-xs text-indigo-600 font-black">
+                  {(record as any).buyoffBy || '-'}
+                </td>
                 <td className="px-6 py-4">
                   <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full font-bold text-slate-500">
                     {record.actions?.length || 0} 项动作
@@ -127,6 +141,47 @@ const RepairRecords: React.FC = () => {
                 </section>
 
                 {/* 2. 执行动作项 */}
+                <section>
+                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <i className="fas fa-tools text-red-600"></i>
+                    Step 2: 维修执行动作记录
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedRecord.actions?.map((action, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-white border border-slate-100 p-4 rounded-2xl shadow-sm">
+                        <i className="fas fa-wrench text-red-500"></i>
+                        <span className="text-xs font-bold text-slate-700">{action}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* 3. 故障根因分析 */}
+                <section className="bg-slate-900 rounded-[2rem] p-8 text-white">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Step 3: 故障根因分析 (Root Cause)</h4>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-3 gap-6">
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-bold text-slate-500 uppercase">维修类别</p>
+                        <p className="text-sm font-black text-red-400">{(selectedRecord as any).repairCategory || '-'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-bold text-slate-500 uppercase">维修方式</p>
+                        <p className="text-sm font-black text-slate-200">{(selectedRecord as any).repairMethod || '-'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-bold text-slate-500 uppercase">验收人员</p>
+                        <p className="text-sm font-black text-green-400">{(selectedRecord as any).buyoffBy || '-'}</p>
+                      </div>
+                    </div>
+                    <div className="pt-4 border-t border-white/10">
+                       <p className="text-[9px] font-bold text-slate-500 uppercase mb-2">根本原因结论</p>
+                       <p className="text-sm font-medium leading-relaxed italic text-slate-300">
+                         {(selectedRecord as any).rootCause || '未录入根因分析结论'}
+                       </p>
+                    </div>
+                  </div>
+                </section>
               </div>
 
               {/* 右侧：备件与流向状态 */}
