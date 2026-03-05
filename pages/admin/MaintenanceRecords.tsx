@@ -105,7 +105,6 @@ const MaintenanceRecords: React.FC = () => {
               <div>
                 <div className="flex items-center gap-3">
                    <h3 className="font-black text-xl tracking-tight uppercase">模具保养执行鉴定书</h3>
-                   <span className="bg-indigo-600 text-[10px] px-2 py-0.5 rounded font-black tracking-widest uppercase">Maintenance Verified</span>
                 </div>
                 <p className="text-[10px] text-slate-400 font-bold mt-1">工单编号: {selectedRecord.id} | 模具: {selectedRecord.moldId}</p>
               </div>
@@ -131,38 +130,6 @@ const MaintenanceRecords: React.FC = () => {
                 </section>
 
                 {/* 2. APP 勾选动作项 */}
-                <section>
-                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <i className="fas fa-tasks text-indigo-500"></i>
-                    Step 2: APP 现场执行保养标准动作项
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {selectedRecord.actions?.map((action, i) => (
-                      <div key={i} className="flex items-center gap-3 bg-white border border-slate-100 p-3 rounded-xl shadow-sm">
-                        <div className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-[10px] font-black">
-                          {i + 1}
-                        </div>
-                        <span className="text-xs font-bold text-slate-800">{action}</span>
-                      </div>
-                    ))}
-                    {(!selectedRecord.actions || selectedRecord.actions.length === 0) && (
-                       <p className="text-xs text-slate-400 col-span-2 italic">未勾选标准作业项</p>
-                    )}
-                  </div>
-                </section>
-
-                {/* 3. 机台判定 */}
-                <section className="bg-slate-900 text-white p-6 rounded-3xl flex items-center justify-between shadow-xl">
-                  <div>
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">设备生产能力判定</h4>
-                    <p className="text-lg font-black italic tracking-tight">
-                      {selectedRecord.machineStatusAfter === 'RECOVERED' ? '设备健康 - 正常还机生产' : '设备受限 - 触发借机停机流程'}
-                    </p>
-                  </div>
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-lg ${selectedRecord.machineStatusAfter === 'RECOVERED' ? 'bg-green-500' : 'bg-red-500'}`}>
-                    <i className={`fas ${selectedRecord.machineStatusAfter === 'RECOVERED' ? 'fa-check-double' : 'fa-stop-circle'}`}></i>
-                  </div>
-                </section>
               </div>
 
               {/* 右侧：备件与流向 */}
@@ -240,12 +207,6 @@ const MaintenanceRecords: React.FC = () => {
                 className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors"
               >
                 关闭预览
-              </button>
-              <button 
-                onClick={() => window.print()}
-                className="px-8 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl shadow-xl hover:bg-black flex items-center gap-2 transition-all active:scale-95"
-              >
-                <i className="fas fa-print"></i> 打印鉴定书
               </button>
             </div>
           </div>
