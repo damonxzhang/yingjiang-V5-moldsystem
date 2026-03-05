@@ -50,6 +50,25 @@
     ```
     *   字段说明参考 1.1。
 
+### 1.3 图片上传
+*   **用途**: 在维保执行或安装检查过程中，上传现场拍摄的图片，并获取可访问的 URL。
+*   **接口**: `POST /api/app/common/upload-image`
+*   **请求体**: `multipart/form-data`
+    *   `file`: File - 图片文件流 (JPEG/PNG)。
+    *   `userId`: String - 上传用户 ID。
+    *   `source`: Enum - 来源模块 (MAINTENANCE, REPAIR, INSTALLATION)。
+*   **返回数据**:
+    ```json
+    {
+      "url": "https://cdn.moldsystem.com/uploads/2026/03/05/img_12345.jpg",
+      "fileName": "img_12345.jpg",
+      "uploadId": "UP_778899"
+    }
+    ```
+    *   `url`: String - 图片公网/内网可访问地址。
+    *   `fileName`: String - 文件名。
+    *   `uploadId`: String - 上传记录 ID。
+
 ---
 
 ## 2. 首页 (Dashboard)
