@@ -1,6 +1,6 @@
-# SmartMold Web 后台管理系统 - 接口汇总文档 (V1)
+# SmartMold Web 后台管理系统 - 接口汇总文档 (V2 - 详细版)
 
-本文档汇总了 SmartMold Web 后台管理系统中所有页面、按钮及交互所需的接口。
+本文档详细汇总了 SmartMold Web 后台管理系统中所有页面、按钮及交互所需的接口细节。
 
 ## 1. 全局规范 (Global Standards)
 *   **方法**: 所有接口统一采用 **POST**。
@@ -10,61 +10,252 @@
 
 ---
 
-## 2. 核心模块接口汇总
+## 2. 身份认证与全局 (Auth & Global)
 
-### 2.1 身份认证与全局 (Auth & Global)
-| 页面/功能 | 交互描述 | 接口地址 | 主要参数 |
-| :--- | :--- | :--- | :--- |
-| 登录页 | 管理员登录 | `/api/admin/auth/login` | `username, password` |
-| 全局 | 获取用户信息与权限 | `/api/admin/auth/profile` | `{}` |
-| 全局 | 退出登录 | `/api/admin/auth/logout` | `{}` |
+### 2.1 管理员登录
+*   **用途**: 管理员进入系统。
+*   **接口**: `POST /api/admin/auth/login`
+*   **请求体**:
+    ```json
+    { "username": "admin", "password": "password123" }
+    ```
+*   **返回数据**: `{ "token": "JWT_TOKEN", "userId": "ADM001" }`
 
-### 2.2 生产看板 (Production Dashboard)
-| 页面/功能 | 交互描述 | 接口地址 | 主要参数 |
-| :--- | :--- | :--- | :--- |
-| 状态矩阵 | 获取全厂设备实时概览 | `/api/admin/dashboard/machines/status` | `onlyAlerts(bool)` |
-| 详情面板 | 获取机台及槽位详细信息 | `/api/admin/machine/detail` | `machineId, slot` |
-| 操作按钮 | 安装模具到机台 | `/api/admin/machine/mold-action` | `action: "INSTALL", machineId, slot, moldId` |
-| 操作按钮 | 从机台卸载模具 | `/api/admin/machine/mold-action` | `action: "UNINSTALL", machineId, slot, moldId` |
-| 操作按钮 | 创建保养任务 (设置时间范围) | `/api/admin/tasks/maintenance/create` | `machineId, moldId, startTime, endTime` |
-| 操作按钮 | 手动创建报修任务 | `/api/admin/tasks/repair/create` | `machineId, moldId, description` |
-| 操作按钮 | 模具停用 (强制下线) | `/api/admin/mold/disable` | `moldId, reason` |
-| 弹窗 | 模具库选择列表 (安装用) | `/api/admin/mold/library` | `keyword, status, packageType, page` |
-
-### 2.3 模具管理 (Mold Management)
-| 页面/功能 | 交互描述 | 接口地址 | 主要参数 |
-| :--- | :--- | :--- | :--- |
-| 模具列表 | 获取模具台账列表 | `/api/admin/mold/list` | `keyword, status, type, page` |
-| 详情页 | 获取单模具生命周期/履历 | `/api/admin/mold/history` | `moldId` |
-| 按钮 | 新增模具入库 | `/api/admin/mold/add` | `moldCode, name, type, maxShots, etc` |
-| 按钮 | 编辑模具资料 | `/api/admin/mold/update` | `moldId, name, warningThreshold, etc` |
-| 按钮 | 模具报废申请 | `/api/admin/mold/scrap` | `moldId, reason` |
-
-### 2.4 任务与工单 (Tasks & Orders)
-| 页面/功能 | 交互描述 | 接口地址 | 主要参数 |
-| :--- | :--- | :--- | :--- |
-| 任务列表 | 获取所有任务 (保养/报修/换模) | `/api/admin/tasks/list` | `type, status, dateRange, page` |
-| 详情页 | 获取任务执行详情/记录 | `/api/admin/tasks/detail` | `taskId` |
-| 按钮 | 分配任务给技术员 | `/api/admin/tasks/assign` | `taskId, technicianId` |
-| 按钮 | 审核/验收任务结果 | `/api/admin/tasks/verify` | `taskId, status: "APPROVED/REJECTED"` |
-
-### 2.5 统计报表 (Statistics & Reports)
-| 页面/功能 | 交互描述 | 接口地址 | 主要参数 |
-| :--- | :--- | :--- | :--- |
-| 统计概览 | 获取生产效率/OEE 统计 | `/api/admin/reports/efficiency` | `timeUnit, dateRange` |
-| 统计概览 | 获取模具异常/故障分布图 | `/api/admin/reports/alerts-distribution` | `dateRange` |
-| 按钮 | 导出 Excel 报表 | `/api/admin/reports/export` | `reportType, dateRange` |
-
-### 2.6 系统配置 (System Config)
-| 页面/功能 | 交互描述 | 接口地址 | 主要参数 |
-| :--- | :--- | :--- | :--- |
-| 设备管理 | 获取/更新机台配置 | `/api/admin/config/machines` | `action: "GET/UPDATE"` |
-| 权限管理 | 角色与账号管理 | `/api/admin/config/users` | `action: "ADD/EDIT/DELETE"` |
+### 2.2 获取管理员信息
+*   **用途**: 页面加载时获取权限。
+*   **接口**: `POST /api/admin/auth/profile`
+*   **返回数据**:
+    ```json
+    {
+      "userId": "ADM001",
+      "userName": "看板管理员",
+      "role": "SUPER_ADMIN",
+      "permissions": ["DASHBOARD_VIEW", "MACHINE_CONFIG", "MOLD_MANAGEMENT", "REPORT_EXPORT"]
+    }
+    ```
 
 ---
 
-## 3. 实时交互推送 (Real-time Events)
-通过 Socket.io 进行实时状态同步：
-1.  `machine:status_change`: 设备状态变更推送。
-2.  `mold:shot_update`: 模具冲次实时更新推送。
-3.  `task:new_alert`: 新预警实时推送。
+## 3. 生产看板 (Production Dashboard)
+
+### 3.1 获取全厂设备实时概览
+*   **接口**: `POST /api/admin/dashboard/machines/status`
+*   **请求体**: `{ "onlyAlerts": false }`
+*   **返回数据**:
+    ```json
+    {
+      "summary": { "total": 24, "normal": 18, "warning": 4, "critical": 2 },
+      "machines": [
+        {
+          "machineId": "BMD-01",
+          "status": "NORMAL",
+          "moldCount": 4,
+          "molds": [{ "moldId": "...", "moldCode": "...", "currentShots": 450000, "maxShots": 500000 }],
+          "pendingTasks": 2
+        }
+      ]
+    }
+    ```
+
+### 3.2 获取机台及模具槽位详细信息
+*   **接口**: `POST /api/admin/machine/detail`
+*   **请求体**: `{ "machineId": "BMD-01", "slot": "P1" }`
+*   **返回数据**:
+    ```json
+    {
+      "machineId": "BMD-01",
+      "production": { "planned": 24288, "completed": 8368 },
+      "slots": [{ "slot": "P1", "moldCode": "T100", "status": "NORMAL" }],
+      "currentMold": { "moldId": "...", "moldCode": "T100", "fullName": "精密 BGA 注塑模", "currentShots": 329769, "healthPercent": 46.28 }
+    }
+    ```
+
+### 3.3 创建保养/报修任务
+*   **接口 (保养)**: `POST /api/admin/tasks/maintenance/create`
+*   **接口 (报修)**: `POST /api/admin/tasks/repair/create`
+*   **请求体 (保养示例)**:
+    ```json
+    {
+      "machineId": "BMD-01", "moldId": "...", "userId": "ADM001",
+      "startTime": "2026-03-05T03:19", "endTime": "2026-03-05T07:19"
+    }
+    ```
+
+### 3.4 模具安装/卸载/停用
+*   **接口 (安装/卸载)**: `POST /api/admin/machine/mold-action`
+*   **请求体**: `{ "action": "INSTALL/UNINSTALL", "machineId": "...", "slot": "P1", "moldId": "..." }`
+*   **接口 (停用)**: `POST /api/admin/mold/disable`
+*   **请求体**: `{ "moldId": "...", "reason": "...", "userId": "..." }`
+
+### 3.5 模具库查询 (安装选择用)
+*   **接口**: `POST /api/admin/mold/library`
+*   **请求体**: `{ "keyword": "", "status": "IDLE", "page": 1, "pageSize": 20 }`
+
+---
+
+## 4. 模具管理 (Mold Management)
+
+### 4.1 获取模具台账列表
+*   **用途**: 用于“模具台账 (大材料/小材料)”及“Audit 清单”页面。
+*   **接口**: `POST /api/admin/mold/list`
+*   **请求体**: 
+    ```json
+    { 
+      "keyword": "", 
+      "department": "大材料/小材料/ALL", 
+      "isAuditMode": false, 
+      "status": "ALL", 
+      "page": 1 
+    }
+    ```
+*   **返回数据**:
+    ```json
+    {
+      "total": 100,
+      "list": [
+        { "moldId": "TY71", "shortName": "BGA-01", "packageType": "QFN", "shotTotal": 450000, "status": "IDLE", "department": "大材料" }
+      ]
+    }
+    ```
+
+### 4.2 新增/编辑模具档案
+*   **接口**: `POST /api/admin/mold/save` (统一新增与编辑)
+*   **请求体**: 
+    ```json
+    {
+      "moldId": "TY71", "name": "...", "type": "注塑模", "maxShots": 500000, 
+      "department": "大材料",
+      "components": [{ "name": "核心针", "sn": "SN001", "lifeLimit": 100000 }]
+    }
+    ```
+
+### 4.3 获取模具 BOM 详情
+*   **接口**: `POST /api/admin/mold/bom`
+*   **请求体**: `{ "moldId": "TY71" }`
+*   **返回数据**: `{ "moldId": "TY71", "components": [...] }`
+
+---
+
+## 5. 维保与任务中心 (Maintenance & Tasks)
+
+### 5.1 获取维保任务/记录列表
+*   **用途**: 用于“任务中心”、“保养执行记录”、“维修执行记录”。
+*   **接口**: `POST /api/admin/tasks/list`
+*   **请求体**: `{ "type": "MAINTENANCE/REPAIR/ALL", "status": "PENDING/COMPLETED/ALL", "page": 1 }`
+
+### 5.2 任务审核与验收
+*   **接口**: `POST /api/admin/tasks/verify`
+*   **请求体**: `{ "taskId": "MT-2026-001", "status": "APPROVED", "remark": "OK" }`
+
+---
+
+## 6. 备件管理 (Spare Parts)
+
+### 6.1 获取备件列表及预警
+*   **用途**: 用于“备件管理 (大材料/小材料)”。
+*   **接口**: `POST /api/admin/spare-parts/list`
+*   **请求体**: `{ "department": "大材料/小材料", "filterAlerts": true }`
+
+### 6.2 备件入库/出库
+*   **接口**: `POST /api/admin/spare-parts/move`
+*   **请求体**: `{ "spareId": "SP-001", "type": "STOCK_IN/STOCK_OUT", "amount": 10 }`
+
+### 6.3 备件购买预测
+*   **接口**: `POST /api/admin/spare-parts/prediction/list`
+*   **请求体**: `{ "planId": "PLAN-001", "timeHorizon": "30d" }`
+
+---
+
+## 7. 生产配置与监控 (Production Config & Monitor)
+
+### 7.1 可生产产品 LIST
+*   **接口**: `POST /api/admin/production/hierarchy`
+*   **用途**: 获取各产线机台及其绑定的产品 SKU 和模具准备状态。
+*   **返回数据**:
+    ```json
+    [
+      {
+        "machineId": "BMD-14",
+        "availableProducts": [
+          {
+            "sku": "5220",
+            "slots": [{ "id": "P1", "moldId": "...", "paramReady": true, "moldReady": true, "buyoffReady": true }]
+          }
+        ]
+      }
+    ]
+    ```
+
+### 7.2 切换生产就绪状态
+*   **接口**: `POST /api/admin/production/toggle-ready`
+*   **请求体**: `{ "machineId": "...", "sku": "...", "slotId": "P1", "type": "PARAM/MOLD/BUYOFF" }`
+
+### 7.3 实时 Shot 数监控
+*   **接口**: `POST /api/admin/monitor/shot-counts`
+*   **请求体**: `{ "process": "注塑", "packageType": "BGA" }`
+*   **返回数据**:
+    ```json
+    {
+      "count": 12,
+      "data": [
+        { "moldId": "...", "currentShots": 450000, "limitShots": 500000, "wornout": 90 }
+      ]
+    }
+    ```
+
+---
+
+## 8. 模具配件绑定 (Mold-Spare Binding)
+
+### 8.1 获取模具绑定配件列表
+*   **接口**: `POST /api/admin/mold/spare-bindings/list`
+*   **请求体**: `{ "moldId": "MOLD-001" }`
+
+### 8.2 保存/更新绑定关系
+*   **接口**: `POST /api/admin/mold/spare-bindings/save`
+*   **请求体**: `{ "moldId": "MOLD-001", "spareId": "SP-001", "quantity": 2 }`
+
+### 8.3 解除绑定
+*   **接口**: `POST /api/admin/mold/spare-bindings/remove`
+*   **请求体**: `{ "moldId": "MOLD-001", "spareId": "SP-001" }`
+
+---
+
+## 9. 系统管理与配置 (System Admin & Config)
+
+### 9.1 选项管理 (保养/维修)
+*   **用途**: 用于“保养选项管理”和“维修选项管理”。
+*   **接口**: `POST /api/admin/system/options/list`
+*   **请求体**: `{ "type": "MAINTENANCE/REPAIR" }`
+*   **保存接口**: `POST /api/admin/system/options/save`
+*   **删除接口**: `POST /api/admin/system/options/delete`
+
+### 9.2 角色权限管理
+*   **接口**: `POST /api/admin/system/roles/list`
+*   **保存接口**: `POST /api/admin/system/roles/save`
+    *   **请求体**: `{ "role": "OPERATOR", "permissions": ["..."], "description": "..." }`
+
+### 9.3 用户账号管理
+*   **接口**: `POST /api/admin/system/users/list`
+*   **保存接口**: `POST /api/admin/system/users/save`
+*   **删除接口**: `POST /api/admin/system/users/delete`
+
+---
+
+## 10. 统计分析 (Report & Analysis)
+
+### 7.1 获取 OEE/效率统计
+*   **接口**: `POST /api/admin/reports/efficiency`
+*   **请求体**: `{ "dateRange": ["2026-01-01", "2026-03-01"], "machineId": "BMD-01" }`
+
+### 7.2 导出报表
+*   **接口**: `POST /api/admin/reports/export`
+*   **请求体**: `{ "reportType": "MOLD_LIFE", "format": "EXCEL" }`
+
+---
+
+## 8. 实时通信 (Real-time Events)
+通过 Socket.io 进行实时同步：
+*   `machine:status_change`: 设备状态变更。
+*   `mold:shot_update`: 实时冲次同步。
+*   `task:new_alert`: 新产生预警通知。
