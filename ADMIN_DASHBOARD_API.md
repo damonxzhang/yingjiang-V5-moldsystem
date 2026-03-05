@@ -22,10 +22,15 @@
   
   ```json
   {
-    "userId": "ADM001",
-    "userName": "看板管理员",
-    "role": "SUPER_ADMIN",
-    "permissions": ["DASHBOARD_VIEW", "MACHINE_CONFIG", "MOLD_MANAGEMENT", "REPORT_EXPORT"]
+    "userId": "ADM001", // 用户唯一标识 (UUID/工号)
+    "userName": "看板管理员", // 用户姓名
+    "role": "SUPER_ADMIN", // 用户角色代码 (如：SUPER_ADMIN, MAINTAINER)
+    "permissions": [ // 用户拥有的权限代码列表
+      "DASHBOARD_VIEW", // 查看看板权限
+      "MACHINE_CONFIG", // 机台配置权限
+      "MOLD_MANAGEMENT", // 模具管理权限
+      "REPORT_EXPORT" // 报表导出权限
+    ]
   }
   ```
 
@@ -48,29 +53,29 @@
   
   ```json
   {
-    "summary": {
-      "total": 24,
-      "normal": 18,
-      "warning": 4,
-      "critical": 2
+    "summary": { // 统计汇总信息
+      "total": 24, // 总机台数
+      "normal": 18, // 正常运行的机台数
+      "warning": 4, // 预警中的机台数 (如冲次接近寿命)
+      "critical": 2 // 严重故障或停用的机台数
     },
-    "machines": [
+    "machines": [ // 机台列表
       {
-        "machineId": "BMD-01",
-        "status": "NORMAL", // NORMAL, MAINTENANCE_DUE, OVERDUE, BUYOFF, DISABLED, OFFLINE
-        "moldCount": 4,      // 当前挂载的模具数量
-        "molds": [
+        "machineId": "BMD-01", // 机台唯一标识符 (ID/编号)
+        "status": "NORMAL", // 机台实时状态 (NORMAL, MAINTENANCE_DUE, OVERDUE, BUYOFF, DISABLED, OFFLINE)
+        "moldCount": 4, // 当前挂载的模具数量
+        "molds": [ // 挂载模具详情列表
           {
-            "moldId": "UUID-MOLD-001",
-            "moldCode": "TY71-A",
-            "name": "QFN-64 上模",
-            "currentShots": 450000,
-            "maxShots": 500000,
-            "healthScore": 90,
-            "status": "RUNNING"
+            "moldId": "UUID-MOLD-001", // 模具系统内唯一 ID
+            "moldCode": "TY71-A", // 模具业务编号
+            "name": "QFN-64 上模", // 模具名称
+            "currentShots": 450000, // 当前已生产冲次
+            "maxShots": 500000, // 模具额定总寿命冲次
+            "healthScore": 90, // 模具健康评分 (0-100)
+            "status": "RUNNING" // 模具实时状态 (RUNNING, IDLE, MAINTENANCE)
           }
         ],
-        "pendingTasks": 2    // 该设备下的待办任务数
+        "pendingTasks": 2 // 该设备下的待办任务数量
       }
     ]
   }
@@ -88,38 +93,38 @@
   
   ```json
   {
-    "machineId": "BMD-01",
-    "slot": "P1" // 可选，指定查看某个槽位的模具
+    "machineId": "BMD-01", // 查询的机台唯一 ID
+    "slot": "P1" // 槽位标识 (如：P1, P2...)
   }
   ```
 * **返回数据**:
   
   ```json
   {
-    "machineId": "BMD-01",
-    "production": {
-      "planned": 24288,
-      "completed": 8368
+    "machineId": "BMD-01", // 机台 ID
+    "production": { // 生产数据统计
+      "planned": 24288, // 计划生产总数
+      "completed": 8368 // 实际完成生产总数
     },
-    "slots": [
-      { "slot": "P1", "moldCode": "T100", "status": "NORMAL" },
-      { "slot": "P2", "moldCode": "T104", "status": "NORMAL" },
-      { "slot": "P3", "moldCode": "T108", "status": "CRITICAL" },
-      { "slot": "P4", "moldCode": "T111", "status": "NORMAL" }
+    "slots": [ // 该机台所有槽位的状态
+      { "slot": "P1", "moldCode": "T100", "status": "NORMAL" }, // 槽位1状态及模具编号
+      { "slot": "P2", "moldCode": "T104", "status": "NORMAL" }, // 槽位2状态及模具编号
+      { "slot": "P3", "moldCode": "T108", "status": "CRITICAL" }, // 槽位3状态及模具编号
+      { "slot": "P4", "moldCode": "T111", "status": "NORMAL" } // 槽位4状态及模具编号
     ],
-    "currentMold": {
-      "moldId": "UUID-T100-01",
-      "moldCode": "T100",
-      "fullName": "精密 BGA 注塑模",
-      "shortName": "BGA-01",
-      "type": "注塑模",
-      "pendingTasks": 0,
-      "currentShots": 329769,
-      "warningThreshold": 800000,
-      "maintenanceStatus": "NORMAL",
-      "remainingLife": 2314,
-      "totalLife": 5000,
-      "healthPercent": 46.28
+    "currentMold": { // 当前选定槽位的模具详细信息
+      "moldId": "UUID-T100-01", // 模具系统内唯一 ID
+      "moldCode": "T100", // 模具业务编号
+      "fullName": "精密 BGA 注塑模", // 模具完整名称
+      "shortName": "BGA-01", // 模具简称
+      "type": "注塑模", // 模具类型分类
+      "pendingTasks": 0, // 该模具关联的待办任务数
+      "currentShots": 329769, // 该模具当前已生产冲次
+      "warningThreshold": 800000, // 模具预警冲次阈值
+      "maintenanceStatus": "NORMAL", // 维保状态 (NORMAL, WARNING, CRITICAL)
+      "remainingLife": 2314, // 剩余可用寿命冲次
+      "totalLife": 5000, // 额定总寿命 (以K次为单位，或根据业务定义)
+      "healthPercent": 46.28 // 健康度百分比
     }
   }
   ```
@@ -132,31 +137,31 @@
   
   ```json
   {
-    "keyword": "MD-2024",     // 可选，按模具编号或名称搜索
-    "status": "IDLE",        // 可选，筛选状态: IDLE (闲置中), IN_USE (使用中), MAINTENANCE (保养中)
-    "packageType": "QFN",    // 可选，按封装类型筛选
-    "page": 1,
-    "pageSize": 20
+    "keyword": "MD-2024", // 模糊搜索关键字 (模具编号或名称)
+    "status": "IDLE", // 筛选状态: IDLE (闲置中), IN_USE (使用中), MAINTENANCE (保养中)
+    "packageType": "QFN", // 按封装类型筛选 (如：BGA, QFN)
+    "page": 1, // 当前页码
+    "pageSize": 20 // 每页记录数
   }
   ```
 * **返回数据**:
   
   ```json
   {
-    "total": 128,
-    "list": [
+    "total": 128, // 符合条件的模具总数
+    "list": [ // 模具简要信息列表
       {
-        "moldId": "UUID-MD-2024-001",
-        "moldCode": "MD-2024-001",
-        "name": "精密 BGA 注塑模",
-        "status": "IDLE",
-        "cabinetCode": "A123456",
-        "location": "CAB-A01",
-        "packageType": "QFN",
-        "currentShots": 45200,
-        "maxShots": 500000,
-        "usagePercent": 9.04,
-        "canInstall": true       // 是否可安装到机台
+        "moldId": "UUID-MD-2024-001", // 模具系统内唯一 ID
+        "moldCode": "MD-2024-001", // 模具业务编号
+        "name": "精密 BGA 注塑模", // 模具名称
+        "status": "IDLE", // 模具当前状态
+        "cabinetCode": "A123456", // 存放库柜编号
+        "location": "CAB-A01", // 库位详细位置
+        "packageType": "QFN", // 封装类型
+        "currentShots": 45200, // 当前已使用冲次
+        "maxShots": 500000, // 额定寿命冲次
+        "usagePercent": 9.04, // 寿命已使用百分比
+        "canInstall": true // 当前是否可被安装到机台 (取决于状态和流程)
       }
     ]
   }
@@ -170,15 +175,15 @@
   
   ```json
   {
-    "machineId": "BMD-01",
-    "moldId": "UUID-T100-01",
-    "userId": "ADM001",
-    "startTime": "2026-03-05T03:19", // 保养开始时间
-    "endTime": "2026-03-05T07:19",   // 保养结束时间
-    "description": "例行保养"
+    "machineId": "BMD-01", // 关联机台 ID
+    "moldId": "UUID-T100-01", // 关联模具唯一 ID
+    "userId": "ADM001", // 任务发起人 ID
+    "startTime": "2026-03-05T03:19", // 计划保养开始时间 (ISO 格式)
+    "endTime": "2026-03-05T07:19", // 计划保养结束时间 (ISO 格式)
+    "description": "例行保养" // 任务详细描述或要求
   }
   ```
-* **返回数据**: `{ "success": true, "taskId": "MT-2026-001" }`
+* **返回数据**: `{ "success": true, "taskId": "MT-2026-001" }` // success: 是否创建成功, taskId: 生成的任务工单号
 
 ### 3.3 创建报修任务 (Repair)
 
@@ -188,13 +193,13 @@
   
   ```json
   {
-    "machineId": "BMD-01",
-    "moldId": "UUID-T100-01",
-    "userId": "ADM001",
-    "description": "发现模具边缘磨损，需紧急修复"
+    "machineId": "BMD-01", // 关联机台 ID
+    "moldId": "UUID-T100-01", // 关联模具唯一 ID
+    "userId": "ADM001", // 报修发起人 ID
+    "description": "发现模具边缘磨损，需紧急修复" // 故障现象描述
   }
   ```
-* **返回数据**: `{ "success": true, "taskId": "RT-2026-001" }`
+* **返回数据**: `{ "success": true, "taskId": "RT-2026-001" }` // success: 是否创建成功, taskId: 生成的报修工单号
 
 ### 3.4 模具安装/卸载操作
 
@@ -204,14 +209,14 @@
   
   ```json
   {
-    "action": "INSTALL", // INSTALL (安装), UNINSTALL (卸载)
-    "machineId": "BMD-01",
-    "slot": "P1",
-    "moldId": "UUID-T100-01",
-    "userId": "ADM001"
+    "action": "INSTALL", // 动作类型: INSTALL (安装/上机), UNINSTALL (卸载/下机)
+    "machineId": "BMD-01", // 目标机台 ID
+    "slot": "P1", // 目标槽位标识
+    "moldId": "UUID-T100-01", // 模具唯一 ID
+    "userId": "ADM001" // 操作执行人 ID
   }
   ```
-* **返回数据**: `{ "success": true }`
+* **返回数据**: `{ "success": true, "message": "操作成功" }` // success: 是否执行成功, message: 结果反馈消息
 
 ### 3.5 模具停用操作
 
@@ -221,12 +226,12 @@
   
   ```json
   {
-    "moldId": "UUID-T100-01",
-    "reason": "手动触发停用",
-    "userId": "ADM001"
+    "moldId": "UUID-T100-01", // 模具唯一 ID
+    "reason": "手动触发停用", // 停用原因详细说明
+    "userId": "ADM001" // 操作执行人 ID
   }
   ```
-* **返回数据**: `{ "success": true }`
+* **返回数据**: `{ "success": true, "message": "模具已停用" }` // success: 是否执行成功, message: 结果反馈消息
 
 ---
 
@@ -238,10 +243,34 @@
 * **Namespace**: `/dashboard`
 * **事件列表**:
   1. `machine:status_change`: 当机台状态发生改变时触发。
-     * Payload: `{ "machineId": "BMD-01", "oldStatus": "NORMAL", "newStatus": "MAINTENANCE_DUE" }`
-  2. `mold:shot_update`: 实时同步模具冲次。
-     * Payload: `{ "moldId": "UUID-MOLD-001", "currentShots": 450012 }`
-  3. `task:new_alert`: 产生新的紧急预警时触发。
-     * Payload: `{ "alertId": "AL-1002", "message": "..." }`
+     * ```json
+  {
+    "machineId": "BMD-01", // 发生状态变更的机台 ID
+    "oldStatus": "NORMAL", // 变更前的状态
+    "newStatus": "MAINTENANCE_DUE", // 变更后的新状态
+    "timestamp": "2026-03-05T08:15:00Z" // 状态变更发生的时间戳
+  }
+  ```
+2. `mold:shot_update`: 实时同步模具冲次。
+   * Payload: 
+     
+     ```json
+     { 
+       "moldId": "UUID-MOLD-001", // 模具唯一 ID
+       "currentShots": 450012, // 最新的当前累计冲次
+       "increment": 1 // 本次更新增加的冲次数值
+     }
+     ```
+3. `task:new_alert`: 产生新的紧急预警时触发。
+   * Payload: 
+     
+     ```json
+     { 
+       "alertId": "AL-1002", // 预警唯一 ID
+       "message": "模具 TY71-A 冲次已超额定寿命", // 预警消息文本
+       "severity": "CRITICAL", // 严重程度: WARNING, CRITICAL
+       "timestamp": "2026-03-05T08:15:00Z" // 预警产生的时间戳
+     }
+     ```
 
 ---
