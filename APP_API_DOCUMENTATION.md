@@ -15,17 +15,24 @@
       "cardNo": "CARD_12345678" // 工卡唯一编号
     }
     ```
+    *   `cardNo`: String - 员工工卡号。
 *   **返回数据**:
     ```json
     {
       "userId": "EMP001",
       "userName": "张三",
-      "role": "ADMIN", // 可选值: ADMIN, MOLD_ENGINEER, MAINTENANCE_ENGINEER, OPERATOR
+      "role": "ADMIN", 
       "department": "模具维修部",
       "permissions": ["MOLD_INQUIRY", "MAINTENANCE", "REPAIR", "INSTALLATION", "TRANSFER"],
       "token": "JWT_TOKEN_HERE..."
     }
     ```
+    *   `userId`: String - 用户唯一标识。
+    *   `userName`: String - 用户姓名。
+    *   `role`: Enum - 用户角色 (ADMIN, MOLD_ENGINEER, MAINTENANCE_ENGINEER, OPERATOR)。
+    *   `department`: String - 用户所属部门名称。
+    *   `permissions`: Array[String] - 权限点列表。
+    *   `token`: String - 接口访问令牌。
 
 ### 1.2 获取当前用户信息
 *   **用途**: 获取登录用户的基本信息及角色权限。
@@ -36,11 +43,12 @@
     {
       "userId": "EMP001",
       "userName": "张三",
-      "role": "ADMIN", // 可选值: ADMIN, MOLD_ENGINEER, MAINTENANCE_ENGINEER, OPERATOR
+      "role": "ADMIN",
       "department": "模具维修部",
       "permissions": ["MOLD_INQUIRY", "MAINTENANCE", "REPAIR", "INSTALLATION", "TRANSFER"]
     }
     ```
+    *   字段说明参考 1.1。
 
 ---
 
@@ -55,6 +63,7 @@
       "userId": "EMP001"
     }
     ```
+    *   `userId`: String - 用户 ID。
 *   **返回数据**:
     ```json
     {
@@ -68,7 +77,45 @@
       ]
     }
     ```
-*   **逻辑说明**: 后端需根据 `userId` 关联的 `role` 和 `department` 过滤按钮，并实时计算各模块的待办数量作为 `badge` 返回。
+    *   `onlineMoldCount`: Number - 当前在线（机台上）的模具总数。
+    *   `pendingTaskCount`: Number - 待该用户处理的任务总数。
+    *   `displayButtons`: Array[Object] - 快捷功能按钮列表。
+        *   `id`: String - 按钮唯一标识（如 inquiry, transfer, maintenance, repair）。
+        *   `name`: String - 按钮显示名称。
+        *   `icon`: String - 按钮图标类名 (FontAwesome)。
+        *   `color`: String - 按钮背景颜色 (Tailwind 类名)。
+        *   `enabled`: Boolean - 按钮是否对该用户可用。
+        *   `badge`: Number - 该功能模块下的待办任务数。
+
+### 2.2 获取首页详情列表
+*   **用途**: 根据类型获取“在线模具”或“待处理任务”的具体列表。
+*   **接口**: `POST /api/app/dashboard/details`
+*   **请求体**:
+    ```json
+    {
+      "userId": "EMP001",
+      "type": "ONLINE" // ONLINE 或 PENDING
+    }
+    ```
+    *   `userId`: String - 用户 ID。
+    *   `type`: Enum - 列表类型 (ONLINE: 在线模具, PENDING: 待处理任务)。
+*   **返回数据**:
+    ```json
+    [
+      {
+        "id": "TY71",
+        "name": "QFN-64 上模",
+        "status": "IN_PRODUCTION",
+        "location": "MC-102",
+        "info": "当前冲次: 450,012" 
+      }
+    ]
+    ```
+    *   `id`: String - 模具或任务 ID。
+    *   `name`: String - 显示名称。
+    *   `status`: String - 当前状态。
+    *   `location`: String - 当前位置 (机台/柜位)。
+    *   `info`: String - 附加信息说明。
 
 ---
 
@@ -83,23 +130,34 @@
       "q": "TY71" // 搜索关键词
     }
     ```
+    *   `q`: String - 搜索关键词。
 *   **返回数据**:
     ```json
     [
       {
         "id": "TY71",
         "name": "QFN-64 上模",
-        "status": "IN_PRODUCTION", // 状态枚举: IN_PRODUCTION, MAINTENANCE, REPAIR, BACKUP, SCRAPPED
+        "status": "IN_PRODUCTION", 
         "location": "MC-102",
         "vendor": "NXP_INTERNAL",
         "packageType": "QFN",
         "pinCode": "64",
         "shotTotal": 450000,
         "lifeLimit": 500000,
-        "buyoffStatus": "PASS" // PASS, FAIL, PENDING
+        "buyoffStatus": "PASS" 
       }
     ]
     ```
+    *   `id`: String - 模具唯一编号。
+    *   `name`: String - 模具名称。
+    *   `status`: Enum - 状态 (IN_PRODUCTION, MAINTENANCE, REPAIR, BACKUP, SCRAPPED)。
+    *   `location`: String - 当前机台或柜位编号。
+    *   `vendor`: String - 供应商。
+    *   `packageType`: String - 封装类型。
+    *   `pinCode`: String - Pin 数。
+    *   `shotTotal`: Number - 当前累计冲次。
+    *   `lifeLimit`: Number - 设计寿命。
+    *   `buyoffStatus`: Enum - BUYOFF 状态 (PASS, FAIL, PENDING)。
 
 ### 3.2 获取模具详情
 *   **用途**: 点击模具查看详细信息。
@@ -110,6 +168,8 @@
       "moldId": "TY71"
     }
     ```
+    *   `moldId`: String - 模具 ID。
+*   **返回数据**: 包含 3.1 中的所有字段及更多详细参数。
 
 ### 3.3 获取模具流转历史
 *   **用途**: 查看模具的历史维保和转换记录。
@@ -120,12 +180,13 @@
       "moldId": "TY71"
     }
     ```
+    *   `moldId`: String - 模具 ID。
 *   **返回数据**:
     ```json
     [
       {
         "id": "WO_1001",
-        "type": "MAINTENANCE", // MAINTENANCE, REPAIR, TRANSFER, INSTALLATION
+        "type": "MAINTENANCE", 
         "description": "常规半年 PM 保养",
         "createdAt": "2026-01-10",
         "operator": "李四",
@@ -133,6 +194,12 @@
       }
     ]
     ```
+    *   `id`: String - 工单或流程 ID。
+    *   `type`: Enum - 类型 (MAINTENANCE, REPAIR, TRANSFER, INSTALLATION)。
+    *   `description`: String - 活动描述。
+    *   `createdAt`: String - 发生日期。
+    *   `operator`: String - 操作人员。
+    *   `status`: String - 完成状态。
 
 ### 3.4 获取模具 BOM 结构
 *   **用途**: 查看模具的全量 BOM 及核心组件寿命。
@@ -143,6 +210,7 @@
       "moldId": "TY71"
     }
     ```
+    *   `moldId`: String - 模具 ID。
 *   **返回数据**:
     ```json
     {
@@ -158,6 +226,13 @@
       ]
     }
     ```
+    *   `moldId`: String - 模具 ID。
+    *   `components`: Array[Object] - 组件列表。
+        *   `name`: String - 组件名称。
+        *   `sn`: String - 序列号。
+        *   `category`: String - 类别。
+        *   `lifeLimit`: Number - 设计寿命。
+        *   `isSpare`: Boolean - 是否为备件。
 
 ---
 
@@ -172,6 +247,8 @@
       "type": "MAINTENANCE" // 或 REPAIR
     }
     ```
+    *   `type`: Enum - 任务类型 (MAINTENANCE: 保养, REPAIR: 维修)。
+*   **返回数据**: 工单对象列表，包含模具 ID、紧急程度等。
 
 ### 4.2 验证扫码模具
 *   **用途**: 流程中扫描模具二维码进行校验，并获取模具当前状态和位置。
@@ -180,9 +257,11 @@
     ```json
     {
       "moldId": "TY71",
-      "flowType": "MAINTENANCE" // MAINTENANCE, REPAIR, TRANSFER, INSTALLATION
+      "flowType": "MAINTENANCE" 
     }
     ```
+    *   `moldId`: String - 扫描到的模具 ID。
+    *   `flowType`: Enum - 流程类型 (MAINTENANCE, REPAIR, TRANSFER, INSTALLATION)。
 *   **返回数据**:
     ```json
     {
@@ -191,6 +270,9 @@
       "message": ""
     }
     ```
+    *   `isValid`: Boolean - 扫码是否有效（是否符合当前流程）。
+    *   `mold`: Object - 模具基础信息。
+    *   `message`: String - 错误提示信息。
 
 ### 4.3 确认取模位置 (解绑)
 *   **用途**: 确认模具已从机台或柜位取出。
@@ -199,10 +281,13 @@
     ```json
     {
       "moldId": "TY71",
-      "sourceType": "MACHINE", // MACHINE, CABINET
+      "sourceType": "MACHINE", 
       "sourceCode": "MC-102"
     }
     ```
+    *   `moldId`: String - 模具 ID。
+    *   `sourceType`: Enum - 来源类型 (MACHINE: 机台, CABINET: 柜位)。
+    *   `sourceCode`: String - 具体编号。
 
 ### 4.4 机台生产能力判定 (还机/借机)
 *   **用途**: 拆下模具后，确认机台是否可继续生产。
@@ -211,9 +296,11 @@
     ```json
     {
       "machineId": "MC-102",
-      "canProduce": true // true: 还机, false: 停机(借机)
+      "canProduce": true 
     }
     ```
+    *   `machineId`: String - 机台 ID。
+    *   `canProduce`: Boolean - 是否还机 (true: 还机, false: 停机/借机)。
 
 ### 4.5 获取维保内容配置
 *   **用途**: 获取保养或维修的标准勾选项列表。
@@ -224,6 +311,8 @@
       "moldType": "QFN"
     }
     ```
+    *   `moldType`: String - 模具类型（用于匹配不同的检查清单）。
+*   **返回数据**: Array[String] - 维保项目字符串列表。
 
 ### 4.6 提交维保记录 (暂存/完成)
 *   **用途**: 提交维保作业内容，决定模具去向。
@@ -234,11 +323,17 @@
       "workOrderId": "WO_2001",
       "selectedItems": ["型腔清洁", "导柱润滑"],
       "remark": "...",
-      "isFinished": true, // 是否彻底结束维保作业
-      "destination": "CABINET", // CABINET, MACHINE
+      "isFinished": true, 
+      "destination": "CABINET", 
       "photos": []
     }
     ```
+    *   `workOrderId`: String - 工单 ID。
+    *   `selectedItems`: Array[String] - 已勾选的维保项目。
+    *   `remark`: String - 备注。
+    *   `isFinished`: Boolean - 是否完成所有维保步骤。
+    *   `destination`: Enum - 模具去向 (CABINET: 入柜, MACHINE: 回装机台)。
+    *   `photos`: Array[String] - 图片 URL 列表。
 
 ---
 
@@ -254,6 +349,9 @@
       "machineId": "MC-201"
     }
     ```
+    *   `moldId`: String - 模具 ID。
+    *   `machineId`: String - 安装的目标机台 ID。
+*   **返回数据**: `{ "status": "PASS", "message": "..." }`
 
 ### 5.2 提交安装检查清单
 *   **用途**: 模具安装至机台后，提交人工检查清单并正式上线。
@@ -266,6 +364,9 @@
       "checkList": ["螺栓紧固", "水路测试"]
     }
     ```
+    *   `moldId`: String - 模具 ID。
+    *   `machineId`: String - 机台 ID。
+    *   `checkList`: Array[String] - 检查项目。
 
 ---
 
@@ -274,6 +375,7 @@
 ### 6.1 获取生产待处理清单
 *   **用途**: 获取生产部门下发的模具拆下或安装任务。
 *   **接口**: `POST /api/app/transfer/pending-tasks`
+*   **请求体**: `{}`
 *   **返回数据**:
     ```json
     [
@@ -281,6 +383,10 @@
       { "type": "INSTALL", "moldId": "TY101", "target": "MC-102", "reason": "生产计划变更" }
     ]
     ```
+    *   `type`: Enum - 任务类型 (REMOVE: 拆下, INSTALL: 安装)。
+    *   `moldId`: String - 模具 ID。
+    *   `machine/target`: String - 机台编号。
+    *   `reason`: String - 操作原因。
 
 ### 6.2 模具拆下并同步冲次
 *   **用途**: 拆下模具时，记录最终冲次并自动触发保养。
@@ -293,6 +399,9 @@
       "finalShotCount": 450012
     }
     ```
+    *   `moldId`: String - 模具 ID。
+    *   `machineId`: String - 机台 ID。
+    *   `finalShotCount`: Number - 最终确认的累计冲次。
 
 ### 6.3 模具位置绑定 (入柜)
 *   **用途**: 扫描模具柜位置码进行绑定。
@@ -304,6 +413,8 @@
       "locationCode": "A1-02"
     }
     ```
+    *   `moldId`: String - 模具 ID。
+    *   `locationCode`: String - 柜位编号。
 
 ---
 
@@ -318,11 +429,19 @@
       "machineId": "MC-102"
     }
     ```
+    *   `machineId`: String - 机台 ID。
+*   **返回数据**: `{ "currentShots": 450012 }`
 
 ### 7.2 Socket.io 实时推送
 *   **用途**: 实时同步冲次。
 *   **事件**: `machine:shot_update`
-*   **Payload**: `{ "machineId": "MC-102", "moldId": "TY71", "currentShots": 450012 }`
+*   **Payload**: 
+    ```json
+    { "machineId": "MC-102", "moldId": "TY71", "currentShots": 450012 }
+    ```
+    *   `machineId`: String - 机台 ID。
+    *   `moldId`: String - 模具 ID。
+    *   `currentShots`: Number - 实时累计冲次。
 
 ---
 
