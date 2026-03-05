@@ -70,23 +70,7 @@
     ```
 *   **逻辑说明**: 后端需根据 `userId` 关联的 `role` 和 `department` 过滤按钮。例如，普通生产人员可能看不到“维修执行”按钮。
 
-### 2.2 获取通知与预警
-*   **用途**: 显示寿命极限预警或其他系统通知。
-*   **接口**: `POST /api/app/notifications/alerts`
-*   **返回数据**:
-    ```json
-    [
-      {
-        "id": "ALERT_001",
-        "type": "LIFE_WARNING",
-        "moldId": "MOLD-002",
-        "message": "模具 MOLD-002 已达到 98% 的设计寿命，请立即安排更换或大修。",
-        "severity": "HIGH"
-      }
-    ]
-    ```
-
-### 2.3 获取最近活动动态
+### 2.2 获取最近活动动态
 *   **用途**: 显示最近的操作日志。
 *   **接口**: `POST /api/app/activities/recent`
 *   **返回数据**:
