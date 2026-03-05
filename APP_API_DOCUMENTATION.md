@@ -97,39 +97,52 @@
 *   **请求体**:
     ```json
     {
-      "q": "TY71" // 搜索关键词
+      "q": "TY71", // 搜索关键词
+      "page": 1,   // 当前页码 (从 1 开始)
+      "pageSize": 20 // 每页条数
     }
     ```
     *   `q`: String - 搜索关键词（模具编号或名称）。
+    *   `page`: Number - 当前页码。
+    *   `pageSize`: Number - 每页返回的数据条数。
 *   **返回数据**:
     ```json
-    [
-      {
-        "moldId": "UUID-TY71-001",
-        "moldCode": "TY71",
-        "name": "QFN-64 上模",
-        "status": "IN_PRODUCTION", 
-        "location": "MC-102",
-        "vendor": "NXP_INTERNAL",
-        "packageType": "QFN",
-        "pinCode": "64",
-        "shotTotal": 450000,
-        "lifeLimit": 500000,
-        "buyoffStatus": "PASS" 
-      }
-    ]
+    {
+      "total": 125,
+      "page": 1,
+      "pageSize": 20,
+      "list": [
+        {
+          "moldId": "UUID-TY71-001",
+          "moldCode": "TY71",
+          "name": "QFN-64 上模",
+          "status": "IN_PRODUCTION", 
+          "location": "MC-102",
+          "vendor": "NXP_INTERNAL",
+          "packageType": "QFN",
+          "pinCode": "64",
+          "shotTotal": 450000,
+          "lifeLimit": 500000,
+          "buyoffStatus": "PASS" 
+        }
+      ]
+    }
     ```
-    *   `moldId`: String - 模具系统唯一 ID。
-    *   `moldCode`: String - 模具显示编号（如 TY71）。
-    *   `name`: String - 模具名称。
-    *   `status`: Enum - 状态 (IN_PRODUCTION, MAINTENANCE, REPAIR, BACKUP, SCRAPPED)。
-    *   `location`: String - 当前机台或柜位编号。
-    *   `vendor`: String - 供应商。
-    *   `packageType`: String - 封装类型。
-    *   `pinCode`: String - Pin 数。
-    *   `shotTotal`: Number - 当前累计冲次。
-    *   `lifeLimit`: Number - 设计寿命。
-    *   `buyoffStatus`: Enum - BUYOFF 状态 (PASS, FAIL, PENDING)。
+    *   `total`: Number - 符合搜索条件的总记录数。
+    *   `page`: Number - 当前页码。
+    *   `pageSize`: Number - 每页条数。
+    *   `list`: Array[Object] - 模具列表。
+        *   `moldId`: String - 模具系统唯一 ID。
+        *   `moldCode`: String - 模具显示编号（如 TY71）。
+        *   `name`: String - 模具名称。
+        *   `status`: Enum - 状态 (IN_PRODUCTION, MAINTENANCE, REPAIR, BACKUP, SCRAPPED)。
+        *   `location`: String - 当前机台或柜位编号。
+        *   `vendor`: String - 供应商。
+        *   `packageType`: String - 封装类型。
+        *   `pinCode`: String - Pin 数。
+        *   `shotTotal`: Number - 当前累计冲次。
+        *   `lifeLimit`: Number - 设计寿命。
+        *   `buyoffStatus`: Enum - BUYOFF 状态 (PASS, FAIL, PENDING)。
 
 ### 3.2 获取模具详情
 *   **用途**: 点击模具查看详细信息。
