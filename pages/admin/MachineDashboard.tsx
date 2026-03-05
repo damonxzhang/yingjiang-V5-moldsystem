@@ -229,9 +229,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                 <div className="space-y-4">
                   {[
                     { color: 'bg-green-500', title: '正常 (NORMAL)', desc: '模具状态良好，处于安全运行期。' },
-                    { color: 'bg-yellow-500', title: '即将保养 (UPCOMING)', desc: '剩余冲次低于预警阈值，建议近期安排维护。' },
-                    { color: 'bg-red-500', title: '超期/停用 (OVERDUE/OFFLINE)', desc: '已超过保养节点或被标记为下线状态，需立即处理。' },
-                    { color: 'bg-blue-500', title: '验证中 (BUYOFF)', desc: '新模具或大修后模具正在进行生产验证阶段。' }
+                    { color: 'bg-yellow-500', title: '即将保养 (UPCOMING)', desc: '剩余冲次低于预警阈值（通常为 70% 或 80%），建议近期安排维护。' },
+                    { color: 'bg-red-500', title: '超期/停用 (OVERDUE/OFFLINE)', desc: '已超过保养节点（>90%）或被标记为停用状态，需立即处理。' },
+                    { color: 'bg-blue-500', title: '验证中 (BUYOFF)', desc: '新模具或大修后模具正在进行生产验证阶段。' },
+                    { color: 'bg-slate-400', title: '已停用 (DEACTIVATED)', desc: '模具已报废或长期闲置，已从生产流程中移除。' }
                   ].map((item, idx) => (
                     <div key={idx} className="flex gap-4 items-start group">
                       <div className={`w-3 h-10 rounded-full ${item.color} shadow-[0_0_10px_rgba(0,0,0,0.5)] mt-1`}></div>
@@ -275,20 +276,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                   <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
                   进度条含义说明
                 </h3>
-                <div className="grid grid-cols-2 gap-8">
-                  <div className="flex gap-4 items-start bg-white/5 p-4 rounded-2xl border border-white/5">
-                    <div className="w-24 shrink-0 space-y-2">
-                      <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500 w-3/4 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>
-                      </div>
-                      <div className="text-[9px] text-center text-blue-400 font-black uppercase">机台主进度条</div>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black text-slate-100">生产达成率进度条</h4>
-                      <p className="text-[10px] text-slate-500 font-bold leading-relaxed">显示当前批次（LOT）产品的完成情况。蓝色充满表示生产任务即将完成。</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4 items-start bg-white/5 p-4 rounded-2xl border border-white/5">
+                <div className="flex justify-center">
+                  <div className="flex gap-4 items-start bg-white/5 p-4 rounded-2xl border border-white/5 max-w-xl">
                     <div className="w-24 shrink-0 space-y-2">
                       <div className="flex gap-1">
                         <div className="h-1.5 flex-1 bg-slate-800 rounded-full overflow-hidden">
@@ -301,40 +290,58 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
                           <div className="h-full bg-red-500 w-full"></div>
                         </div>
                       </div>
-                      <div className="text-[9px] text-center text-slate-400 font-black uppercase">模具寿命进度条</div>
+                      <div className="text-[9px] text-center text-slate-400 font-black uppercase">累计冲次 (Shot Count)</div>
                     </div>
                     <div>
-                      <h4 className="text-sm font-black text-slate-100">模具保养寿命进度条</h4>
+                      <h4 className="text-sm font-black text-slate-100">模具累计冲次进度条</h4>
                       <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
-                        显示模具距离下次保养的剩余冲次。
-                        <span className="text-green-500 ml-1">绿色</span>表示安全，
-                        <span className="text-yellow-500 ml-1">黄色</span>表示临界，
-                        <span className="text-red-500 ml-1">红色</span>表示已到期。
+                        显示模具当前已累计运行的冲次（Shot Count）占总寿命阈值的比例。
+                        <span className="text-green-500 ml-1">绿色</span>表示运行在安全冲次内，
+                        <span className="text-yellow-500 ml-1">黄色</span>表示接近预警阈值，
+                        <span className="text-red-500 ml-1">红色</span>表示已达到或超过寿命极限。
                       </p>
                     </div>
                   </div>
                 </div>
               </section>
 
-              {/* 交互说明 */}
+              {/* 交互操作指南 */}
               <section className="col-span-2 space-y-6 pt-4">
                 <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest flex items-center gap-2 border-b border-blue-500/20 pb-2">
                   <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
-                  交互操作指南
+                  设备指挥中心交互说明
                 </h3>
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-4 gap-4">
                   <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                    <div className="text-blue-400 text-xs font-black mb-2 uppercase">单机详情</div>
-                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">点击任意机台卡片，可进入“设备指挥中心”，查看 P1/P2/P3 模具的详细履历及执行保养/维修申报。</p>
+                    <div className="text-blue-400 text-[10px] font-black mb-2 uppercase flex items-center gap-2">
+                      <i className="fas fa-chart-line"></i> 生产监控
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">实时展示当前机台的“计划产量”与“实际完成量”，计算生产达成率，帮助调度人员监控产线负荷。</p>
                   </div>
                   <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                    <div className="text-blue-400 text-xs font-black mb-2 uppercase">多维筛选</div>
-                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">顶部筛选栏支持按产品、机台号、模具 ID 进行实时检索，勾选“仅显示可生产”可快速定位可用资源。</p>
+                    <div className="text-blue-400 text-[10px] font-black mb-2 uppercase flex items-center gap-2">
+                      <i className="fas fa-microchip"></i> 模具详情
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">穿透查看 P1/P2/P3 模具的全称、型号、累计冲次、预警阈值及待办任务数，实现精细化台账管理。</p>
                   </div>
                   <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                    <div className="text-blue-400 text-xs font-black mb-2 uppercase">任务联动</div>
-                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">在指挥中心发起的保养或维修任务，将实时同步至“任务中心”模块供工程师确认。</p>
+                    <div className="text-blue-400 text-[10px] font-black mb-2 uppercase flex items-center gap-2">
+                      <i className="fas fa-tools"></i> 维保申报
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">一键发起“保养任务”或“报修任务”。发起后系统将锁定模具状态，并实时派发工单至工程师端。</p>
                   </div>
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div className="text-blue-400 text-[10px] font-black mb-2 uppercase flex items-center gap-2">
+                      <i className="fas fa-arrows-rotate"></i> 生命周期
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">支持“模具安装/卸载”以同步物理生产环境；“模具停用”可对异常模具进行封存，防止误操作生产。</p>
+                  </div>
+                </div>
+                <div className="bg-blue-500/5 p-3 rounded-xl border border-blue-500/20">
+                  <p className="text-[10px] text-blue-400/80 font-bold leading-relaxed text-center">
+                    <i className="fas fa-lightbulb mr-2"></i>
+                    提示：点击看板上任意机台卡片即可进入“设备指挥中心”面板进行上述操作。
+                  </p>
                 </div>
               </section>
             </div>
@@ -477,6 +484,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
               Object.keys(machine.molds).length === 2 ? 'grid-cols-2' : 'grid-cols-3'
             } gap-1.5 my-2 flex-1`}>
               {Object.entries(machine.molds).map(([pos, mold]: [string, any]) => {
+                if (!mold) return null;
                 return (
                   <div key={pos} className="flex flex-col gap-1.5">
                     <div className="flex justify-between items-center">
@@ -551,8 +559,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
             <div className="flex">
               {/* Left Sidebar: Pos Selector */}
               <div className="w-24 bg-slate-950/50 border-r border-blue-900/30 flex flex-col p-2 gap-2">
-                {['P1', 'P2', 'P3'].map(pos => {
+                {Object.keys(selectedMachine.molds).map(pos => {
                   const mold = (selectedMachine.molds as any)[pos];
+                  if (!mold) return null;
                   const isActive = selectedMoldPos === pos;
                   return (
                     <button 
@@ -577,7 +586,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
 
               {/* Right Content: Detail & Action for selected POS */}
               {(() => {
-                const mold = (selectedMachine.molds as any)[selectedMoldPos];
+                const mold = (selectedMachine.molds as any)[selectedMoldPos] || Object.values(selectedMachine.molds)[0];
+                if (!mold) return null;
                 return (
                   <div className="flex-1 p-8 grid grid-cols-2 gap-8">
                     <div className="space-y-4">
@@ -792,6 +802,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
             
             <div className="p-6 overflow-y-auto max-h-[60vh] space-y-4 custom-scrollbar">
               {Object.entries(todoMachine.molds).map(([pos, mold]: [string, any]) => {
+                if (!mold) return null;
                 const tasks = [];
                 if (mold.status === 'OVERDUE') tasks.push({ type: 'MAINTENANCE', title: '例行保养', status: '超期', color: 'red' });
                 if (mold.status === 'UPCOMING') tasks.push({ type: 'MAINTENANCE', title: '例行保养', status: '即将到期', color: 'yellow' });

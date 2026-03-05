@@ -35,13 +35,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
 
   const menuItems = [
     { id: 'machine_screen', name: '设备生产看板 (主入口)', icon: 'fa-display', permission: Permission.MONITOR_SCREEN_VIEW },
-    { id: 'dashboard', name: '仪表盘 (智能决策)', icon: 'fa-chart-pie', permission: Permission.DASHBOARD_VIEW },
+    { id: 'dashboard', name: '仪表盘 (待定)', icon: 'fa-chart-pie', permission: Permission.DASHBOARD_VIEW },
     { id: 'tooling_screen', name: '模具监控大屏', icon: 'fa-desktop', permission: Permission.MONITOR_SCREEN_VIEW },
     { id: 'production_list', name: '可生产产品 LIST', icon: 'fa-list-check', permission: Permission.MOLD_VIEW },
     { id: 'shot_monitor', name: '实时 Shot 数监控', icon: 'fa-wave-square', permission: Permission.MOLD_VIEW },
     { id: 'molds_big', name: '模具台账 (大材料)', icon: 'fa-cube', department: '大材料', permission: Permission.MOLD_VIEW },
     { id: 'molds_small', name: '模具台账 (小材料)', icon: 'fa-cube', department: '小材料', permission: Permission.MOLD_VIEW },
-    { id: 'molds_audit', name: 'Audit 清单', icon: 'fa-clipboard-list', permission: Permission.MOLD_AUDIT },
+    { id: 'molds_audit', name: 'Audit 清单（单独账号）', icon: 'fa-clipboard-list', permission: Permission.MOLD_AUDIT },
     { id: 'spares_big', name: '备件管理 (大材料)', icon: 'fa-cog', department: '大材料', permission: Permission.SPARE_VIEW },
     { id: 'spares_small', name: '备件管理 (小材料)', icon: 'fa-cog', department: '小材料', permission: Permission.SPARE_VIEW },
     { id: 'prediction', name: '备件购买预测', icon: 'fa-magnifying-glass-chart', permission: Permission.SPARE_PREDICTION },
