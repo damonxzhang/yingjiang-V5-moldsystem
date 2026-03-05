@@ -115,7 +115,42 @@
     }
     ```
 
-### 3.2 创建保养任务 (Maintenance)
+### 3.2 查询模具库列表 (用于安装模具选择)
+*   **用途**: 点击“安装模具”按钮时，弹出模具库列表，支持按编号、状态、封装类型搜索。
+*   **接口**: `POST /api/admin/mold/library`
+*   **请求体**:
+    ```json
+    {
+      "keyword": "MD-2024",     // 可选，按模具编号或名称搜索
+      "status": "IDLE",        // 可选，筛选状态: IDLE (闲置中), IN_USE (使用中), MAINTENANCE (保养中)
+      "packageType": "QFN",    // 可选，按封装类型筛选
+      "page": 1,
+      "pageSize": 20
+    }
+    ```
+*   **返回数据**:
+    ```json
+    {
+      "total": 128,
+      "list": [
+        {
+          "moldId": "UUID-MD-2024-001",
+          "moldCode": "MD-2024-001",
+          "name": "精密 BGA 注塑模",
+          "status": "IDLE",
+          "cabinetCode": "A123456",
+          "location": "CAB-A01",
+          "packageType": "QFN",
+          "currentShots": 45200,
+          "maxShots": 500000,
+          "usagePercent": 9.04,
+          "canInstall": true       // 是否可安装到机台
+        }
+      ]
+    }
+    ```
+
+### 3.3 创建保养任务 (Maintenance)
 *   **用途**: 在看板中点击“创建保养任务”，并设置保养时间范围。
 *   **接口**: `POST /api/admin/tasks/maintenance/create`
 *   **请求体**:
