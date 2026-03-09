@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-03-21T00:00:00.000Z" agent="Trae AI Assistant" version="21.0.0">
+  <diagram id="APP_Detailed_Function_Flow" name="APP 全功能详细流程图">
+    <mxGraphModel dx="2000" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="2000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ================== APP 首页 (Home.tsx) ================== -->
+        <mxCell id="home_group" value="APP 首页 (Home)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="600" y="40" width="300" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="home_stats" value="数据概览卡片&#xa;(在线模具、待处理任务)" style="whiteSpace=wrap;html=1;fillColor=#f5f5f5" vertex="1" parent="home_group">
+          <mxGeometry x="40" y="40" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="home_nav" value="快捷入口 (权限过滤)&#xa;[查询, 转换, 保养, 维修]" style="whiteSpace=wrap;html=1;fillColor=#f5f5f5" vertex="1" parent="home_group">
+          <mxGeometry x="40" y="140" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ================== 模具查询 (MoldInquiry.tsx) ================== -->
+        <mxCell id="inquiry_group" value="模具查询 (Inquiry)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="40" y="320" width="300" height="600" as="geometry" />
+        </mxCell>
+        <mxCell id="inq_search" value="搜索 ID / 名称" style="whiteSpace=wrap;html=1;" vertex="1" parent="inquiry_group">
+          <mxGeometry x="50" y="40" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="inq_list" value="模具卡片列表&#xa;(状态、位置、Package、Shot)" style="whiteSpace=wrap;html=1;" vertex="1" parent="inquiry_group">
+          <mxGeometry x="50" y="100" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="inq_bom_preview" value="BOM Health 预览&#xa;(关键组件寿命限值)" style="whiteSpace=wrap;html=1;" vertex="1" parent="inquiry_group">
+          <mxGeometry x="50" y="180" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="inq_history_btn" value="按钮：流转历史" style="whiteSpace=wrap;html=1;fillColor=#fff2cc" vertex="1" parent="inquiry_group">
+          <mxGeometry x="50" y="260" width="90" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="inq_bom_btn" value="按钮：全量 BOM" style="whiteSpace=wrap;html=1;fillColor=#fff2cc" vertex="1" parent="inquiry_group">
+          <mxGeometry x="160" y="260" width="90" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="inq_history_panel" value="流转履历追踪 (Timeline)&#xa;(维修/保养/转换记录、操作人)" style="whiteSpace=wrap;html=1;fillColor=#dae8fc" vertex="1" parent="inquiry_group">
+          <mxGeometry x="50" y="340" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="inq_bom_panel" value="全量 BOM 结构树&#xa;(上/下模/Transfer件、健康度判定)" style="whiteSpace=wrap;html=1;fillColor=#dae8fc" vertex="1" parent="inquiry_group">
+          <mxGeometry x="50" y="440" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ================== 模具转换 (TransferFlow.tsx) ================== -->
+        <mxCell id="transfer_group" value="模具转换 (Transfer)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00" vertex="1" parent="1">
+          <mxGeometry x="380" y="320" width="340" height="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_pending" value="生产下发：待处理任务列表&#xa;(待拆下 / 待安装)" style="whiteSpace=wrap;html=1;" vertex="1" parent="transfer_group">
+          <mxGeometry x="60" y="40" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_mode_dec" value="选择作业类型" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="transfer_group">
+          <mxGeometry x="85" y="120" width="170" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- 拆下分支 -->
+        <mxCell id="tr_rem_scan_m" value="1. 扫模具码" style="whiteSpace=wrap;html=1;" vertex="1" parent="transfer_group">
+          <mxGeometry x="20" y="240" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_rem_scan_mc" value="2. 扫机台码" style="whiteSpace=wrap;html=1;" vertex="1" parent="transfer_group">
+          <mxGeometry x="20" y="300" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_rem_sync_shot" value="3. 确认/同步末次 Shot Count&#xa;(数据集成 Socket/API)" style="whiteSpace=wrap;html=1;fillColor=#f8cecc" vertex="1" parent="transfer_group">
+          <mxGeometry x="20" y="360" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_rem_maint_trigger" value="强制触发保养任务" style="whiteSpace=wrap;html=1;fillColor=#f8cecc" vertex="1" parent="transfer_group">
+          <mxGeometry x="20" y="440" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_rem_scan_cab" value="4. 扫模具柜位置码&#xa;(绑定 backup 库位)" style="whiteSpace=wrap;html=1;" vertex="1" parent="transfer_group">
+          <mxGeometry x="20" y="500" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- 安装分支 -->
+        <mxCell id="tr_ins_scan_m" value="1. 扫模具码" style="whiteSpace=wrap;html=1;" vertex="1" parent="transfer_group">
+          <mxGeometry x="180" y="240" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_ins_scan_cab" value="2. 扫模具柜码 (解绑)" style="whiteSpace=wrap;html=1;" vertex="1" parent="transfer_group">
+          <mxGeometry x="180" y="300" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_ins_scan_mc" value="3. 扫机台合模码 (绑定)" style="whiteSpace=wrap;html=1;" vertex="1" parent="transfer_group">
+          <mxGeometry x="180" y="360" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_ins_buyoff" value="4. 外部 BUYOFF 接口验证&#xa;(预 BUYOFF 状态)" style="whiteSpace=wrap;html=1;fillColor=#d5e8d4" vertex="1" parent="transfer_group">
+          <mxGeometry x="180" y="420" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_ins_done" value="安装完成 (正常状态)" style="whiteSpace=wrap;html=1;" vertex="1" parent="transfer_group">
+          <mxGeometry x="180" y="500" width="140" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ================== 模具保养 (MaintenanceFlow.tsx) ================== -->
+        <mxCell id="maint_group" value="保养执行 (Maintenance)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="760" y="320" width="340" height="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="mt_list" value="待保养任务列表&#xa;(PENDING 任务)" style="whiteSpace=wrap;html=1;" vertex="1" parent="maint_group">
+          <mxGeometry x="60" y="40" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="mt_scan" value="1. 扫码核对模具" style="whiteSpace=wrap;html=1;" vertex="1" parent="maint_group">
+          <mxGeometry x="60" y="110" width="220" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="mt_source" value="系统自动检测取模位置&#xa;(柜体 / 机台)" style="whiteSpace=wrap;html=1;fillColor=#fff2cc" vertex="1" parent="maint_group">
+          <mxGeometry x="60" y="170" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="mt_mc_check" value="机台拆卸：设备生产能力判定&#xa;(还机 / 借机流程)" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="maint_group">
+          <mxGeometry x="45" y="240" width="250" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="mt_exec" value="2. 执行保养项 (多选)&#xa;详细作业记录 (MMS 同步)&#xa;拍照上传现场照片" style="whiteSpace=wrap;html=1;" vertex="1" parent="maint_group">
+          <mxGeometry x="60" y="340" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="mt_decision" value="作业是否彻底结束？" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="maint_group">
+          <mxGeometry x="70" y="440" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="mt_dest" value="选择模具去向&#xa;(回柜 [正常] / 回机 [预 BUYOFF])" style="whiteSpace=wrap;html=1;" vertex="1" parent="maint_group">
+          <mxGeometry x="60" y="540" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="mt_final" value="3. 最终扫码核验&#xa;(半年 PM 逻辑校验)" style="whiteSpace=wrap;html=1;fillColor=#f8cecc" vertex="1" parent="maint_group">
+          <mxGeometry x="60" y="620" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ================== 维修执行 (RepairFlow.tsx) ================== -->
+        <mxCell id="repair_group" value="维修执行 (Repair)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450" vertex="1" parent="1">
+          <mxGeometry x="1140" y="320" width="340" height="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="rp_list" value="待维修任务列表&#xa;(报修 PENDING)" style="whiteSpace=wrap;html=1;" vertex="1" parent="repair_group">
+          <mxGeometry x="60" y="40" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="rp_scan" value="1. 扫码核对模具" style="whiteSpace=wrap;html=1;" vertex="1" parent="repair_group">
+          <mxGeometry x="60" y="110" width="220" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rp_source" value="取模位置检测 (柜/机)&#xa;+ 机台生产判定" style="whiteSpace=wrap;html=1;" vertex="1" parent="repair_group">
+          <mxGeometry x="60" y="170" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="rp_exec" value="2. 维修项选择&#xa;备注说明 + 拍摄维修照片&#xa;按钮：扫码领配件" style="whiteSpace=wrap;html=1;" vertex="1" parent="repair_group">
+          <mxGeometry x="60" y="240" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="rp_decision" value="作业是否结束？&#xa;(否：保留维修中状态)" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="repair_group">
+          <mxGeometry x="70" y="340" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="rp_dest" value="去向选择&#xa;(回柜 [待 BUYOFF] / 回机 [预 BUYOFF])" style="whiteSpace=wrap;html=1;" vertex="1" parent="repair_group">
+          <mxGeometry x="60" y="440" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rp_final" value="3. 位置绑定扫码确认" style="whiteSpace=wrap;html=1;" vertex="1" parent="repair_group">
+          <mxGeometry x="60" y="520" width="220" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ================== 模具安装 (InstallationFlow.tsx) ================== -->
+        <mxCell id="inst_group" value="模具安装 (Installation)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="1140" y="1350" width="340" height="500" as="geometry" />
+        </mxCell>
+        <mxCell id="in_step1" value="1. 识别模具 (扫码/输入)" style="whiteSpace=wrap;html=1;" vertex="1" parent="inst_group">
+          <mxGeometry x="60" y="40" width="220" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="in_check" value="状态校验&#xa;(报废/寿命已满禁止安装)" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc" vertex="1" parent="inst_group">
+          <mxGeometry x="60" y="100" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="in_step2" value="2. 输入机台 ID + 发起 BUYOFF 验证" style="whiteSpace=wrap;html=1;" vertex="1" parent="inst_group">
+          <mxGeometry x="60" y="200" width="220" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="in_step3" value="3. 勾选安装检查清单 (Checklist)&#xa;(螺栓、水路、限位、清洁)" style="whiteSpace=wrap;html=1;" vertex="1" parent="inst_group">
+          <mxGeometry x="60" y="260" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="in_done" value="安装成功 (状态：使用中)" style="whiteSpace=wrap;html=1;" vertex="1" parent="inst_group">
+          <mxGeometry x="60" y="340" width="220" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ================== 连线 (Edges) ================== -->
+        <mxCell id="e_h_inq" edge="1" parent="1" source="home_nav" target="inquiry_group"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="710" y="300"/><mxPoint x="190" y="300"/></Array></mxGeometry></mxCell>
+        <mxCell id="e_h_tr" edge="1" parent="1" source="home_nav" target="transfer_group"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="710" y="300"/><mxPoint x="550" y="300"/></Array></mxGeometry></mxCell>
+        <mxCell id="e_h_mt" edge="1" parent="1" source="home_nav" target="maint_group"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="710" y="300"/><mxPoint x="930" y="300"/></Array></mxGeometry></mxCell>
+        <mxCell id="e_h_rp" edge="1" parent="1" source="home_nav" target="repair_group"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="710" y="300"/><mxPoint x="1310" y="300"/></Array></mxGeometry></mxCell>
+
+        <!-- Inquiry Internal -->
+        <mxCell id="ei1" edge="1" parent="inquiry_group" source="inq_search" target="inq_list"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ei2" edge="1" parent="inquiry_group" source="inq_list" target="inq_bom_preview"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ei3" edge="1" parent="inquiry_group" source="inq_bom_preview" target="inq_history_btn"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ei4" edge="1" parent="inquiry_group" source="inq_history_btn" target="inq_history_panel"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ei5" edge="1" parent="inquiry_group" source="inq_bom_btn" target="inq_bom_panel"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Transfer Internal -->
+        <mxCell id="et1" edge="1" parent="transfer_group" source="tr_pending" target="tr_mode_dec"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="et2" edge="1" parent="transfer_group" source="tr_mode_dec" target="tr_rem_scan_m" value="拆下"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="90" y="200"/></Array></mxGeometry></mxCell>
+        <mxCell id="et3" edge="1" parent="transfer_group" source="tr_mode_dec" target="tr_ins_scan_m" value="安装"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="250" y="200"/></Array></mxGeometry></mxCell>
+        <mxCell id="et4" edge="1" parent="transfer_group" source="tr_rem_scan_m" target="tr_rem_scan_mc"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="et5" edge="1" parent="transfer_group" source="tr_rem_scan_mc" target="tr_rem_sync_shot"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="et6" edge="1" parent="transfer_group" source="tr_rem_sync_shot" target="tr_rem_maint_trigger"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="et7" edge="1" parent="transfer_group" source="tr_rem_maint_trigger" target="tr_rem_scan_cab"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="et8" edge="1" parent="transfer_group" source="tr_ins_scan_m" target="tr_ins_scan_cab"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="et9" edge="1" parent="transfer_group" source="tr_ins_scan_cab" target="tr_ins_scan_mc"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="et10" edge="1" parent="transfer_group" source="tr_ins_scan_mc" target="tr_ins_buyoff"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="et11" edge="1" parent="transfer_group" source="tr_ins_buyoff" target="tr_ins_done"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Maintenance Internal -->
+        <mxCell id="em1" edge="1" parent="maint_group" source="mt_list" target="mt_scan"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em2" edge="1" parent="maint_group" source="mt_scan" target="mt_source"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em3" edge="1" parent="maint_group" source="mt_source" target="mt_mc_check"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em4" edge="1" parent="maint_group" source="mt_mc_check" target="mt_exec"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em5" edge="1" parent="maint_group" source="mt_exec" target="mt_decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em6" edge="1" parent="maint_group" source="mt_decision" target="mt_dest" value="结束"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em7" edge="1" parent="maint_group" source="mt_dest" target="mt_final"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Repair Internal -->
+        <mxCell id="er1" edge="1" parent="repair_group" source="rp_list" target="rp_scan"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="er2" edge="1" parent="repair_group" source="rp_scan" target="rp_source"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="er3" edge="1" parent="repair_group" source="rp_source" target="rp_exec"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="er4" edge="1" parent="repair_group" source="rp_exec" target="rp_decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="er5" edge="1" parent="repair_group" source="rp_decision" target="rp_dest" value="结束"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="er6" edge="1" parent="repair_group" source="rp_dest" target="rp_final"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Installation Internal -->
+        <mxCell id="ei11" edge="1" parent="inst_group" source="in_step1" target="in_check"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ei12" edge="1" parent="inst_group" source="in_check" target="in_step2" value="通过"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ei13" edge="1" parent="inst_group" source="in_step2" target="in_step3"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ei14" edge="1" parent="inst_group" source="in_step3" target="in_done"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

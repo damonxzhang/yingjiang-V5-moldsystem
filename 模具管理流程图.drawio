@@ -1,0 +1,260 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
+  <diagram name="APP 全功能详细流程图" id="XGzkbr35fwW0CUdUWUj_">
+    <mxGraphModel dx="1733" dy="1031" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="pOfzbs13QADoCp63UazR-120" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" value="APP 首页 (Home)" vertex="1">
+          <mxGeometry height="240" width="300" x="600" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-121" parent="pOfzbs13QADoCp63UazR-120" style="whiteSpace=wrap;html=1;fillColor=#f5f5f5" value="数据概览卡片&#xa;(在线模具、待处理任务)" vertex="1">
+          <mxGeometry height="60" width="220" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-122" parent="pOfzbs13QADoCp63UazR-120" style="whiteSpace=wrap;html=1;fillColor=#f5f5f5" value="快捷入口 (权限过滤)&#xa;[查询, 转换, 保养, 维修]" vertex="1">
+          <mxGeometry height="60" width="220" x="40" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-123" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" value="模具查询 (Inquiry)" vertex="1">
+          <mxGeometry height="600" width="300" x="40" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-124" parent="pOfzbs13QADoCp63UazR-123" style="whiteSpace=wrap;html=1;" value="搜索 ID / 名称" vertex="1">
+          <mxGeometry height="40" width="200" x="50" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-125" parent="pOfzbs13QADoCp63UazR-123" style="whiteSpace=wrap;html=1;" value="模具卡片列表&#xa;(状态、位置、Package、Shot)" vertex="1">
+          <mxGeometry height="60" width="200" x="50" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-126" parent="pOfzbs13QADoCp63UazR-123" style="whiteSpace=wrap;html=1;" value="BOM Health 预览&#xa;(关键组件寿命限值)" vertex="1">
+          <mxGeometry height="60" width="200" x="50" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-127" parent="pOfzbs13QADoCp63UazR-123" style="whiteSpace=wrap;html=1;fillColor=#fff2cc" value="按钮：流转历史" vertex="1">
+          <mxGeometry height="40" width="90" x="50" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-128" parent="pOfzbs13QADoCp63UazR-123" style="whiteSpace=wrap;html=1;fillColor=#fff2cc" value="按钮：全量 BOM" vertex="1">
+          <mxGeometry height="40" width="90" x="160" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-129" parent="pOfzbs13QADoCp63UazR-123" style="whiteSpace=wrap;html=1;fillColor=#dae8fc" value="流转履历追踪 (Timeline)&#xa;(维修/保养/转换记录、操作人)" vertex="1">
+          <mxGeometry height="80" width="200" x="50" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-130" parent="pOfzbs13QADoCp63UazR-123" style="whiteSpace=wrap;html=1;fillColor=#dae8fc" value="全量 BOM 结构树&#xa;(上/下模/Transfer件、健康度判定)" vertex="1">
+          <mxGeometry height="80" width="200" x="50" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-131" edge="1" parent="pOfzbs13QADoCp63UazR-123" source="pOfzbs13QADoCp63UazR-124" target="pOfzbs13QADoCp63UazR-125">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-132" edge="1" parent="pOfzbs13QADoCp63UazR-123" source="pOfzbs13QADoCp63UazR-125" target="pOfzbs13QADoCp63UazR-126">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-133" edge="1" parent="pOfzbs13QADoCp63UazR-123" source="pOfzbs13QADoCp63UazR-126" target="pOfzbs13QADoCp63UazR-127">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-134" edge="1" parent="pOfzbs13QADoCp63UazR-123" source="pOfzbs13QADoCp63UazR-127" target="pOfzbs13QADoCp63UazR-129">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-135" edge="1" parent="pOfzbs13QADoCp63UazR-123" source="pOfzbs13QADoCp63UazR-128" target="pOfzbs13QADoCp63UazR-130">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-136" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00" value="模具转换 (Transfer)" vertex="1">
+          <mxGeometry height="1000" width="340" x="380" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-137" parent="pOfzbs13QADoCp63UazR-136" style="whiteSpace=wrap;html=1;" value="生产下发：待处理任务列表&#xa;(待拆下 / 待安装)" vertex="1">
+          <mxGeometry height="60" width="220" x="60" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-138" parent="pOfzbs13QADoCp63UazR-136" style="rhombus;whiteSpace=wrap;html=1;" value="选择作业类型" vertex="1">
+          <mxGeometry height="80" width="170" x="85" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-139" parent="pOfzbs13QADoCp63UazR-136" style="whiteSpace=wrap;html=1;" value="1. 扫模具码" vertex="1">
+          <mxGeometry height="40" width="140" x="20" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-140" parent="pOfzbs13QADoCp63UazR-136" style="whiteSpace=wrap;html=1;" value="2. 扫机台码" vertex="1">
+          <mxGeometry height="40" width="140" x="20" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-141" parent="pOfzbs13QADoCp63UazR-136" style="whiteSpace=wrap;html=1;fillColor=#f8cecc" value="3. 确认/同步末次 Shot Count&#xa;(数据集成 Socket/API)" vertex="1">
+          <mxGeometry height="60" width="140" x="20" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-142" parent="pOfzbs13QADoCp63UazR-136" style="whiteSpace=wrap;html=1;fillColor=#f8cecc" value="强制触发保养任务" vertex="1">
+          <mxGeometry height="40" width="140" x="20" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-143" parent="pOfzbs13QADoCp63UazR-136" style="whiteSpace=wrap;html=1;" value="4. 扫模具柜位置码&#xa;(绑定 backup 库位)" vertex="1">
+          <mxGeometry height="60" width="140" x="20" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-144" parent="pOfzbs13QADoCp63UazR-136" style="whiteSpace=wrap;html=1;" value="1. 扫模具码" vertex="1">
+          <mxGeometry height="40" width="140" x="180" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-145" parent="pOfzbs13QADoCp63UazR-136" style="whiteSpace=wrap;html=1;" value="2. 扫模具柜码 (解绑)" vertex="1">
+          <mxGeometry height="40" width="140" x="180" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-146" parent="pOfzbs13QADoCp63UazR-136" style="whiteSpace=wrap;html=1;" value="3. 扫机台合模码 (绑定)" vertex="1">
+          <mxGeometry height="40" width="140" x="180" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-147" parent="pOfzbs13QADoCp63UazR-136" style="whiteSpace=wrap;html=1;fillColor=#d5e8d4" value="4. 外部 BUYOFF 接口验证&#xa;(预 BUYOFF 状态)" vertex="1">
+          <mxGeometry height="60" width="140" x="180" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-148" parent="pOfzbs13QADoCp63UazR-136" style="whiteSpace=wrap;html=1;" value="安装完成 (正常状态)" vertex="1">
+          <mxGeometry height="40" width="140" x="180" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-149" edge="1" parent="pOfzbs13QADoCp63UazR-136" source="pOfzbs13QADoCp63UazR-137" target="pOfzbs13QADoCp63UazR-138">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-150" edge="1" parent="pOfzbs13QADoCp63UazR-136" source="pOfzbs13QADoCp63UazR-138" target="pOfzbs13QADoCp63UazR-139" value="拆下">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="90" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-151" edge="1" parent="pOfzbs13QADoCp63UazR-136" source="pOfzbs13QADoCp63UazR-138" target="pOfzbs13QADoCp63UazR-144" value="安装">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="250" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-152" edge="1" parent="pOfzbs13QADoCp63UazR-136" source="pOfzbs13QADoCp63UazR-139" target="pOfzbs13QADoCp63UazR-140">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-153" edge="1" parent="pOfzbs13QADoCp63UazR-136" source="pOfzbs13QADoCp63UazR-140" target="pOfzbs13QADoCp63UazR-141">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-154" edge="1" parent="pOfzbs13QADoCp63UazR-136" source="pOfzbs13QADoCp63UazR-141" target="pOfzbs13QADoCp63UazR-142">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-155" edge="1" parent="pOfzbs13QADoCp63UazR-136" source="pOfzbs13QADoCp63UazR-142" target="pOfzbs13QADoCp63UazR-143">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-156" edge="1" parent="pOfzbs13QADoCp63UazR-136" source="pOfzbs13QADoCp63UazR-144" target="pOfzbs13QADoCp63UazR-145">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-157" edge="1" parent="pOfzbs13QADoCp63UazR-136" source="pOfzbs13QADoCp63UazR-145" target="pOfzbs13QADoCp63UazR-146">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-158" edge="1" parent="pOfzbs13QADoCp63UazR-136" source="pOfzbs13QADoCp63UazR-146" target="pOfzbs13QADoCp63UazR-147">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-159" edge="1" parent="pOfzbs13QADoCp63UazR-136" source="pOfzbs13QADoCp63UazR-147" target="pOfzbs13QADoCp63UazR-148">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-160" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" value="保养执行 (Maintenance)" vertex="1">
+          <mxGeometry height="1000" width="340" x="760" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-161" parent="pOfzbs13QADoCp63UazR-160" style="whiteSpace=wrap;html=1;" value="待保养任务列表&#xa;(PENDING 任务)" vertex="1">
+          <mxGeometry height="50" width="220" x="60" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-162" parent="pOfzbs13QADoCp63UazR-160" style="whiteSpace=wrap;html=1;" value="1. 扫码核对模具" vertex="1">
+          <mxGeometry height="40" width="220" x="60" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-163" parent="pOfzbs13QADoCp63UazR-160" style="whiteSpace=wrap;html=1;fillColor=#fff2cc" value="系统自动检测取模位置&#xa;(柜体 / 机台)" vertex="1">
+          <mxGeometry height="50" width="220" x="60" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-164" parent="pOfzbs13QADoCp63UazR-160" style="rhombus;whiteSpace=wrap;html=1;" value="机台拆卸：设备生产能力判定&#xa;(还机 / 借机流程)" vertex="1">
+          <mxGeometry height="80" width="250" x="45" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-165" parent="pOfzbs13QADoCp63UazR-160" style="whiteSpace=wrap;html=1;" value="2. 执行保养项 (多选)&#xa;详细作业记录 (MMS 同步)&#xa;拍照上传现场照片" vertex="1">
+          <mxGeometry height="80" width="220" x="60" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-166" parent="pOfzbs13QADoCp63UazR-160" style="rhombus;whiteSpace=wrap;html=1;" value="作业是否彻底结束？" vertex="1">
+          <mxGeometry height="80" width="200" x="70" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-167" parent="pOfzbs13QADoCp63UazR-160" style="whiteSpace=wrap;html=1;" value="选择模具去向&#xa;(回柜 [正常] / 回机 [预 BUYOFF])" vertex="1">
+          <mxGeometry height="60" width="220" x="60" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-168" parent="pOfzbs13QADoCp63UazR-160" style="whiteSpace=wrap;html=1;fillColor=#f8cecc" value="3. 最终扫码核验&#xa;(半年 PM 逻辑校验)" vertex="1">
+          <mxGeometry height="60" width="220" x="60" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-169" edge="1" parent="pOfzbs13QADoCp63UazR-160" source="pOfzbs13QADoCp63UazR-161" target="pOfzbs13QADoCp63UazR-162">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-170" edge="1" parent="pOfzbs13QADoCp63UazR-160" source="pOfzbs13QADoCp63UazR-162" target="pOfzbs13QADoCp63UazR-163">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-171" edge="1" parent="pOfzbs13QADoCp63UazR-160" source="pOfzbs13QADoCp63UazR-163" target="pOfzbs13QADoCp63UazR-164">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-172" edge="1" parent="pOfzbs13QADoCp63UazR-160" source="pOfzbs13QADoCp63UazR-164" target="pOfzbs13QADoCp63UazR-165">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-173" edge="1" parent="pOfzbs13QADoCp63UazR-160" source="pOfzbs13QADoCp63UazR-165" target="pOfzbs13QADoCp63UazR-166">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-174" edge="1" parent="pOfzbs13QADoCp63UazR-160" source="pOfzbs13QADoCp63UazR-166" target="pOfzbs13QADoCp63UazR-167" value="结束">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-175" edge="1" parent="pOfzbs13QADoCp63UazR-160" source="pOfzbs13QADoCp63UazR-167" target="pOfzbs13QADoCp63UazR-168">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-176" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450" value="维修执行 (Repair)" vertex="1">
+          <mxGeometry height="1000" width="340" x="1140" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-177" parent="pOfzbs13QADoCp63UazR-176" style="whiteSpace=wrap;html=1;" value="待维修任务列表&#xa;(报修 PENDING)" vertex="1">
+          <mxGeometry height="50" width="220" x="60" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-178" parent="pOfzbs13QADoCp63UazR-176" style="whiteSpace=wrap;html=1;" value="1. 扫码核对模具" vertex="1">
+          <mxGeometry height="40" width="220" x="60" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-179" parent="pOfzbs13QADoCp63UazR-176" style="whiteSpace=wrap;html=1;" value="取模位置检测 (柜/机)&#xa;+ 机台生产判定" vertex="1">
+          <mxGeometry height="50" width="220" x="60" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-180" parent="pOfzbs13QADoCp63UazR-176" style="whiteSpace=wrap;html=1;" value="2. 维修项选择&#xa;备注说明 + 拍摄维修照片&#xa;按钮：扫码领配件" vertex="1">
+          <mxGeometry height="80" width="220" x="60" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-181" parent="pOfzbs13QADoCp63UazR-176" style="rhombus;whiteSpace=wrap;html=1;" value="作业是否结束？&#xa;(否：保留维修中状态)" vertex="1">
+          <mxGeometry height="80" width="200" x="70" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-182" parent="pOfzbs13QADoCp63UazR-176" style="whiteSpace=wrap;html=1;" value="去向选择&#xa;(回柜 [待 BUYOFF] / 回机 [预 BUYOFF])" vertex="1">
+          <mxGeometry height="60" width="220" x="60" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-183" parent="pOfzbs13QADoCp63UazR-176" style="whiteSpace=wrap;html=1;" value="3. 位置绑定扫码确认" vertex="1">
+          <mxGeometry height="40" width="220" x="60" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-184" edge="1" parent="pOfzbs13QADoCp63UazR-176" source="pOfzbs13QADoCp63UazR-177" target="pOfzbs13QADoCp63UazR-178">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-185" edge="1" parent="pOfzbs13QADoCp63UazR-176" source="pOfzbs13QADoCp63UazR-178" target="pOfzbs13QADoCp63UazR-179">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-186" edge="1" parent="pOfzbs13QADoCp63UazR-176" source="pOfzbs13QADoCp63UazR-179" target="pOfzbs13QADoCp63UazR-180">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-187" edge="1" parent="pOfzbs13QADoCp63UazR-176" source="pOfzbs13QADoCp63UazR-180" target="pOfzbs13QADoCp63UazR-181">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-188" edge="1" parent="pOfzbs13QADoCp63UazR-176" source="pOfzbs13QADoCp63UazR-181" target="pOfzbs13QADoCp63UazR-182" value="结束">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-189" edge="1" parent="pOfzbs13QADoCp63UazR-176" source="pOfzbs13QADoCp63UazR-182" target="pOfzbs13QADoCp63UazR-183">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-200" edge="1" parent="1" source="pOfzbs13QADoCp63UazR-122" target="pOfzbs13QADoCp63UazR-123">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="710" y="300" />
+              <mxPoint x="190" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-201" edge="1" parent="1" source="pOfzbs13QADoCp63UazR-122" target="pOfzbs13QADoCp63UazR-136">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="710" y="300" />
+              <mxPoint x="550" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-202" edge="1" parent="1" source="pOfzbs13QADoCp63UazR-122" target="pOfzbs13QADoCp63UazR-160">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="710" y="300" />
+              <mxPoint x="930" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pOfzbs13QADoCp63UazR-203" edge="1" parent="1" source="pOfzbs13QADoCp63UazR-122" target="pOfzbs13QADoCp63UazR-176">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="710" y="300" />
+              <mxPoint x="1310" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
