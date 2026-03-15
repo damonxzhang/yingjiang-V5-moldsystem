@@ -6,10 +6,27 @@
 
 * **方法**: 所有接口统一采用 **POST**。
 * **格式**: 请求与返回均使用 **JSON**。
-* **命名**: 字段使用小驼峰 (camelCase)。
-* **标识**: 模具必须区分 `moldId` (UUID) 和 `moldCode` (编号)。
-
+* **命名**: 字段使用小写 (camelcase)。
+* **标识**: 模具必须区分 `moldid` (UUID) 和 `moldcode` (编号)。
+* **返回数据的标准结构**:
+```json
+   {
+        "code": 200,          //状态码
+        "message": "success", //返回信息
+        "data": {             //返回的data信息
+            "userid": ADM001, // 用户唯一标识 (工号/UUID)
+            "username": "看板管理员" // 用户真实姓名
+        }
+    }
 ---
+
+* **状态码**: 。
+
+| 状态码 |  说明 |
+| :--- | :--- |
+| 200 | 成功，返回正常数据 |
+| 400| 异常,同时会在message提示异常信息 |
+
 
 ## 2. 身份认证与全局 (Auth & Global)
 
@@ -28,12 +45,194 @@
 * **返回数据**:
   
   ```json
+   {
+        "code": 200,
+        "message": "success",
+        "data": {
+            "token": "Bearer",  // 访问令牌，后续请求需携带在 Header (Authorization: Bearer <token>) 中
+            "userid": ADM001, // 用户唯一标识 (工号/UUID)
+            "username": "看板管理员" // 用户真实姓名
+        }
+    }
+  ```
+
+### 2.1.1 左侧菜单
+
+* **用途**: 人员登录系统后左侧菜单栏列表。
+* **接口**: `POST /api/admin/menu/left`
+* **请求体**:
+  
+  ```json
   {
-    "token": "JWT_TOKEN", // 访问令牌，后续请求需携带在 Header (Authorization: Bearer <token>) 中
-    "userId": "ADM001",   // 用户唯一标识 (工号/UUID)
-    "userName": "看板管理员" // 用户真实姓名
+     "token": "Bearer",  // 访问令牌，需携带在 Header (Authorization: Bearer <token>) 中
+     "userid": ADM001, // 用户唯一标识 (工号/UUID)
   }
   ```
+* **返回数据**:
+  
+  ```json
+{
+    "code": 200,
+    "message": "success",
+    "data": [
+        {
+            "id": 1,
+            "parent_id": 0,
+            "name": "生产看板",
+            "path": "/api/admin/dashboard/machines/status"
+        },
+        {
+            "id": 2,
+            "parent_id": 0,
+            "name": "模具台账(大材料)",
+            "path": "/api/admin/mold/list",
+            "meta":[ 
+                {
+                    "id": 3,
+                    "parent_id": 2,
+                    "name": "新增模具档案"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "parent_id": 0,
+            "name": "备件管理(大材料)",
+            "path": "/api/admin/spare-parts/list",
+            "meta":[          //菜单页面中的按钮
+                {
+                    "id": 5,
+                    "parent_id": 4,
+                    "name": "批量导入"
+                },
+                {
+                    "id": 6,
+                    "parent_id": 4,
+                    "name": "新增备件档案"
+                }
+            ],
+            "children": [     //如果有二级菜单,以children的json数组形式返回
+                {
+                    "id": 5,
+                    "parent_id": 4,
+                    "name": "二级菜单-备件历史",
+                    "path": "/api/admin/spare-parts/history",
+                    "meta":[ 
+                        {
+                            "id": 6,
+                            "parent_id": 5,
+                            "name": "导出按钮"
+                        },
+                        {
+                            "id": 7,
+                            "parent_id": 5,
+                            "name": "新增按钮"
+                        }
+                    ]
+                },
+                {
+                    "id": 8,
+                    "parent_id": 4,
+                    "name": "二级菜单-其它",
+                    "path": "/api/admin/spare-parts/other",
+                    "meta":[ 
+                        {
+                            "id": 9,
+                            "parent_id": 8,
+                            "name": "导出按钮"
+                        },
+                        {
+                            "id": 10,
+                            "parent_id": 8,
+                            "name": "新增按钮"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+  ```
+
+
+### 2.1.2 右侧列表页---> 以模具台账(大材料列表为例)
+
+* **用途**: 用于“模具台账 (大材料/小材料)”及“Audit 清单”页面，支持多维度筛选。
+* **接口**: `POST /api/admin/mold/list`
+* **请求体**: 
+  
+  ```json
+  { 
+    "keyword": "", // 搜索词：支持模具编号或名称模糊查询
+    "isauditmode": false, // 是否为 Audit 模式：true(仅看需 Audit 的模具), false(普通台账)
+    "status": "ALL", // 状态筛选：IDLE, IN_USE, MAINTENANCE, REPAIR, DEACTIVATED, ALL
+    "page": 1, // 当前页码
+    "pagesize": 20 // 每页记录数
+  }
+  ```
+* **返回数据**:
+  
+  ```json
+{
+    "code": 200,
+    "message": "success",
+    "data": [
+        "total": 100, // 符合条件的模具总数
+        "list": [ // 模具台账简要信息列表
+            { 
+                "moldid": "TY71", // 模具系统内唯一 ID
+                "moldcode": "T100", // 模具编号
+                "shortname": "BGA-01", // 模具简称
+                "packagetype": "QFN", // 封装类型
+                "shottotal": 450000, // 当前累计总冲次
+                "status": "IDLE", // 当前状态
+                "department": "大材料", // 所属部门
+                "nextauditdate": "2026-04-01", // 下次 Audit 日期 (仅在 Audit 模式下返回有效值)
+                "operate":[   // 列表右侧操作栏按钮
+                    {
+                        "id": 11,  //按钮id
+                        "parent_id": 2,  //按钮所属页面id
+                        "name": "BOM"   //按钮名称
+                    },
+                    {
+                        "id": 12,      //按钮在列表页的id值是一致的,因为按钮显示隐藏以菜单栏页面权限为准
+                        "parent_id": 2,
+                        "name": "停用"
+                    }
+                ]
+            },
+            { 
+                "moldd": "TY72", // 模具系统内唯一 ID
+                "moldcode": "T1001", // 模具编号
+                "shortname": "BGA-02", // 模具简称
+                "packagetype": "QFN", // 封装类型
+                "shottotal": 50000, // 当前累计总冲次
+                "status": "IDLE", // 当前状态
+                "department": "大材料", // 所属部门
+                "nextauditdate": "2026-04-01", // 下次 Audit 日期 (仅在 Audit 模式下返回有效值)
+                "operate":[     
+                    {
+                        "id": 11, //按钮id同上也是11
+                        "parent_id": 2,  //按钮所属页面id
+                        "name": "BOM"   //按钮名称
+                    },
+                    {
+                        "id": 12,
+                        "parent_id": 2,
+                        "name": "停用"
+                    }
+                ]
+            }
+        ]
+    ]
+}
+  ```
+
+####  以上是接口的一些基本修改和规则调整
+####  以上是接口的一些基本修改和规则调整
+####  以上是接口的一些基本修改和规则调整
+####  以上是接口的一些基本修改和规则调整
+
 
 ### 2.2 获取管理员信息
 
