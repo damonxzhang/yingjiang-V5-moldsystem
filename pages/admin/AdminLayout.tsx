@@ -74,8 +74,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
   const renderContent = () => {
     switch(activePage) {
       case 'dashboard': return <Dashboard />;
-      case 'tooling_screen': return <ToolingDashboard onSwitchView={(view) => setActivePage(view === 'tooling' ? 'tooling_screen' : 'machine_screen')} />;
-      case 'machine_screen': return <MachineDashboard onSwitchView={(view) => setActivePage(view === 'tooling' ? 'tooling_screen' : 'machine_screen')} />;
+      case 'tooling_screen': return <ToolingDashboard onSwitchView={(view) => setActivePage(view === 'tooling' ? 'tooling_screen' : 'machine_screen')} onBackToAdmin={() => setActivePage('dashboard')} />;
+      case 'machine_screen': return <MachineDashboard onSwitchView={(view) => setActivePage(view === 'tooling' ? 'tooling_screen' : 'machine_screen')} onBackToAdmin={() => setActivePage('dashboard')} />;
       case 'production_list': return <ProductionReadyList />;
       case 'shot_monitor': return <ShotCountMonitor />;
       case 'molds_big': return <MoldManagement department="大材料" />;
@@ -172,13 +172,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
         )}
 
         {isBigScreen && (
-          <button 
-            onClick={() => setActivePage('dashboard')}
-            className="fixed top-4 left-4 z-50 bg-blue-900/50 hover:bg-blue-800 text-blue-300 w-10 h-10 rounded-full flex items-center justify-center border border-blue-500/30 transition-all group"
-            title="返回后台"
-          >
-            <i className="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
-          </button>
+          <div className="hidden">
+            {/* 按钮已移动到看板组件内部 */}
+          </div>
         )}
 
         <div className={isBigScreen ? '' : 'p-8'}>

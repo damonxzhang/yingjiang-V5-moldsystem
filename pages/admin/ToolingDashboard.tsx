@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 
 interface ToolingDashboardProps {
   onSwitchView?: (view: 'tooling' | 'machine') => void;
+  onBackToAdmin?: () => void;
 }
 
-const ToolingDashboard: React.FC<ToolingDashboardProps> = ({ onSwitchView }) => {
+const ToolingDashboard: React.FC<ToolingDashboardProps> = ({ onSwitchView, onBackToAdmin }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -44,6 +45,16 @@ const ToolingDashboard: React.FC<ToolingDashboardProps> = ({ onSwitchView }) => 
       {/* Header */}
       <div className="flex justify-between items-center mb-6 px-4">
         <div className="flex gap-2">
+          {onBackToAdmin && (
+            <button 
+              onClick={onBackToAdmin}
+              className="px-6 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-sm font-bold transition-all flex items-center gap-2 group mr-2"
+              title="返回后台"
+            >
+              <i className="fas fa-arrow-left group-hover:-translate-x-1 transition-transform text-blue-400"></i>
+              返回后台
+            </button>
+          )}
           <button 
             onClick={() => onSwitchView?.('machine')}
             className="px-6 py-1 bg-blue-900/50 border border-blue-500/50 rounded text-sm font-bold text-blue-400 hover:bg-blue-800 transition-colors"

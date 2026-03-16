@@ -4,9 +4,10 @@ import { MOCK_MOLDS } from '../../services/mockData';
 
 interface MachineDashboardProps {
   onSwitchView?: (view: 'tooling' | 'machine') => void;
+  onBackToAdmin?: () => void;
 }
 
-const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => {
+const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBackToAdmin }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedMachine, setSelectedMachine] = useState<any>(null);
   const [selectedMoldPos, setSelectedMoldPos] = useState<'P1' | 'P2' | 'P3'>('P1');
@@ -361,6 +362,16 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView }) => 
       {/* Header */}
       <div className="flex justify-between items-center mb-1 px-2">
         <div className="flex gap-2">
+          {onBackToAdmin && (
+            <button 
+              onClick={onBackToAdmin}
+              className="px-4 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-[10px] font-bold transition-all flex items-center gap-2 group"
+              title="返回后台"
+            >
+              <i className="fas fa-arrow-left group-hover:-translate-x-1 transition-transform text-blue-400"></i>
+              返回后台
+            </button>
+          )}
           <button className="px-4 py-0.5 bg-blue-700 border border-blue-400 rounded text-[10px] font-bold shadow-[0_0_10px_rgba(59,130,246,0.5)]">
             设备看板 (3-MOLD MODE)
           </button>
