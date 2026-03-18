@@ -40,12 +40,13 @@
 
 ### 2.1 获取全厂设备实时概览
 
-* **用途**: 渲染看板主界面，展示全厂设备（如 BMD-01 ~ BMD-24）的状态矩阵。
+* **用途**: 渲染看板主界面，展示全厂设备（如 BMD-01 ~ BMD-24）的状态矩阵。系统会根据传入的 `user_id` 自动判断用户所属部门，并仅返回该部门下的机台设备。
 * **接口**: `POST /api/admin/dashboard/machines/status`
 * **请求体**:
   
   ```json
   {
+    "user_id": "ADM001",     // 必填, 当前登录用户的 ID, 用于区分部门和数据权限
     "only_alerts": false     // 可选, true (仅显示异常/预警设备)
   }
   ```
@@ -53,6 +54,7 @@
   
   ```json
   {
+    "department": "A厂区", // 当前用户所属的部门/厂区名称
     "summary": { // 统计汇总信息
       "total": 24, // 总机台数
       "normal": 18, // 正常运行的机台数
@@ -71,7 +73,6 @@
             "name": "QFN-64 上模", // 模具名称
             "current_shots": 450000, // 当前已生产冲次
             "max_shots": 500000, // 模具额定总寿命冲次
-            "health_score": 90, // 模具健康评分 (0-100)
             "status": "RUNNING" // 模具实时状态 (RUNNING, IDLE, MAINTENANCE)
           }
         ],
@@ -124,7 +125,6 @@
       "maintenance_status": "NORMAL", // 维保状态 (NORMAL, WARNING, CRITICAL)
       "remaining_life": 2314, // 剩余可用寿命冲次
       "total_life": 5000, // 额定总寿命 (以K次为单位，或根据业务定义)
-      "health_percent": 46.28 // 健康度百分比
     }
   }
   ```
