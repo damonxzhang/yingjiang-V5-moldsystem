@@ -188,3 +188,30 @@ export interface SparePart {
   maxShots?: number; // 冲次上限
   department?: '大材料' | '小材料'; // 所属部门
 }
+
+// 认证相关类型定义
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  code: number;
+  message: string;
+  data: {
+    token: string;
+    userid: string;
+    username: string;
+    role: Role;
+    department?: string;
+  };
+}
+
+export interface AuthData {
+  token: string;
+  userid: string;
+  username: string;
+  role: Role;
+  department?: string;
+  loginTime: string;
+}

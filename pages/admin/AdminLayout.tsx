@@ -22,10 +22,20 @@ import RepairOptionManagement from './RepairOptionManagement';
 
 interface AdminLayoutProps {
   userRole: Role;
+  onLogout?: () => void;
 }
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
+const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
   const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'maintenance_confirm' | 'repair_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen' | 'role_manage' | 'user_manage' | 'maintenance_option_manage' | 'repair_option_manage'>('machine_screen');
+
+  // 处理登出
+  const handleLogout = () => {
+    if (window.confirm('确定要退出系统吗？')) {
+      if (onLogout) {
+        onLogout();
+      }
+    }
+  };
 
   // 获取当前角色的权限
   const userPermissions = ROLE_PERMISSIONS.find(rp => rp.role === userRole)?.permissions || [];
@@ -138,7 +148,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole }) => {
               <p className="text-slate-500">登录用户</p>
             </div>
           </div>
-          <button className="mt-4 w-full text-left text-xs text-slate-500 hover:text-white flex items-center gap-2">
+          <button onClick={handleLogout} className="mt-4 w-full text-left text-xs text-slate-500 hover:text-white flex items-center gap-2">
             <i className="fas fa-sign-out-alt"></i>
             退出系统
           </button>

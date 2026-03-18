@@ -1,37 +1,60 @@
 
-import React, { useState } from 'react';
-import { Role } from './types';
+import React, { useState, useEffect } from 'react';
+import { Role, AuthData } from './types';
+import { AuthService } from './services/authService';
+import LoginPage from './pages/auth/LoginPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import AppLayout from './pages/app/AppLayout';
 
 const App: React.FC = () => {
   const [view, setView] = useState<'APP' | 'ADMIN'>('ADMIN');
-  const [role, setRole] = useState<Role>(Role.Admin);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [userData, setUserData] = useState<AuthData | null>(null);
 
-  if (!isLoggedIn) {
+  // 组件挂载时检查会话存储
+  useEffect(() => {
+    const storedAuth = AuthService.getStoredAuth();
+    if (storedAuth) {
+      setUserData(storedAuth);
+      setIsLoggedIn(true);
+    }
+    setIsCheckingAuth(false);
+  }, []);
+
+  // 处理登录成功
+  const handleLoginSuccess = (data: AuthData) => {
+    setUserData(data);
+    setIsLoggedIn(true);
+  };
+
+  // 处理登出
+  const handleLogout = () => {
+    AuthService.logout();
+    setUserData(null);
+    setIsLoggedIn(false);
+  };
+
+  // 正在检查认证状态
+  if (isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-        <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md text-center space-y-6">
-          <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-microchip text-4xl"></i>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-800">SmartMold Pro</h1>
-          <p className="text-slate-500">欢迎使用模具管理系统，请登录以继续</p>
-          <button 
-            onClick={() => setIsLoggedIn(true)}
-            className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-200 active:scale-95 transition-transform"
-          >
-            登录系统
-          </button>
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <i className="fas fa-spinner fa-spin text-4xl mb-4"></i>
+          <p>加载中...</p>
         </div>
       </div>
     );
   }
 
+  // 未登录，显示登录页面
+  if (!isLoggedIn || !userData) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="min-h-screen">
-      {/* 模拟切换 - 生产环境中应由身份验证处理 */}
+      {/* 开发模式切换器 - 生产环境中应移除 */}
       <div className="fixed top-0 right-0 z-50 p-2 flex gap-2 opacity-50 hover:opacity-100 transition-opacity">
         <button 
           onClick={() => setView('APP')} 
@@ -45,23 +68,15 @@ const App: React.FC = () => {
         >
           Web 后台管理
         </button>
-        <select 
-          value={role} 
-          onChange={(e) => setRole(e.target.value as Role)}
-          className="px-3 py-1 rounded-full text-xs bg-white border border-slate-300 outline-none"
-        >
-          <option value={Role.Admin}>管理员</option>
-          <option value={Role.MoldEngineerBig}>大材料工程师</option>
-          <option value={Role.MoldEngineerSmall}>小材料工程师</option>
-          <option value={Role.ShiftLeader}>带班</option>
-          <option value={Role.Operator}>操作员</option>
-        </select>
+        <div className="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700 font-bold">
+          {userData.username}
+        </div>
       </div>
 
       {view === 'APP' ? (
-        <AppLayout userRole={role} onLogout={() => setIsLoggedIn(false)} />
+        <AppLayout userRole={userData.role} onLogout={handleLogout} />
       ) : (
-        <AdminLayout userRole={role} />
+        <AdminLayout userRole={userData.role} onLogout={handleLogout} />
       )}
     </div>
   );
