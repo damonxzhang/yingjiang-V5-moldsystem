@@ -14,7 +14,7 @@
         "code": 200,          //状态码
         "message": "success", //返回信息
         "data": {             //返回的data信息
-            "user_id": ADM001, // 用户唯一标识 (工号/UUID)
+            "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
             "user_name": "看板管理员" // 用户真实姓名
         }
     }
@@ -74,7 +74,7 @@
   ```json
   {
      "token": "Bearer",  // 访问令牌，需携带在 Header (Authorization: Bearer <token>) 中
-     "user_id": ADM001, // 用户唯一标识 (工号/UUID)
+     "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
   }
   ```
 * **返回数据**:
@@ -583,17 +583,20 @@
 * **用途**: 用于“任务中心”、“保养执行记录”页面。
 * **接口**: `POST /api/admin/tasks/maintenance/list`
 * **请求体**: 
-  
+
   ```json
   { 
     "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "status": "PENDING",   // 任务状态：PENDING(待执行), COMPLETED(已完成), ALL(全部)
+    "keyword": "",         // 搜索词 (模具编号/工单号)
+    "start_date": "",      // 筛选开始日期
+    "end_date": "",        // 筛选结束日期
     "page": 1, 
     "page_size": 10 
   }
   ```
 * **返回数据**:
-  
+
   ```json
   {
     "total": 50,
@@ -604,8 +607,11 @@
         "machine_id": "BMD-01", 
         "mold_code": "T100", 
         "start_time": "2026-03-05 08:00", 
+        "end_time": "2026-03-05 10:00", 
         "status": "PENDING", 
-        "operator": "张工" 
+        "operator": "张工",
+        "check_items_count": 15, // 保养项目总数
+        "completed_items_count": 0 // 已完成项目数
       }
     ]
   }
@@ -616,17 +622,20 @@
 * **用途**: 用于“任务中心”、“维修执行记录”页面。
 * **接口**: `POST /api/admin/tasks/repair/list`
 * **请求体**: 
-  
+
   ```json
   { 
     "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "status": "PENDING",   // 任务状态
+    "keyword": "",         // 搜索词
+    "start_date": "", 
+    "end_date": "",
     "page": 1, 
     "page_size": 10 
   }
   ```
 * **返回数据**:
-  
+
   ```json
   {
     "total": 20,
@@ -637,6 +646,8 @@
         "machine_id": "BMD-01", 
         "mold_code": "T100", 
         "fault_description": "顶针复位不良",
+        "start_time": "2026-03-05 09:00",
+        "end_time": "2026-03-05 11:30",
         "status": "IN_PROGRESS", 
         "operator": "李工" 
       }
@@ -649,7 +660,7 @@
 * **用途**: 管理员对已完成的保养或维修任务进行审核确认。
 * **接口**: `POST /api/admin/tasks/verify`
 * **请求体**: 
-  
+
   ```json
   { 
     "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
@@ -659,7 +670,122 @@
     "remark": "保养到位，可以投产" // 审核备注
   }
   ```
-* **返回数据**: `{ "success": true, "message": "任务审核已完成" }`
+* **返回数据**: 
+  
+  ```json
+  { "success": true, "message": "任务审核已完成" }
+  ```
+
+### 6.4 获取保养任务详情
+
+* **用途**: 查看保养任务的详细信息，包括保养项目勾选情况。
+* **接口**: `POST /api/admin/tasks/maintenance/detail`
+* **请求体**: 
+
+  ```json
+  { 
+    "user_id": "ADM001", 
+    "task_id": "MT-2026-001" 
+  }
+  ```
+* **返回数据**:
+
+  ```json
+  {
+    "task_id": "MT-2026-001",
+    "order_no": "PM-20260305001",
+    "mold_code": "T100",
+    "machine_id": "BMD-01",
+    "status": "PENDING",
+    "operator": "张工",
+    "start_time": "2026-03-05 08:00",
+    "end_time": "2026-03-05 10:00",
+    "check_items": [ // 保养项目列表
+      {
+        "item_id": "CHK-001",
+        "item_name": "清理分型面",
+        "is_completed": true,
+        "result": "OK", // OK, NG
+        "remark": ""
+      },
+      {
+        "item_id": "CHK-002",
+        "item_name": "检查顶针润滑",
+        "is_completed": false,
+        "result": "",
+        "remark": ""
+      }
+    ],
+    "spare_parts_used": [ // 保养中消耗的备件
+      {
+        "spare_id": "SP-001",
+        "name": "顶针润滑油",
+        "quantity": 1,
+        "unit": "瓶"
+      }
+    ]
+  }
+  ```
+
+### 6.5 获取维修任务详情
+
+* **用途**: 查看维修任务的详细信息，包括故障原因和处理过程。
+* **接口**: `POST /api/admin/tasks/repair/detail`
+* **请求体**: 
+
+  ```json
+  { 
+    "user_id": "ADM001", 
+    "task_id": "RT-2026-001" 
+  }
+  ```
+* **返回数据**:
+
+  ```json
+  {
+    "task_id": "RT-2026-001",
+    "order_no": "RE-20260305001",
+    "mold_code": "T100",
+    "machine_id": "BMD-01",
+    "status": "IN_PROGRESS",
+    "operator": "李工",
+    "fault_description": "顶针复位不良",
+    "root_cause": "弹簧疲劳断裂", // 故障根本原因
+    "action_taken": "更换同规格弹簧并重新调试", // 处理措施
+    "spare_parts_replaced": [ // 更换的配件
+      {
+        "spare_id": "SP-005",
+        "name": "顶针弹簧",
+        "quantity": 2,
+        "unit": "PCS"
+      }
+    ],
+    "start_time": "2026-03-05 09:00",
+    "end_time": "2026-03-05 11:30"
+  }
+  ```
+
+### 6.6 导出保养记录
+
+* **用途**: 导出保养记录报表。
+* **接口**: `GET /api/admin/tasks/maintenance/export`
+* **请求参数**: 
+  * `user_id`: "ADM001",
+  * `status`: "ALL",
+  * `start_date`: "2026-01-01",
+  * `end_date`: "2026-03-31"
+* **返回**: 二进制流 (Excel 文件)
+
+### 6.7 导出维修记录
+
+* **用途**: 导出维修记录报表。
+* **接口**: `GET /api/admin/tasks/repair/export`
+* **请求参数**: 
+  * `user_id`: "ADM001",
+  * `status`: "ALL",
+  * `start_date`: "2026-01-01",
+  * `end_date`: "2026-03-31"
+* **返回**: 二进制流 (Excel 文件)
 
 ---
 
@@ -1070,17 +1196,59 @@
 
 ### 10.1 保养项目配置管理
 
-* **用途**: 管理员自定义保养的任务选项。
+* **用途**: 管理员自定义保养的任务选项（Checklist 项目）。
 * **获取列表**: `POST /api/admin/system/maintenance-items/list`
+  * **请求体**: `{ "user_id": "ADM001", "department": "大材料" }`
+  * **返回数据**: 
+    ```json
+    [
+      { "item_id": "CHK-001", "name": "清理分型面", "category": "日常保养" },
+      { "item_id": "CHK-002", "name": "检查顶针润滑", "category": "日常保养" }
+    ]
+    ```
 * **新增/编辑**: `POST /api/admin/system/maintenance-items/save`
+  * **请求体**: 
+    ```json
+    { 
+      "user_id": "ADM001", 
+      "item_id": "", // 新增为空，编辑传 ID
+      "name": "检查冷却水路", 
+      "category": "定期保养",
+      "department": "大材料"
+    }
+    ```
+  * **返回数据**: `{ "success": true, "item_id": "CHK-003" }`
 * **删除**: `POST /api/admin/system/maintenance-items/delete`
+  * **请求体**: `{ "user_id": "ADM001", "item_id": "CHK-001" }`
+  * **返回数据**: `{ "success": true }`
 
 ### 10.2 维修故障项配置管理
 
-* **用途**: 管理员自定义维修的任务选项。
+* **用途**: 管理员自定义维修的任务选项（故障分类/原因项）。
 * **获取列表**: `POST /api/admin/system/repair-items/list`
+  * **请求体**: `{ "user_id": "ADM001", "department": "大材料" }`
+  * **返回数据**: 
+    ```json
+    [
+      { "item_id": "FLT-001", "name": "顶针复位不良", "category": "机构类" },
+      { "item_id": "FLT-002", "name": "加热管不热", "category": "电气类" }
+    ]
+    ```
 * **新增/编辑**: `POST /api/admin/system/repair-items/save`
+  * **请求体**: 
+    ```json
+    { 
+      "user_id": "ADM001", 
+      "item_id": "", 
+      "name": "滑块磨损", 
+      "category": "机构类",
+      "department": "大材料"
+    }
+    ```
+  * **返回数据**: `{ "success": true, "item_id": "FLT-003" }`
 * **删除**: `POST /api/admin/system/repair-items/delete`
+  * **请求体**: `{ "user_id": "ADM001", "item_id": "FLT-001" }`
+  * **返回数据**: `{ "success": true }`
 
 ### 10.3 字典数据管理 (通用)
 
