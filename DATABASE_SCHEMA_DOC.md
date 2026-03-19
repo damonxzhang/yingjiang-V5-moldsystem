@@ -213,7 +213,6 @@
 | :--- | :--- | :--- | :--- |
 | order_id | INT | PK, IDENTITY | 工单 ID |
 | order_no | NVARCHAR(50) | NOT NULL, UNIQUE | 保养单号 (如 PM-20260305001) |
-| priority | NVARCHAR(20) | DEFAULT 'MEDIUM' | 优先级 (LOW/MEDIUM/HIGH) |
 | status | NVARCHAR(20) | DEFAULT 'PENDING' | 状态 (PENDING/IN_PROGRESS/COMPLETED/AUDITED) |
 | task_source | NVARCHAR(20) | DEFAULT 'MANUAL' | 任务来源 (SCHEDULED: 定时任务, MANUAL: 手工添加) |
 | maintenance_result | NVARCHAR(50) | - | 保养结果 (OK/NG/WAIT) |
@@ -238,7 +237,6 @@
 | :--- | :--- | :--- | :--- |
 | order_id | INT | PK, IDENTITY | 工单 ID |
 | order_no | NVARCHAR(50) | NOT NULL, UNIQUE | 维修单号 (如 RE-20260305001) |
-| priority | NVARCHAR(20) | DEFAULT 'HIGH' | 优先级 (LOW/MEDIUM/HIGH/URGENT) |
 | status | NVARCHAR(20) | DEFAULT 'PENDING' | 状态 (PENDING/IN_PROGRESS/COMPLETED/AUDITED) |
 | repair_category | NVARCHAR(50) | - | 维修类别 (小修/中修/大修/紧急) |
 | repair_method | NVARCHAR(50) | - | 维修方式 (内部维修/外委维修/更换备件) |

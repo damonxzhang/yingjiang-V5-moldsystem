@@ -318,11 +318,10 @@
       "order_no": "PM-20260305001", // 维保单号
       "mold_id": "UUID-TY71-001", // 模具系统 ID
       "mold_code": "TY71", // 模具编号
-      "priority": "HIGH", // 优先级 (HIGH, MEDIUM, LOW)
       "status": "PENDING" // 状态
     }
   ]
-  ```
+```
 
 ### 4.2 获取保养项目配置
 
@@ -389,7 +388,6 @@
       "mold_id": "UUID-TY71-001", // 模具系统 ID
       "mold_code": "TY71", // 模具编号
       "fault_description": "顶针复位不良", // 故障描述
-      "priority": "URGENT", // 优先级
       "status": "IN_PROGRESS" // 状态
     }
   ]
