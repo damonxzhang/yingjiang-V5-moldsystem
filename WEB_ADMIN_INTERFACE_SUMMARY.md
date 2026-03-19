@@ -1042,6 +1042,47 @@
   }
   ```
 
+### 8.4 获取冲次原始数据列表
+
+* **用途**: 查看模具冲次的原始采集记录列表，支持按模具编号、机台等筛选。
+* **接口**: `POST /api/admin/monitor/shot-logs`
+* **请求体**: 
+
+  ```json
+  { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "mold_code": "MD-2024-071", // 模具编号筛选 (可选)
+    "machine_code": "MT-12", // 机台编号筛选 (可选)
+    "start_date": "2024-05-20", // 开始日期 (可选)
+    "end_date": "2024-05-21", // 结束日期 (可选)
+    "page": 1, // 当前页码
+    "page_size": 20 // 每页记录数
+  }
+  ```
+* **返回数据**:
+
+  ```json
+  {
+    "code": 200,
+    "message": "success",
+    "data": {
+        "total": 100, // 总记录数
+        "list": [ // 原始冲次日志列表
+            { 
+                "log_id": 1, // 记录唯一 ID
+                "mold_id": 10, // 关联模具内部 ID
+                "mold_code": "MD-2024-071", // 模具编号 (DIE ID)
+                "current_shots": 485000, // 当前累计冲次 (CURRENT SHOTS)
+                "life_limit": 500000, // 额定寿命限制 (LIMIT)
+                "machine_code": "N/A", // 机台编号 (MACHINE)
+                "location": "MT-08", // 位置 (LOCATION)
+                "created_at": "2024-05-20 14:30:05" // 数据更新时间 (LAST UPDATE)
+            }
+        ]
+    }
+  }
+  ```
+
 ---
 
 ## 9. 模具配件绑定 (Mold-Spare Binding)
