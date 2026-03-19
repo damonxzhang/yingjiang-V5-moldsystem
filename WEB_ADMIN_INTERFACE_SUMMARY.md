@@ -6,16 +6,16 @@
 
 * **方法**: 所有接口统一采用 **POST**。
 * **格式**: 请求与返回均使用 **JSON**。
-* **命名**: 字段使用小写 (camelcase)。
-* **标识**: 模具必须区分 `moldid` (UUID) 和 `moldcode` (编号)。
+* **命名**: 字段使用下划线规则 (snake_case)。
+* **标识**: 模具必须区分 `mold_id` (UUID) 和 `mold_code` (编号)。
 * **返回数据的标准结构**:
 ```json
    {
         "code": 200,          //状态码
         "message": "success", //返回信息
         "data": {             //返回的data信息
-            "userid": ADM001, // 用户唯一标识 (工号/UUID)
-            "username": "看板管理员" // 用户真实姓名
+            "user_id": ADM001, // 用户唯一标识 (工号/UUID)
+            "user_name": "看板管理员" // 用户真实姓名
         }
     }
 ```
@@ -40,7 +40,7 @@
   
   ```json
   {
-    "username": "admin", // 登录用户名
+    "user_name": "admin", // 登录用户名
     "password": "password123" // 登录密码
   }
   ```
@@ -52,8 +52,8 @@
         "message": "success",
         "data": {
             "token": "Bearer",  // 访问令牌，后续请求需携带在 Header (Authorization: Bearer <token>) 中
-            "userid": "ADM001", // 用户唯一标识 (工号/UUID)
-            "username": "看板管理员", // 用户真实姓名
+            "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+            "user_name": "看板管理员", // 用户真实姓名
             "role": "SUPER_ADMIN", // 角色代码：SUPER_ADMIN(超级管理), MAINTAINER(维保员), OPERATOR(操作员)
             "permissions": [ // 拥有的功能权限点列表
               "DASHBOARD_VIEW",   // 查看看板权限
@@ -74,7 +74,7 @@
   ```json
   {
      "token": "Bearer",  // 访问令牌，需携带在 Header (Authorization: Bearer <token>) 中
-     "userid": ADM001, // 用户唯一标识 (工号/UUID)
+     "user_id": ADM001, // 用户唯一标识 (工号/UUID)
   }
   ```
 * **返回数据**:
@@ -173,10 +173,10 @@
   ```json
   { 
     "keyword": "", // 搜索词：支持模具编号或名称模糊查询
-    "isauditmode": false, // 是否为 Audit 模式：true(仅看需 Audit 的模具), false(普通台账)
+    "is_audit_mode": false, // 是否为 Audit 模式：true(仅看需 Audit 的模具), false(普通台账)
     "status": "ALL", // 状态筛选：IDLE, IN_USE, MAINTENANCE, REPAIR, DEACTIVATED, ALL
     "page": 1, // 当前页码
-    "pagesize": 20 // 每页记录数
+    "page_size": 20 // 每页记录数
   }
   ```
 * **返回数据**:
@@ -185,25 +185,25 @@
 {
     "code": 200,
     "message": "success",
-    "data": [
+    "data": {
         "total": 100, // 符合条件的模具总数
         "list": [ // 模具台账简要信息列表
             { 
-                "moldid": "TY71", // 模具系统内唯一 ID
-                "moldcode": "T100", // 模具编号
-                "shortname": "BGA-01", // 模具简称
-                "packagetype": "QFN", // 封装类型
-                "shottotal": 450000, // 当前累计总冲次
+                "mold_id": "TY71", // 模具系统内唯一 ID
+                "mold_code": "T100", // 模具编号
+                "short_name": "BGA-01", // 模具简称
+                "package_type": "QFN", // 封装类型
+                "shot_total": 450000, // 当前累计总冲次
                 "status": "IDLE", // 当前状态
                 "department": "大材料", // 所属部门
-                "nextauditdate": "2026-04-01", // 下次 Audit 日期 (仅在 Audit 模式下返回有效值)
+                "next_audit_date": "2026-04-01", // 下次 Audit 日期 (仅在 Audit 模式下返回有效值)
                 "operate":[   // 列表右侧操作栏按钮
-                    {
+                    { 
                         "id": 11,  //按钮id
                         "parent_id": 2,  //按钮所属页面id
                         "name": "BOM"   //按钮名称
                     },
-                    {
+                    { 
                         "id": 12,      //按钮在列表页的id值是一致的,因为按钮显示隐藏以菜单栏页面权限为准
                         "parent_id": 2,
                         "name": "停用"
@@ -211,21 +211,21 @@
                 ]
             },
             { 
-                "moldd": "TY72", // 模具系统内唯一 ID
-                "moldcode": "T1001", // 模具编号
-                "shortname": "BGA-02", // 模具简称
-                "packagetype": "QFN", // 封装类型
-                "shottotal": 50000, // 当前累计总冲次
+                "mold_id": "TY72", // 模具系统内唯一 ID
+                "mold_code": "T1001", // 模具编号
+                "short_name": "BGA-02", // 模具简称
+                "package_type": "QFN", // 封装类型
+                "shot_total": 50000, // 当前累计总冲次
                 "status": "IDLE", // 当前状态
                 "department": "大材料", // 所属部门
-                "nextauditdate": "2026-04-01", // 下次 Audit 日期 (仅在 Audit 模式下返回有效值)
+                "next_audit_date": "2026-04-01", // 下次 Audit 日期 (仅在 Audit 模式下返回有效值)
                 "operate":[     
-                    {
+                    { 
                         "id": 11, //按钮id同上也是11
                         "parent_id": 2,  //按钮所属页面id
                         "name": "BOM"   //按钮名称
                     },
-                    {
+                    { 
                         "id": 12,
                         "parent_id": 2,
                         "name": "停用"
@@ -233,14 +233,9 @@
                 ]
             }
         ]
-    ]
+    }
 }
   ```
-
-####  以上是接口的一些基本修改和规则调整
-####  以上是接口的一些基本修改和规则调整
-####  以上是接口的一些基本修改和规则调整
-####  以上是接口的一些基本修改和规则调整
 
 
 ### 2.2 获取管理员信息
@@ -252,8 +247,8 @@
   
   ```json
   {
-    "userId": "ADM001", // 用户唯一标识 (工号/UUID)
-    "userName": "看板管理员", // 用户姓名
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_name": "看板管理员", // 用户姓名
     "role": "SUPER_ADMIN", // 角色代码：SUPER_ADMIN(超级管理), MAINTAINER(维保员), OPERATOR(操作员)
     "permissions": [ // 拥有的功能权限点列表
       "DASHBOARD_VIEW",   // 查看看板权限
@@ -276,7 +271,7 @@
   
   ```json
   { 
-    "onlyAlerts": false // 是否仅查看异常机台：true(仅异常), false(全部)
+    "only_alerts": false // 是否仅查看异常机台：true(仅异常), false(全部)
   }
   ```
 * **返回数据**:
@@ -291,18 +286,18 @@
     },
     "machines": [ // 各机台简要信息列表
       {
-        "machineId": "BMD-01", // 机台唯一标识符 (ID/编号)
+        "machine_id": "BMD-01", // 机台唯一标识符 (ID/编号)
         "status": "NORMAL",    // 实时状态：NORMAL, WARNING, CRITICAL
-        "moldCount": 4,        // 当前已挂载的模具总数
+        "mold_count": 4,        // 当前已挂载的模具总数
         "molds": [             // 挂载模具详情
           { 
-            "moldId": "M1", // 模具系统内唯一 ID
-            "moldCode": "T100", // 模具业务编号
-            "currentShots": 450000, // 当前累计生产冲次
-            "maxShots": 500000      // 模具额定总寿命冲次
+            "mold_id": "M1", // 模具系统内唯一 ID
+            "mold_code": "T100", // 模具业务编号
+            "current_shots": 450000, // 当前累计生产冲次
+            "max_shots": 500000      // 模具额定总寿命冲次
           }
         ],
-        "pendingTasks": 2      // 该机台关联的待办维保任务数量
+        "pending_tasks": 2      // 该机台关联的待办维保任务数量
       }
     ]
   }
@@ -316,7 +311,7 @@
   
   ```json
   { 
-    "machineId": "BMD-01", // 机台唯一 ID
+    "machine_id": "BMD-01", // 机台唯一 ID
     "slot": "P1"           // 槽位编号 (如 P1, P2)
   }
   ```
@@ -324,7 +319,7 @@
   
   ```json
   {
-    "machineId": "BMD-01", // 机台唯一 ID
+    "machine_id": "BMD-01", // 机台唯一 ID
     "production": { 
       "planned": 24288,   // 计划生产总数 (订单总量)
       "completed": 8368   // 当前已完成数 (已生产总量)
@@ -332,16 +327,16 @@
     "slots": [
       { 
         "slot": "P1", // 槽位编号
-        "moldCode": "T100", // 挂载的模具编号
+        "mold_code": "T100", // 挂载的模具编号
         "status": "NORMAL" // 槽位状态：NORMAL(正常), WARNING(预警), CRITICAL(紧急)
       }
     ],
-    "currentMold": {
-      "moldId": "M1", // 模具系统内唯一 ID
-      "moldCode": "T100", // 模具业务编号
-      "fullName": "精密 BGA 注塑模", // 模具全称
-      "currentShots": 329769, // 该模具当前累计生产冲次
-      "healthPercent": 46.28 // 健康度百分比：(1 - current/max) * 100
+    "current_mold": {
+      "mold_id": "M1", // 模具系统内唯一 ID
+      "mold_code": "T100", // 模具业务编号
+      "full_name": "精密 BGA 注塑模", // 模具全称
+      "current_shots": 329769, // 该模具当前累计生产冲次
+      "health_percent": 46.28 // 健康度百分比：(1 - current/max) * 100
     }
   }
   ```
@@ -354,15 +349,14 @@
   
   ```json
   {
-    "machineId": "BMD-01",  // 机台唯一 ID
-    "moldId": "M1",         // 模具唯一 ID
-    "userId": "ADM001",     // 发起人 ID
-    "startTime": "2026-03-05T03:19", // 计划开始时间
-    "endTime": "2026-03-05T07:19",   // 计划结束时间
-    "description": "例行季度保养"     // 任务描述
+    "machine_id": "BMD-01",  // 机台唯一 ID
+    "mold_id": "M1",         // 模具唯一 ID
+    "user_id": "ADM001",     // 发起人 ID
+    "start_time": "2026-03-05T03:19", // 计划开始时间
+    "end_time": "2026-03-05T07:19"   // 计划结束时间
   }
   ```
-* **返回数据**: `{ "success": true, "taskId": "MT-20260305-001" }`
+* **返回数据**: `{ "success": true, "task_id": "MT-20260305-001" }`
 
 ### 3.4 创建报修任务
 
@@ -372,13 +366,13 @@
   
   ```json
   {
-    "machineId": "BMD-01",  // 机台唯一 ID
-    "moldId": "M1",         // 模具唯一 ID
-    "userId": "ADM001",     // 发起人 ID
-    "description": "顶针复位异常"     // 故障现象描述
+    "machine_id": "BMD-01",  // 机台唯一 ID
+    "mold_id": "M1",         // 模具唯一 ID
+    "user_id": "ADM001",     // 发起人 ID
+    "fault_description": "顶针复位异常"     // 故障现象描述
   }
   ```
-* **返回数据**: `{ "success": true, "taskId": "RT-20260305-001" }`
+* **返回数据**: `{ "success": true, "task_id": "RT-20260305-001" }`
 
 ### 3.5 模具安装/卸载
 
@@ -389,9 +383,9 @@
   ```json
   { 
     "action": "INSTALL", // 动作类型：INSTALL(安装), UNINSTALL(卸载)
-    "machineId": "BMD-01", // 目标机台 ID
+    "machine_id": "BMD-01", // 目标机台 ID
     "slot": "P1", // 目标槽位
-    "moldId": "M1" // 模具唯一 ID
+    "mold_id": "M1" // 模具唯一 ID
   }
   ```
 * **返回数据**: `{ "success": true, "message": "操作执行成功" }`
@@ -404,9 +398,9 @@
   
   ```json
   { 
-    "moldId": "M1", // 模具唯一 ID
+    "mold_id": "M1", // 模具唯一 ID
     "reason": "表面划痕严重", // 停用原因详细描述
-    "userId": "ADM001" // 操作人 ID
+    "user_id": "ADM001" // 操作人 ID
   }
   ```
 * **返回数据**: `{ "success": true, "message": "操作执行成功" }`
@@ -422,7 +416,7 @@
     "keyword": "BGA",   // 模糊搜索关键词
     "status": "IDLE",    // 筛选状态
     "page": 1, 
-    "pageSize": 20 
+    "page_size": 20 
   }
   ```
 * **返回数据**:
@@ -432,9 +426,9 @@
     "total": 45,
     "list": [
       {
-        "moldId": "M1",
-        "moldCode": "T100",
-        "shortName": "BGA-01",
+        "mold_id": "M1",
+        "mold_code": "T100",
+        "short_name": "BGA-01",
         "status": "IDLE"
       }
     ]
@@ -455,10 +449,10 @@
   { 
     "keyword": "", // 搜索词：支持模具编号或名称模糊查询
     "department": "大材料", // 部门筛选：大材料, 小材料, ALL(全部)
-    "isAuditMode": false, // 是否为 Audit 模式：true(仅看需 Audit 的模具), false(普通台账)
+    "is_audit_mode": false, // 是否为 Audit 模式：true(仅看需 Audit 的模具), false(普通台账)
     "status": "ALL", // 状态筛选：IDLE, IN_USE, MAINTENANCE, REPAIR, DEACTIVATED, ALL
     "page": 1, // 当前页码
-    "pageSize": 20 // 每页记录数
+    "page_size": 20 // 每页记录数
   }
   ```
 * **返回数据**:
@@ -468,14 +462,14 @@
     "total": 100, // 符合条件的模具总数
     "list": [ // 模具台账简要信息列表
       { 
-        "moldId": "TY71", // 模具系统内唯一 ID
-        "moldCode": "T100", // 模具编号
-        "shortName": "BGA-01", // 模具简称
-        "packageType": "QFN", // 封装类型
-        "shotTotal": 450000, // 当前累计总冲次
+        "mold_id": "TY71", // 模具系统内唯一 ID
+        "mold_code": "T100", // 模具编号
+        "short_name": "BGA-01", // 模具简称
+        "package_type": "QFN", // 封装类型
+        "shot_total": 450000, // 当前累计总冲次
         "status": "IDLE", // 当前状态
         "department": "大材料", // 所属部门
-        "nextAuditDate": "2026-04-01" // 下次 Audit 日期 (仅在 Audit 模式下返回有效值)
+        "next_audit_date": "2026-04-01" // 下次 Audit 日期 (仅在 Audit 模式下返回有效值)
       }
     ]
   }
@@ -489,23 +483,23 @@
   
   ```json
   {
-    "moldId": "MD-2024-001", // 编辑时必填，新增时传空串或不传
-    "moldCode": "T100", // 模具编号
-    "shortName": "BGA-01", // 模具简称
+    "mold_id": "MD-2024-001", // 编辑时必填，新增时传空串或不传
+    "mold_code": "T100", // 模具编号
+    "short_name": "BGA-01", // 模具简称
     "thickness": "250mm", // 模具厚度参数
-    "moldCategory": "大材料模具", // 模具类别名称
-    "productType": "BGA", // 适用产品类型
-    "packageType": "QFN", // 适用封装类型
-    "pinCode": "A", // Pin Code 标识
+    "mold_category": "大材料模具", // 模具类别名称
+    "product_type": "BGA", // 适用产品类型
+    "package_type": "QFN", // 适用封装类型
+    "pin_code": "A", // Pin Code 标识
     "department": "大材料", // 所属部门
-    "lifeLimit": 500000, // 额定总寿命冲次
+    "life_limit": 500000, // 额定总寿命冲次
     "components": [ // 模具 BOM 结构/组成部件列表
       { 
         "category": "上模件", // 部件所属分类 (如：上模件、下模件、中模件)
         "name": "上模盒",     // 部件具体名称
         "sn": "#1/6-100597", // 部件序列号或唯一标识
-        "isSpare": false,    // 是否为消耗性备件：true(是), false(否)
-        "lifeLimit": "N/A"   // 该部件的寿命限制 (如有，无则传 "N/A")
+        "is_spare": false,    // 是否为消耗性备件：true(是), false(否)
+        "life_limit": "N/A"   // 该部件的寿命限制 (如有，无则传 "N/A")
       }
     ]
   }
@@ -515,7 +509,7 @@
   ```json
   {
     "success": true, // 操作是否成功
-    "moldId": "MD-2024-001", // 保存成功的模具 ID
+    "mold_id": "MD-2024-001", // 保存成功的模具 ID
     "message": "模具档案保存成功" // 返回的提示消息
   }
   ```
@@ -528,32 +522,32 @@
   
   ```json
   { 
-    "moldId": "MD-2024-001" // 模具唯一 ID
+    "mold_id": "MD-2024-001" // 模具唯一 ID
   }
   ```
 * **返回数据**: 
   
   ```json
   {
-    "moldId": "MD-2024-001", // 模具唯一 ID
-    "moldCode": "T100", // 模具编号
-    "shortName": "BGA-01", // 模具简称
+    "mold_id": "MD-2024-001", // 模具唯一 ID
+    "mold_code": "T100", // 模具编号
+    "short_name": "BGA-01", // 模具简称
     "thickness": "250mm", // 模具厚度
-    "moldCategory": "大材料模具", // 模具类别
-    "productType": "BGA", // 产品类型
-    "packageType": "QFN", // 封装类型
-    "pinCode": "A", // Pin Code
+    "mold_category": "大材料模具", // 模具类别
+    "product_type": "BGA", // 产品类型
+    "package_type": "QFN", // 封装类型
+    "pin_code": "A", // Pin Code
     "department": "大材料", // 所属部门
-    "lifeLimit": 500000, // 额定寿命冲次
-    "shotTotal": 456789, // 实时当前累计总冲次
+    "life_limit": 500000, // 额定寿命冲次
+    "shot_total": 456789, // 实时当前累计总冲次
     "status": "IDLE", // 当前状态
     "components": [ // BOM 组成部件列表
       { 
         "category": "上模件", // 部件分类
         "name": "上模盒", // 部件名称
         "sn": "#1/6-100597", // 序列号
-        "isSpare": false, // 是否备件
-        "lifeLimit": "N/A" // 寿命限制
+        "is_spare": false, // 是否备件
+        "life_limit": "N/A" // 寿命限制
       }
     ]
   }
@@ -567,9 +561,9 @@
   
   ```json
   { 
-    "moldId": "MD-2024-001", // 模具唯一 ID
+    "mold_id": "MD-2024-001", // 模具唯一 ID
     "reason": "寿命已满且无法修复", // 停用或报废的原因描述
-    "userId": "ADM001" // 执行操作的管理员 ID
+    "user_id": "ADM001" // 执行操作的管理员 ID
   }
   ```
 * **返回数据**:
@@ -595,7 +589,7 @@
   { 
     "status": "PENDING",   // 任务状态：PENDING(待执行), COMPLETED(已完成), ALL(全部)
     "page": 1, 
-    "pageSize": 10 
+    "page_size": 10 
   }
   ```
 * **返回数据**:
@@ -605,11 +599,11 @@
     "total": 50,
     "list": [
       {
-        "taskId": "MT-2026-001", 
-        "orderNo": "PM-20260305001",
-        "machineId": "BMD-01", 
-        "moldCode": "T100", 
-        "startTime": "2026-03-05 08:00", 
+        "task_id": "MT-2026-001", 
+        "order_no": "PM-20260305001",
+        "machine_id": "BMD-01", 
+        "mold_code": "T100", 
+        "start_time": "2026-03-05 08:00", 
         "status": "PENDING", 
         "operator": "张工" 
       }
@@ -627,7 +621,7 @@
   { 
     "status": "PENDING",   // 任务状态
     "page": 1, 
-    "pageSize": 10 
+    "page_size": 10 
   }
   ```
 * **返回数据**:
@@ -637,11 +631,11 @@
     "total": 20,
     "list": [
       {
-        "taskId": "RT-2026-001", 
-        "orderNo": "RE-20260305001",
-        "machineId": "BMD-01", 
-        "moldCode": "T100", 
-        "faultDescription": "顶针复位不良",
+        "task_id": "RT-2026-001", 
+        "order_no": "RE-20260305001",
+        "machine_id": "BMD-01", 
+        "mold_code": "T100", 
+        "fault_description": "顶针复位不良",
         "status": "IN_PROGRESS", 
         "operator": "李工" 
       }
@@ -657,8 +651,8 @@
   
   ```json
   { 
-    "taskId": "MT-2026-001", // 任务单号
-    "taskType": "MAINTENANCE", // 任务类型 (MAINTENANCE, REPAIR)
+    "task_id": "MT-2026-001", // 任务单号
+    "task_type": "MAINTENANCE", // 任务类型 (MAINTENANCE, REPAIR)
     "status": "APPROVED", // 审核结果：APPROVED(通过), REJECTED(驳回)
     "remark": "保养到位，可以投产" // 审核备注
   }
@@ -678,7 +672,7 @@
   ```json
   { 
     "department": "大材料", // 部门筛选：大材料, 小材料, ALL(全部)
-    "filterAlerts": false, // 是否仅查看预警项：true(仅看库存不足), false(全部)
+    "filter_alerts": false, // 是否仅查看预警项：true(仅看库存不足), false(全部)
     "keyword": "" // 备件名称/规格模糊搜索关键词
   }
   ```
@@ -689,11 +683,11 @@
     "total": 30, // 符合条件的备件总数
     "list": [ // 备件信息列表
       {
-        "spareId": "SP-001", // 备件唯一 ID
+        "spare_id": "SP-001", // 备件唯一 ID
         "name": "上模顶针", // 备件名称
         "spec": "2.0mm * 150mm", // 规格型号描述
-        "currentStock": 5, // 当前库存数量
-        "minStock": 10, // 安全库存阈值 (低于此值将触发预警)
+        "current_stock": 5, // 当前库存数量
+        "min_stock": 10, // 安全库存阈值 (低于此值将触发预警)
         "unit": "PCS", // 计量单位
         "status": "LOW_STOCK" // 状态：NORMAL(正常), LOW_STOCK(库存不足)
       }
@@ -709,7 +703,7 @@
   
   ```json
   { 
-    "spareId": "SP-001", // 备件唯一 ID
+    "spare_id": "SP-001", // 备件唯一 ID
     "type": "STOCK_IN", // 动作类型：STOCK_IN(入库), STOCK_OUT(出库)
     "amount": 10,       // 操作数量 (正整数)
     "remark": "季度采购入库" // 操作原因/备注
@@ -720,7 +714,7 @@
   ```json
   {
     "success": true, // 操作是否成功
-    "newStock": 15, // 操作完成后的最新库存总量
+    "new_stock": 15, // 操作完成后的最新库存总量
     "message": "库存更新成功" // 返回的提示消息
   }
   ```
@@ -733,21 +727,21 @@
   
   ```json
   { 
-    "planId": "PLAN-2026-Q2", // 关联的生产计划 ID
-    "timeHorizon": "30d"      // 预测时间跨度：7d(一周), 30d(一月), 90d(一季)
+    "plan_id": "PLAN-2026-Q2", // 关联的生产计划 ID
+    "time_horizon": "30d"      // 预测时间跨度：7d(一周), 30d(一月), 90d(一季)
   }
   ```
 * **返回数据**:
   
   ```json
   {
-    "predictionId": "PR-001", // 预测结果记录 ID
+    "prediction_id": "PR-001", // 预测结果记录 ID
     "items": [ // 备件需求明细列表
       {
-        "spareId": "SP-001", // 备件 ID
+        "spare_id": "SP-001", // 备件 ID
         "name": "上模顶针", // 备件名称
-        "predictedUsage": 12, // 预计消耗量
-        "currentStock": 5, // 当前库存量
+        "predicted_usage": 12, // 预计消耗量
+        "current_stock": 5, // 当前库存量
         "gap": 7, // 缺口量 (预计消耗 - 当前库存)
         "recommendation": "建议本周下单采购 10 PCS" // 系统给出的采购建议
       }
@@ -775,17 +769,17 @@
   ```json
   [
     {
-      "machineId": "BMD-14", // 机台唯一 ID
-      "availableProducts": [ // 该机台支持生产的产品列表
+      "machine_id": "BMD-14", // 机台唯一 ID
+      "available_products": [ // 该机台支持生产的产品列表
         {
           "sku": "5220", // 产品 SKU 编号
           "slots": [ // 该产品涉及的生产槽位状态
             { 
               "id": "P1", // 槽位 ID (如 P1, P2)
-              "moldId": "M1", // 预定使用的模具 ID
-              "paramReady": true, // 生产参数设定是否就绪 (Checklist 项)
-              "moldReady": true,  // 模具物理安装是否就绪 (Checklist 项)
-              "buyoffReady": true // 质量验收/首检是否就绪 (Checklist 项)
+              "mold_id": "M1", // 预定使用的模具 ID
+              "param_ready": true, // 生产参数设定是否就绪 (Checklist 项)
+              "mold_ready": true,  // 模具物理安装是否就绪 (Checklist 项)
+              "buyoff_ready": true // 质量验收/首检是否就绪 (Checklist 项)
             }
           ]
         }
@@ -802,9 +796,9 @@
   
   ```json
   { 
-    "machineId": "BMD-14", // 机台 ID
+    "machine_id": "BMD-14", // 机台 ID
     "sku": "5220", // 产品 SKU
-    "slotId": "P1", // 槽位 ID
+    "slot_id": "P1", // 槽位 ID
     "type": "PARAM", // 状态类型：PARAM(参数), MOLD(模具), BUYOFF(验收)
     "ready": true    // 目标状态：true(已就绪), false(未就绪)
   }
@@ -827,7 +821,7 @@
   ```json
   { 
     "process": "注塑", // 工序过滤
-    "packageType": "BGA" // 封装类型过滤
+    "package_type": "BGA" // 封装类型过滤
   }
   ```
 * **返回数据**:
@@ -837,10 +831,10 @@
     "count": 12, // 返回的记录条数
     "data": [ // 实时冲次数据列表
       { 
-        "moldId": "M1", // 模具 ID
-        "moldCode": "T100", // 模具编号
-        "currentShots": 450000, // 当前累计冲次
-        "limitShots": 500000, // 额定总寿命冲次
+        "mold_id": "M1", // 模具 ID
+        "mold_code": "T100", // 模具编号
+        "current_shots": 450000, // 当前累计冲次
+        "limit_shots": 500000, // 额定总寿命冲次
         "wornout": 90 // 磨损/消耗百分比 (0-100)
       }
     ]
@@ -861,7 +855,7 @@
   
   ```json
   { 
-    "moldId": "MOLD-001" // 模具唯一 ID
+    "mold_id": "MOLD-001" // 模具唯一 ID
   }
   ```
 * **返回数据**:
@@ -869,11 +863,11 @@
   ```json
   [
     {
-      "spareId": "SP-001", // 备件唯一 ID
-      "spareName": "上模顶针", // 备件名称
+      "spare_id": "SP-001", // 备件唯一 ID
+      "spare_name": "上模顶针", // 备件名称
       "quantity": 2, // 建议装配量 (该模具标准配置需要的数量)
-      "currentStock": 15, // 备件当前的仓库总库存
-      "minStock": 5 // 备件的安全库存报警阈值
+      "current_stock": 15, // 备件当前的仓库总库存
+      "min_stock": 5 // 备件的安全库存报警阈值
     }
   ]
   ```
@@ -886,8 +880,8 @@
   
   ```json
   { 
-    "moldId": "MOLD-001", // 模具唯一 ID
-    "spareId": "SP-001", // 备件唯一 ID
+    "mold_id": "MOLD-001", // 模具唯一 ID
+    "spare_id": "SP-001", // 备件唯一 ID
     "quantity": 2 // 设定的建议装配数量 (正整数)
   }
   ```
@@ -908,8 +902,8 @@
   
   ```json
   { 
-    "moldId": "MOLD-001", // 模具唯一 ID
-    "spareId": "SP-001" // 备件唯一 ID
+    "mold_id": "MOLD-001", // 模具唯一 ID
+    "spare_id": "SP-001" // 备件唯一 ID
   }
   ```
 * **返回数据**:
@@ -929,7 +923,7 @@
   
   ```json
   { 
-    "moldId": "MOLD-001", // 当前操作的模具 ID
+    "mold_id": "MOLD-001", // 当前操作的模具 ID
     "keyword": "" // 按名称/规格搜索备件
   }
   ```
@@ -939,8 +933,8 @@
   {
     "total": 15, // 可选备件总数
     "list": [ // 备件简要信息列表
-      {
-        "spareId": "SP-005", // 备件 ID
+      { 
+        "spare_id": "SP-005", // 备件 ID
         "name": "下模推板", // 备件名称
         "spec": "Type-C" // 规格
       }
@@ -982,7 +976,66 @@
 
 ---
 
-## 10. 异常与说明 (Exceptions & Notes)
+## 10. 统计报表 (Reports & Statistics)
+
+### 10.1 获取 OEE 及稼动率数据
+
+* **用途**: 用于仪表盘大屏或月度报表。
+* **接口**: `POST /api/admin/reports/oee`
+* **请求体**: 
+  
+  ```json
+  { 
+    "start_date": "2024-01-01", 
+    "end_date": "2024-01-31", 
+    "machine_id": "ALL" 
+  }
+  ```
+* **返回数据**:
+  
+  ```json
+  {
+    "oee_average": 85.5,
+    "utilization_rate": 92.0,
+    "daily_stats": [
+      { "date": "2024-01-01", "oee": 84.0, "utilization": 90.5 }
+    ]
+  }
+  ```
+
+### 10.2 导出台账报表
+
+* **用途**: 下载 Excel 格式的模具或维修台账。
+* **接口**: `GET /api/admin/reports/export/ledger?type=MOLD`
+* **返回**: 二进制流 (Excel 文件)
+
+---
+
+## 11. 全局枚举值定义 (Global Enums)
+
+为了前端代码规范，以下为常用的状态枚举值：
+
+* **模具状态 (MoldStatus)**:
+  * `IDLE`: 闲置 (在库)
+  * `PRODUCING`: 生产中 (已上模)
+  * `MAINTAINING`: 保养中
+  * `REPAIRING`: 维修中
+  * `DEACTIVATED`: 已停用/报废
+* **任务状态 (TaskStatus)**:
+  * `PENDING`: 待执行
+  * `IN_PROGRESS`: 执行中
+  * `COMPLETED`: 已完成 (待审核)
+  * `APPROVED`: 审核通过 (已结案)
+  * `REJECTED`: 已驳回
+* **用户角色 (UserRole)**:
+  * `SUPER_ADMIN`: 超级管理员
+  * `PRODUCTION_LEAD`: 生产主管
+  * `MAINTENANCE_TECH`: 维保技师
+  * `GUEST`: 只读访客
+
+---
+
+## 12. 异常与说明 (Exceptions & Notes)
 
 1. **Token 过期**: 返回 HTTP 401，前端需自动跳转至登录页。
 2. **操作冲突**: 如模具已被他人占用，返回 HTTP 409 及具体错误消息。
