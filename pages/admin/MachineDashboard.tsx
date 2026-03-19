@@ -5,9 +5,10 @@ import { MOCK_MOLDS } from '../../services/mockData';
 interface MachineDashboardProps {
   onSwitchView?: (view: 'tooling' | 'machine') => void;
   onBackToAdmin?: () => void;
+  department?: string;
 }
 
-const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBackToAdmin }) => {
+const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBackToAdmin, department }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedMachine, setSelectedMachine] = useState<any>(null);
   const [selectedMoldPos, setSelectedMoldPos] = useState<'P1' | 'P2' | 'P3'>('P1');
@@ -46,7 +47,11 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
   // 固定的24台设备数据，每台设备包含 P1, P2, P3 三套模具
   const allMachines = useMemo(() => {
-    const availableMolds = MOCK_MOLDS.filter(m => m.status !== MoldStatus.Deactivated);
+    // 根据部门过滤模具
+    let availableMolds = MOCK_MOLDS.filter(m => m.status !== MoldStatus.Deactivated);
+    if (department) {
+      availableMolds = availableMolds.filter(m => m.department === department);
+    }
     
     return Array.from({ length: 24 }).map((_, i) => {
       const machineId = `BMD-${String(i + 1).padStart(2, '0')}`;

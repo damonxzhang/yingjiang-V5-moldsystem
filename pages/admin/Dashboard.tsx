@@ -46,10 +46,30 @@ const spareConsumption = [
   { name: '精密螺栓', count: 42 },
 ];
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  department?: string;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ department }) => {
   return (
     <div className="space-y-6">
       {/* 1. 核心 KPI 看板 */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-black text-slate-800 flex items-center gap-3">
+          <i className="fas fa-chart-line text-indigo-600"></i>
+          {department ? `${department} 数据分析看板` : '全厂数据汇总分析看板'}
+        </h2>
+        <div className="flex gap-2">
+          <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-bold text-slate-500 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            实时数据已同步
+          </span>
+          <span className="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-[10px] font-bold text-indigo-600">
+            {new Date().toLocaleDateString()}
+          </span>
+        </div>
+      </div>
+
       <div className="grid grid-cols-4 gap-6">
         {[
           { label: '累计总产出 (Shots)', value: '2.4M', icon: 'fa-microchip', color: 'indigo', sub: '↑ 12% 环比增长' },

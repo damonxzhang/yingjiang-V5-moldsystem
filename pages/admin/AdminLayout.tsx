@@ -31,15 +31,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
   // 处理访客模式下的初始页面
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const dept = params.get('dept');
     const guest = params.get('guest');
 
     if (guest === 'true') {
-      if (dept === 'big') {
-        setActivePage('molds_big');
-      } else if (dept === 'small') {
-        setActivePage('molds_small');
-      }
+      // 访客模式下，默认留在主看板页面，不要跳转到台账
+      setActivePage('machine_screen');
     }
   }, []);
 
@@ -83,7 +79,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
   ];
 
   // 过滤出有权限的菜单
-  const visibleMenuItems = menuItems.filter(item => hasPermission(item.permission));
+  let visibleMenuItems = menuItems.filter(item => hasPermission(item.permission));
+
+  // 访客模式限制：只能访问看板
+  const isGuest = new URLSearchParams(window.location.search).get('guest') === 'true';
+  if (isGuest) {
+    visibleMenuItems = visibleMenuItems.filter(item => 
+      item.id === 'machine_screen' || item.id === 'dashboard' || item.id === 'tooling_screen'
+    );
+  }
 
   const getRoleLabel = (role: Role) => {
     switch(role) {
@@ -97,10 +101,19 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
   };
 
   const renderContent = () => {
+    // 获取当前用户的部门，用于看板过滤
+    const userDept = (userRole === Role.MoldEngineerBig || (userRole as any) === 'GUEST_BIG') ? '大材料' : 
+                     (userRole === Role.MoldEngineerSmall || (userRole as any) === 'GUEST_SMALL') ? '小材料' : undefined;
+    
+    // 从 URL 获取访客模式下的部门 (App.tsx 已经将访客部门存入了权限/角色中，但这里可以直接解析参数更保险)
+    const params = new URLSearchParams(window.location.search);
+    const deptParam = params.get('dept') === 'big' ? '大材料' : params.get('dept') === 'small' ? '小材料' : undefined;
+    const currentDept = deptParam || userDept;
+
     switch(activePage) {
-      case 'dashboard': return <Dashboard />;
+      case 'dashboard': return <Dashboard department={currentDept} />;
       case 'tooling_screen': return <ToolingDashboard onSwitchView={(view) => setActivePage(view === 'tooling' ? 'tooling_screen' : 'machine_screen')} onBackToAdmin={() => setActivePage('dashboard')} />;
-      case 'machine_screen': return <MachineDashboard onSwitchView={(view) => setActivePage(view === 'tooling' ? 'tooling_screen' : 'machine_screen')} onBackToAdmin={() => setActivePage('dashboard')} />;
+      case 'machine_screen': return <MachineDashboard department={currentDept} onSwitchView={(view) => setActivePage(view === 'tooling' ? 'tooling_screen' : 'machine_screen')} onBackToAdmin={() => setActivePage('dashboard')} />;
       case 'production_list': return <ProductionReadyList />;
       case 'shot_monitor': return <ShotCountMonitor />;
       case 'molds_big': return <MoldManagement department="大材料" />;
@@ -136,7 +149,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
             <div className="flex items-center gap-2">
               <h1 className="font-bold text-white text-lg leading-none">SmartMold</h1>
             </div>
-            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase font-mono">V 5.1.20260319.009</span>
+            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase font-mono">V 5.1.20260319.010</span>
           </div>
         </div>
 
