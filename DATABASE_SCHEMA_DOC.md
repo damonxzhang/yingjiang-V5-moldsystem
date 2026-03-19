@@ -345,3 +345,19 @@
 | source_module | NVARCHAR(50) | - | 来源模块 (MOLD/MAINTENANCE/REPAIR) |
 | source_id | INT | - | 来源业务 ID (如工单ID) |
 | created_at | DATETIME | DEFAULT GETDATE() | 上传时间 |
+
+---
+
+### 2.23 模具冲次原始数据 (MoldShotLogs)
+记录模具冲次的原始采集数据。
+
+| 字段名 | 数据类型 | 约束 | 说明 |
+| :--- | :--- | :--- | :--- |
+| log_id | INT | PK, IDENTITY | 记录唯一 ID |
+| mold_id | INT | FK (Molds) | 关联模具内部 ID |
+| mold_code | NVARCHAR(50) | NOT NULL | 模具编号 (DIE ID) |
+| current_shots | INT | - | 当前累计冲次 (CURRENT SHOTS) |
+| life_limit | INT | - | 额定寿命限制 (LIMIT) |
+| machine_code | NVARCHAR(50) | - | 机台编号 (MACHINE) |
+| location | NVARCHAR(100) | - | 位置 (LOCATION) |
+| created_at | DATETIME | DEFAULT GETDATE() | 数据更新时间 (LAST UPDATE) |
