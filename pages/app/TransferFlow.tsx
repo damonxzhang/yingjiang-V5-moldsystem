@@ -271,7 +271,7 @@ const TransferFlow: React.FC<TransferFlowProps> = ({ onBack }) => {
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${
                         task.type === 'REMOVE' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'
                       }`}>
-                        <i className={`fas ${task.type === 'REMOVE' ? 'fa-arrow-up' : 'fa-arrow-down'}`}></i>
+                        <i className={`fas ${task.type === 'REMOVE' ? 'fa-arrow-down' : 'fa-arrow-up'}`}></i>
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -307,22 +307,22 @@ const TransferFlow: React.FC<TransferFlowProps> = ({ onBack }) => {
             <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest text-center">请选择当前作业类型</h3>
             <div className="grid grid-cols-2 gap-6">
                <button 
-                  onClick={() => setMode('REMOVE')}
-                  className="p-8 bg-white border-2 border-slate-100 rounded-3xl shadow-sm flex flex-col items-center gap-4 active:scale-95 transition-all hover:border-red-500"
-               >
-                 <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-3xl">
-                   <i className="fas fa-arrow-up"></i>
-                 </div>
-                 <span className="font-bold text-slate-700">模具拆下</span>
-               </button>
-               <button 
                   onClick={() => setMode('INSTALL')}
                   className="p-8 bg-white border-2 border-slate-100 rounded-3xl shadow-sm flex flex-col items-center gap-4 active:scale-95 transition-all hover:border-green-500"
                >
                  <div className="w-16 h-16 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center text-3xl">
-                   <i className="fas fa-arrow-down"></i>
+                   <i className="fas fa-arrow-up"></i>
                  </div>
                  <span className="font-bold text-slate-700">模具安装</span>
+               </button>
+               <button 
+                  onClick={() => setMode('REMOVE')}
+                  className="p-8 bg-white border-2 border-slate-100 rounded-3xl shadow-sm flex flex-col items-center gap-4 active:scale-95 transition-all hover:border-red-500"
+               >
+                 <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-3xl">
+                   <i className="fas fa-arrow-down"></i>
+                 </div>
+                 <span className="font-bold text-slate-700">模具拆下</span>
                </button>
             </div>
             <div className="bg-blue-50 p-6 rounded-2xl">
