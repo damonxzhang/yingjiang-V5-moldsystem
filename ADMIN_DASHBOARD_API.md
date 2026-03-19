@@ -135,7 +135,7 @@
   ```json
   {
     "keyword": "MD-2024", // 模糊搜索关键字 (模具编号或名称)
-    "status": "IDLE", // 筛选状态: IDLE (闲置中), IN_USE (使用中), MAINTENANCE (保养中)
+    "status": "ALL", // 筛选状态: ALL (全部), IDLE (闲置中), IN_USE (使用中), MAINTENANCE (保养中)
     "package_type": "QFN", // 按封装类型筛选 (如：BGA, QFN)
     "page": 1, // 当前页码
     "page_size": 20 // 每页记录数
@@ -152,8 +152,10 @@
         "mold_code": "MD-2024-001", // 模具业务编号
         "name": "精密 BGA 注塑模", // 模具名称
         "status": "IDLE", // 模具当前状态
-        "cabinet_code": "A123456", // 存放库柜编号
-        "location": "CAB-A01", // 库位详细位置
+        "is_in_cabinet": true, // 存放标记: true (在柜子里), false (在设备上)
+        "cabinet_code": "A123456", // 存放库柜编号 (若在设备上，可为空)
+        "machine_id": "BMD-01", // 当前挂载机台编号 (若在柜子里，可为空)
+        "location": "CAB-A01", // 库位或机台槽位详细位置
         "package_type": "QFN", // 封装类型
         "current_shots": 45200, // 当前已使用冲次
         "max_shots": 500000, // 额定寿命冲次
