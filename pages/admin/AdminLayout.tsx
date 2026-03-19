@@ -149,7 +149,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
             <div className="flex items-center gap-2">
               <h1 className="font-bold text-white text-lg leading-none">SmartMold</h1>
             </div>
-            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase font-mono">V 5.1.20260319.011</span>
+            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase font-mono">V 5.1.20260319.012</span>
           </div>
         </div>
 

@@ -75,27 +75,30 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* 开发模式切换器 - 生产环境中应移除 */}
-      <div className="fixed top-0 right-0 z-50 p-2 flex gap-2 opacity-50 hover:opacity-100 transition-opacity">
+      {/* 开发模式切换器 - 生产环境中应移除 - 调整至顶部中央避免遮挡 Header 按钮 */}
+      <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[60] p-1 flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-indigo-100 opacity-40 hover:opacity-100 transition-all duration-300">
+        <div className="pl-3 pr-1 text-[9px] font-black text-slate-400 uppercase tracking-tighter">Debug Mode</div>
         {!isGuestMode && (
-          <>
+          <div className="flex bg-slate-100 p-0.5 rounded-full border border-slate-200">
             <button 
               onClick={() => setView('APP')} 
-              className={`px-3 py-1 rounded-full text-xs font-bold ${view === 'APP' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600'}`}
+              className={`px-3 py-1 rounded-full text-[10px] font-black transition-all ${view === 'APP' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
             >
               APP (现场执行)
             </button>
             <button 
               onClick={() => setView('ADMIN')} 
-              className={`px-3 py-1 rounded-full text-xs font-bold ${view === 'ADMIN' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'}`}
+              className={`px-3 py-1 rounded-full text-[10px] font-black transition-all ${view === 'ADMIN' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
             >
               Web 后台管理
             </button>
-          </>
+          </div>
         )}
-        <div className={`px-3 py-1 rounded-full text-xs font-bold ${isGuestMode ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+        <div className={`px-3 py-1 rounded-full text-[10px] font-black shadow-sm border ${isGuestMode ? 'bg-amber-500 text-white border-amber-600' : 'bg-green-500 text-white border-green-600'}`}>
+          <i className={`fas ${isGuestMode ? 'fa-user-secret' : 'fa-user-shield'} mr-1.5`}></i>
           {userData.username}
         </div>
+      </div>
         {isGuestMode && (
           <button 
             onClick={() => window.location.href = window.location.pathname}
