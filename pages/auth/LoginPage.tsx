@@ -171,6 +171,26 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               '登录系统'
             )}
           </button>
+          {/* 快速访问链接 (访客模式) */}
+          <div className="pt-4 border-t border-slate-100">
+            <p className="text-[10px] text-slate-400 text-center mb-3 uppercase tracking-widest font-bold">快速看板访问 (无需登录)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <a 
+                href="?guest=true&dept=big" 
+                className="flex items-center justify-center gap-2 py-2 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 rounded-xl transition-all border border-slate-100 hover:border-indigo-100 group"
+              >
+                <i className="fas fa-cube text-xs opacity-50 group-hover:opacity-100"></i>
+                <span className="text-[11px] font-bold">大材料看板</span>
+              </a>
+              <a 
+                href="?guest=true&dept=small" 
+                className="flex items-center justify-center gap-2 py-2 bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-xl transition-all border border-slate-100 hover:border-blue-100 group"
+              >
+                <i className="fas fa-cube text-xs opacity-50 group-hover:opacity-100"></i>
+                <span className="text-[11px] font-bold">小材料看板</span>
+              </a>
+            </div>
+          </div>
         </form>
 
         {/* 测试账号提示 */}

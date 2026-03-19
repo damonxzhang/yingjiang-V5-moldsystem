@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Role, Permission } from '../../types';
 import { ROLE_PERMISSIONS } from '../../services/mockData';
 import Dashboard from './Dashboard';
@@ -27,6 +27,21 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
   const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'maintenance_confirm' | 'repair_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen' | 'role_manage' | 'user_manage' | 'maintenance_option_manage' | 'repair_option_manage'>('machine_screen');
+
+  // 处理访客模式下的初始页面
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const dept = params.get('dept');
+    const guest = params.get('guest');
+
+    if (guest === 'true') {
+      if (dept === 'big') {
+        setActivePage('molds_big');
+      } else if (dept === 'small') {
+        setActivePage('molds_small');
+      }
+    }
+  }, []);
 
   // 处理登出
   const handleLogout = () => {
@@ -121,7 +136,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
             <div className="flex items-center gap-2">
               <h1 className="font-bold text-white text-lg leading-none">SmartMold</h1>
             </div>
-            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase font-mono">V 5.1.20260319.008</span>
+            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase font-mono">V 5.1.20260319.009</span>
           </div>
         </div>
 
