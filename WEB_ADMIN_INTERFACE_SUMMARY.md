@@ -172,6 +172,7 @@
   
   ```json
   { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "keyword": "", // 搜索词：支持模具编号或名称模糊查询
     "is_audit_mode": false, // 是否为 Audit 模式：true(仅看需 Audit 的模具), false(普通台账)
     "status": "ALL", // 状态筛选：IDLE, IN_USE, MAINTENANCE, REPAIR, DEACTIVATED, ALL
@@ -242,7 +243,13 @@
 
 * **用途**: 页面加载或刷新时，通过 Token 获取当前登录用户的详细信息及权限。
 * **接口**: `POST /api/admin/auth/profile`
-* **请求体**: `{}` // 鉴权信息通常在 Header 中，请求体可为空
+* **请求体**: 
+  
+  ```json
+  {
+    "user_id": "ADM001" // 用户唯一标识 (工号/UUID)
+  }
+  ```
 * **返回数据**:
   
   ```json
@@ -314,6 +321,7 @@
   
   ```json
   {
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "mold_id": "MD-2024-001", // 编辑时必填，新增时传空串或不传
     "mold_code": "T100", // 模具编号
     "short_name": "BGA-01", // 模具简称
@@ -353,6 +361,7 @@
   
   ```json
   { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "mold_id": "MD-2024-001" // 模具唯一 ID
   }
   ```
@@ -418,6 +427,7 @@
   
   ```json
   { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "status": "PENDING",   // 任务状态：PENDING(待执行), COMPLETED(已完成), ALL(全部)
     "page": 1, 
     "page_size": 10 
@@ -450,6 +460,7 @@
   
   ```json
   { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "status": "PENDING",   // 任务状态
     "page": 1, 
     "page_size": 10 
@@ -482,6 +493,7 @@
   
   ```json
   { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "task_id": "MT-2026-001", // 任务单号
     "task_type": "MAINTENANCE", // 任务类型 (MAINTENANCE, REPAIR)
     "status": "APPROVED", // 审核结果：APPROVED(通过), REJECTED(驳回)
@@ -502,6 +514,7 @@
   
   ```json
   { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "department": "大材料", // 部门筛选：大材料, 小材料, ALL(全部)
     "filter_alerts": false, // 是否仅查看预警项：true(仅看库存不足), false(全部)
     "keyword": "" // 备件名称/规格模糊搜索关键词
@@ -534,6 +547,7 @@
   
   ```json
   { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "spare_id": "SP-001", // 备件唯一 ID
     "type": "STOCK_IN", // 动作类型：STOCK_IN(入库), STOCK_OUT(出库)
     "amount": 10,       // 操作数量 (正整数)
@@ -558,6 +572,7 @@
   
   ```json
   { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "plan_id": "PLAN-2026-Q2", // 关联的生产计划 ID
     "time_horizon": "30d"      // 预测时间跨度：7d(一周), 30d(一月), 90d(一季)
   }
@@ -592,6 +607,7 @@
   
   ```json
   {
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "department": "大材料" // 部门过滤：大材料, 小材料, ALL
   }
   ```
@@ -627,6 +643,7 @@
   
   ```json
   { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "machine_id": "BMD-14", // 机台 ID
     "sku": "5220", // 产品 SKU
     "slot_id": "P1", // 槽位 ID
@@ -651,6 +668,7 @@
   
   ```json
   { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "process": "注塑", // 工序过滤
     "package_type": "BGA" // 封装类型过滤
   }
