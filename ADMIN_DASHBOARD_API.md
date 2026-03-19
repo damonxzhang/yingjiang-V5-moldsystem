@@ -178,8 +178,7 @@
     "mold_id": "UUID-T100-01", // 关联模具唯一 ID
     "user_id": "ADM001", // 任务发起人 ID
     "start_time": "2026-03-05T03:19", // 计划保养开始时间 (ISO 格式)
-    "end_time": "2026-03-05T07:19", // 计划保养结束时间 (ISO 格式)
-    "description": "例行保养" // 任务详细描述或要求
+    "end_time": "2026-03-05T07:19" // 计划保养结束时间 (ISO 格式)
   }
   ```
 * **返回数据**: `{ "success": true, "task_id": "MT-2026-001" }` // success: 是否创建成功, task_id: 生成的任务工单号
@@ -194,8 +193,7 @@
   {
     "machine_id": "BMD-01", // 关联机台 ID
     "mold_id": "UUID-T100-01", // 关联模具唯一 ID
-    "user_id": "ADM001", // 报修发起人 ID
-    "description": "发现模具边缘磨损，需紧急修复" // 故障现象描述
+    "user_id": "ADM001" // 报修发起人 ID
   }
   ```
 * **返回数据**: `{ "success": true, "task_id": "RT-2026-001" }` // success: 是否创建成功, task_id: 生成的报修工单号
