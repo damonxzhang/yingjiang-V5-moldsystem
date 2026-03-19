@@ -330,6 +330,8 @@
     "pin_code": "A", // Pin Code 标识
     "department": "大材料", // 所属部门
     "life_limit": 500000, // 额定总寿命冲次
+    "maintenance_cycle": "30天", // 保养周期 (MAINT CYCLE)
+    "start_time": "2026-01-01", // 开始保养时间 (START TIME)
     "components": [ // 模具 BOM 结构/组成部件列表
       { 
         "category": "上模件", // 部件所属分类 (如：上模件、下模件、中模件)
@@ -377,6 +379,8 @@
     "pin_code": "A", // Pin Code
     "department": "大材料", // 所属部门
     "life_limit": 500000, // 额定寿命冲次
+    "maintenance_cycle": "30天", // 保养周期 (MAINT CYCLE)
+    "start_time": "2026-01-01", // 开始保养时间 (START TIME)
     "shot_total": 456789, // 实时当前累计总冲次
     "status": "IDLE", // 当前状态
     "components": [ // BOM 组成部件列表
