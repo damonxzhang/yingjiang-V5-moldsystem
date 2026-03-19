@@ -17,7 +17,13 @@
 
 * **用途**: 获取当前登录管理者的基本信息及看板操作权限。
 * **接口**: `POST /api/admin/auth/profile`
-* **请求体**: `{}`
+* **请求体**: 
+  
+  ```json
+  {
+    "user_id": "ADM001" // 用户唯一标识 (UUID/工号)
+  }
+  ```
 * **返回数据**:
   
   ```json
@@ -95,6 +101,7 @@
   
   ```json
   {
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "machine_id": "BMD-01", // 查询的机台唯一 ID
     "slot": "P1" // 槽位标识 (如：P1, P2...)
   }
@@ -134,6 +141,7 @@
   
   ```json
   {
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "keyword": "MD-2024", // 模糊搜索关键字 (模具编号或名称)
     "status": "ALL", // 筛选状态: ALL (全部), IDLE (闲置中), IN_USE (使用中), MAINTENANCE (保养中)
     "package_type": "QFN", // 按封装类型筛选 (如：BGA, QFN)
