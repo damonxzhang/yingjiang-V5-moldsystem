@@ -419,9 +419,166 @@
 
 ---
 
-## 5. 维保与任务中心 (Maintenance & Tasks)
+## 5. Audit 清单 (Audit Checklist)
 
-### 5.1 获取保养记录列表
+### 5.1 获取 Audit 模具列表
+
+* **用途**: 专门用于“Audit 清单”页面，默认仅展示需要 Audit 的模具。
+* **接口**: `POST /api/admin/mold/list`
+* **请求体**: 
+  
+  ```json
+  { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "keyword": "", // 搜索词：支持模具编号或名称模糊查询
+    "department": "大材料", // 部门筛选：大材料, 小材料, ALL(全部)
+    "is_audit_mode": true, // 是否为 Audit 模式：在此接口中默认为 true
+    "status": "ALL", // 状态筛选：IDLE, IN_USE, MAINTENANCE, REPAIR, DEACTIVATED, ALL
+    "page": 1, // 当前页码
+    "page_size": 20 // 每页记录数
+  }
+  ```
+* **返回数据**:
+  
+  ```json
+  {
+    "total": 100, // 符合条件的模具总数
+    "list": [ // 模具台账简要信息列表
+      { 
+        "mold_id": "TY71", // 模具系统内唯一 ID
+        "mold_code": "MD-2024-001", // 模具编号
+        "short_name": "BGA-01", // 模具简称
+        "mold_category": "大材料模具", // 分类
+        "product_type": "BGA", // 产品类型
+        "location": "CAB-A01", // 位置 (库位或机台)
+        "thickness": "250mm", // 厚度
+        "package_type": "QFN", // PACKAGE TYPE
+        "package_size": "HD", // PACKAGE SIZE
+        "current_shots": 45200, // 实时 SHOT COUNT
+        "max_shots": 500000, // SHOT 上限
+        "maintenance_cycle": "30天", // 保养周期
+        "start_date": "2026-01-01", // 开始时间
+        "current_machine": "离线/库房", // 所在设备 (机台编号或状态)
+        "machine_status": "闲置", // 设备上的状态 (闲置, 使用中, 保养中)
+        "is_active": true, // 状态是否有效
+        "status": "IDLE", // 业务状态 (IDLE, MAINTENANCE, USING)
+        "department": "大材料" // 所属部门
+      }
+    ]
+  }
+  ```
+
+### 5.2 新增/编辑 Audit 模具档案 (含基本参数与 BOM)
+
+* **用途**: 统一处理模具档案的创建与更新。
+* **接口**: `POST /api/admin/mold/save`
+* **请求体**: 
+  
+  ```json
+  {
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "mold_id": "MD-2024-001", // 编辑时必填，新增时传空串或不传
+    "mold_code": "T100", // 模具编号
+    "short_name": "BGA-01", // 模具简称
+    "thickness": "250mm", // 模具厚度参数
+    "mold_category": "大材料模具", // 模具类别名称
+    "product_type": "BGA", // 适用产品类型
+    "package_type": "QFN", // 适用封装类型
+    "pin_code": "A", // Pin Code 标识
+    "department": "大材料", // 所属部门
+    "life_limit": 500000, // 额定总寿命冲次
+    "maintenance_cycle": "30天", // 保养周期 (MAINT CYCLE)
+    "start_time": "2026-01-01", // 开始保养时间 (START TIME)
+    "components": [ // 模具 BOM 结构/组成部件列表
+      { 
+        "category": "上模件", // 部件所属分类 (如：上模件、下模件、中模件)
+        "name": "上模盒",     // 部件具体名称
+        "sn": "#1/6-100597", // 部件序列号或唯一标识
+        "is_spare": false,    // 是否为消耗性备件：true(是), false(否)
+        "life_limit": "N/A"   // 该部件的寿命限制 (如有，无则传 "N/A")
+      }
+    ]
+  }
+  ```
+* **返回数据**:
+  
+  ```json
+  {
+    "success": true, // 操作是否成功
+    "mold_id": "MD-2024-001", // 保存成功的模具 ID
+    "message": "模具档案保存成功" // 返回的提示消息
+  }
+  ```
+
+### 5.3 获取 Audit 模具完整详情 (含 BOM)
+
+* **用途**: 在编辑模具或查看模具详情详情时调用。
+* **接口**: `POST /api/admin/mold/detail`
+* **请求体**: 
+  
+  ```json
+  { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "mold_id": "MD-2024-001" // 模具唯一 ID
+  }
+  ```
+* **返回数据**: 
+  
+  ```json
+  {
+    "mold_id": "MD-2024-001", // 模具唯一 ID
+    "mold_code": "T100", // 模具编号
+    "short_name": "BGA-01", // 模具简称
+    "thickness": "250mm", // 模具厚度
+    "mold_category": "大材料模具", // 模具类别
+    "product_type": "BGA", // 产品类型
+    "package_type": "QFN", // 封装类型
+    "pin_code": "A", // Pin Code
+    "department": "大材料", // 所属部门
+    "life_limit": 500000, // 额定寿命冲次
+    "maintenance_cycle": "30天", // 保养周期 (MAINT CYCLE)
+    "start_time": "2026-01-01", // 开始保养时间 (START TIME)
+    "shot_total": 456789, // 实时当前累计总冲次
+    "status": "IDLE", // 当前状态
+    "components": [ // BOM 组成部件列表
+      { 
+        "category": "上模件", // 部件分类
+        "name": "上模盒", // 部件名称
+        "sn": "#1/6-100597", // 序列号
+        "is_spare": false, // 是否备件
+        "life_limit": "N/A" // 寿命限制
+      }
+    ]
+  }
+  ```
+
+### 5.4 停用 Audit 模具
+
+* **用途**: 在模具台账页面对模具进行报废或长期停用处理。
+* **接口**: `POST /api/admin/mold/deactivate`
+* **请求体**: 
+  
+  ```json
+  { 
+    "mold_id": "MD-2024-001", // 模具唯一 ID
+    "reason": "寿命已满且无法修复", // 停用或报废的原因描述
+    "user_id": "ADM001" // 执行操作的管理员 ID
+  }
+  ```
+* **返回数据**:
+  
+  ```json
+  {
+    "success": true, // 操作是否成功
+    "message": "模具已成功停用" // 返回的提示消息
+  }
+  ```
+
+---
+
+## 6. 维保与任务中心 (Maintenance & Tasks)
+
+### 6.1 获取保养记录列表
 
 * **用途**: 用于“任务中心”、“保养执行记录”页面。
 * **接口**: `POST /api/admin/tasks/maintenance/list`
@@ -454,7 +611,7 @@
   }
   ```
 
-### 5.2 获取维修记录列表
+### 6.2 获取维修记录列表
 
 * **用途**: 用于“任务中心”、“维修执行记录”页面。
 * **接口**: `POST /api/admin/tasks/repair/list`
@@ -487,7 +644,7 @@
   }
   ```
 
-### 5.3 任务审核与验收
+### 6.3 任务审核与验收
 
 * **用途**: 管理员对已完成的保养或维修任务进行审核确认。
 * **接口**: `POST /api/admin/tasks/verify`
@@ -506,9 +663,9 @@
 
 ---
 
-## 6. 备件管理 (Spare Parts)
+## 7. 备件管理 (Spare Parts)
 
-### 6.1 获取备件列表及预警
+### 7.1 获取备件列表及预警
 
 * **用途**: 获取备件库存状态，高亮显示低于安全库存的备件。
 * **接口**: `POST /api/admin/spare-parts/list`
@@ -541,7 +698,7 @@
   }
   ```
 
-### 6.2 备件入库/出库
+### 7.2 备件入库/出库
 
 * **用途**: 手动调整备件库存。
 * **接口**: `POST /api/admin/spare-parts/move`
@@ -566,7 +723,7 @@
   }
   ```
 
-### 6.3 备件购买预测
+### 7.3 备件购买预测
 
 * **用途**: 根据模具生产计划及当前配件消耗率，预测未来备件需求。
 * **接口**: `POST /api/admin/spare-parts/prediction/list`
@@ -599,9 +756,9 @@
 
 ---
 
-## 7. 生产配置与监控 (Production Config & Monitor)
+## 8. 生产配置与监控 (Production Config & Monitor)
 
-### 7.1 可生产产品 LIST
+### 8.1 可生产产品 LIST
 
 * **用途**: 获取各产线机台及其绑定的产品 SKU 和模具准备状态。
 * **接口**: `POST /api/admin/production/hierarchy`
@@ -637,7 +794,7 @@
   ]
   ```
 
-### 7.2 切换生产就绪状态
+### 8.2 切换生产就绪状态
 
 * **用途**: 在生产监控页面点击勾选/取消各项就绪状态。
 * **接口**: `POST /api/admin/production/toggle-ready`
@@ -662,7 +819,7 @@
   }
   ```
 
-### 7.3 实时 Shot 数监控
+### 8.3 实时 Shot 数监控
 
 * **用途**: 实时查看各模具的消耗比例及预警状态。
 * **接口**: `POST /api/admin/monitor/shot-counts`
@@ -694,11 +851,11 @@
 
 ---
 
-## 8. 模具配件绑定 (Mold-Spare Binding)
+## 9. 模具配件绑定 (Mold-Spare Binding)
 
 * **业务逻辑**: 用于建立模具与常用备件之间的关联关系。在维保领料或备件预警时，系统将根据此绑定关系及“建议装配量”自动计算缺口。
 
-### 8.1 获取模具绑定配件列表
+### 9.1 获取模具绑定配件列表
 
 * **用途**: 在绑定管理页面，查看特定模具已绑定的所有备件及其实时库存。
 * **接口**: `POST /api/admin/mold/spare-bindings/list`
@@ -723,7 +880,7 @@
   ]
   ```
 
-### 8.2 保存/更新绑定关系
+### 9.2 保存/更新绑定关系
 
 * **用途**: 新增绑定或修改已有绑定的装配数量。
 * **接口**: `POST /api/admin/mold/spare-bindings/save`
@@ -745,7 +902,7 @@
   }
   ```
 
-### 8.3 解除绑定
+### 9.3 解除绑定
 
 * **用途**: 删除模具与备件之间的关联。
 * **接口**: `POST /api/admin/mold/spare-bindings/remove`
@@ -766,7 +923,7 @@
   }
   ```
 
-### 8.4 获取可绑定的备件候选项
+### 9.4 获取可绑定的备件候选项
 
 * **用途**: 点击“添加绑定”时，获取尚未与当前模具关联的备件列表。
 * **接口**: `POST /api/admin/mold/spare-bindings/available-spares`
@@ -795,23 +952,23 @@
 
 ---
 
-## 9. 系统管理与配置 (System Admin & Config)
+## 10. 系统管理与配置 (System Admin & Config)
 
-### 9.1 保养项目配置管理
+### 10.1 保养项目配置管理
 
 * **用途**: 管理员自定义保养的任务选项。
 * **获取列表**: `POST /api/admin/system/maintenance-items/list`
 * **新增/编辑**: `POST /api/admin/system/maintenance-items/save`
 * **删除**: `POST /api/admin/system/maintenance-items/delete`
 
-### 9.2 维修故障项配置管理
+### 10.2 维修故障项配置管理
 
 * **用途**: 管理员自定义维修的任务选项。
 * **获取列表**: `POST /api/admin/system/repair-items/list`
 * **新增/编辑**: `POST /api/admin/system/repair-items/save`
 * **删除**: `POST /api/admin/system/repair-items/delete`
 
-### 9.3 字典数据管理 (通用)
+### 10.3 字典数据管理 (通用)
 
 * **用途**: 管理机台列表、槽位定义、部门、模具类别等基础数据。
 * **接口**: `POST /api/admin/system/dict/list`
@@ -827,9 +984,9 @@
 
 ---
 
-## 10. 统计报表 (Reports & Statistics)
+## 11. 统计报表 (Reports & Statistics)
 
-### 10.1 获取 OEE 及稼动率数据
+### 11.1 获取 OEE 及稼动率数据
 
 * **用途**: 用于仪表盘大屏或月度报表。
 * **接口**: `POST /api/admin/reports/oee`
@@ -854,7 +1011,7 @@
   }
   ```
 
-### 10.2 导出台账报表
+### 11.2 导出台账报表
 
 * **用途**: 下载 Excel 格式的模具或维修台账。
 * **接口**: `GET /api/admin/reports/export/ledger?type=MOLD`
@@ -862,7 +1019,7 @@
 
 ---
 
-## 11. 全局枚举值定义 (Global Enums)
+## 12. 全局枚举值定义 (Global Enums)
 
 为了前端代码规范，以下为常用的状态枚举值：
 
@@ -886,7 +1043,7 @@
 
 ---
 
-## 12. 异常与说明 (Exceptions & Notes)
+## 13. 异常与说明 (Exceptions & Notes)
 
 1. **Token 过期**: 返回 HTTP 401，前端需自动跳转至登录页。
 2. **操作冲突**: 如模具已被他人占用，返回 HTTP 409 及具体错误消息。
