@@ -149,7 +149,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
             <div className="flex items-center gap-2">
               <h1 className="font-bold text-white text-lg leading-none">SmartMold</h1>
             </div>
-            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase font-mono">V 5.1.20260319.010</span>
+            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase font-mono">V 5.1.20260319.011</span>
           </div>
         </div>
 
@@ -204,6 +204,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
                 className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors"
               >
                 刷新数据
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-4 py-2 rounded-lg text-xs font-black transition-all border border-red-100"
+              >
+                <i className="fas fa-sign-out-alt"></i>
+                退出登录
               </button>
             </div>
           </header>
