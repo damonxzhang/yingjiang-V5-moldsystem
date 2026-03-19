@@ -603,22 +603,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   <div className="flex-1 p-8 grid grid-cols-2 gap-8">
                     <div className="space-y-4">
                       <div className="bg-blue-950/50 p-5 rounded-2xl border border-blue-900">
-                        <h3 className="text-[10px] font-black text-blue-500 uppercase mb-4">当前生产概况</h3>
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4 text-xs">
-                            <div>
-                              <p className="text-slate-500 text-[10px] uppercase font-bold mb-1">计划产量</p>
-                              <p className="text-blue-100 font-mono font-bold">{selectedMachine.targetQty.toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-slate-500 text-[10px] uppercase font-bold mb-1">已完成</p>
-                              <p className="text-green-400 font-mono font-bold">{selectedMachine.completedQty.toLocaleString()}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-blue-950/50 p-5 rounded-2xl border border-blue-900">
                         <div className="flex justify-between items-center mb-4">
                           <h3 className="text-[10px] font-black text-blue-500 uppercase">模具状态 ({selectedMoldPos})</h3>
                           <span className={`text-[10px] font-black px-2 py-0.5 rounded ${
