@@ -277,6 +277,7 @@
   
   ```json
   { 
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "keyword": "", // 搜索词：支持模具编号或名称模糊查询
     "department": "大材料", // 部门筛选：大材料, 小材料, ALL(全部)
     "is_audit_mode": false, // 是否为 Audit 模式：true(仅看需 Audit 的模具), false(普通台账)
