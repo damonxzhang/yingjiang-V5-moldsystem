@@ -942,42 +942,67 @@
 
 * **业务逻辑**: 用于建立模具与常用备件之间的关联关系。在维保领料或备件预警时，系统将根据此绑定关系及“建议装配量”自动计算缺口。
 
-### 9.1 获取模具绑定配件列表
+### 9.1 获取模具及其绑定的备件列表
 
-* **用途**: 在绑定管理页面，查看特定模具已绑定的所有备件及其实时库存。
+* **用途**: 区分部门展示模具清单，并可查看特定模具已绑定的所有备件及其实时库存。
 * **接口**: `POST /api/admin/mold/spare-bindings/list`
 * **请求体**: 
   
   ```json
   { 
-    "mold_id": "MOLD-001" // 模具唯一 ID
+    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "department": "大材料", // 部门过滤：大材料, 小材料, ALL(全部)
+    "keyword": "", // 模具编号/名称搜索
+    "mold_id": "", // 特定模具 ID (可选，若传此值则仅返回该模具的绑定详情)
+    "page": 1,
+    "page_size": 20
   }
   ```
 * **返回数据**:
   
   ```json
-  [
-    {
-      "spare_id": "SP-001", // 备件唯一 ID
-      "spare_name": "上模顶针", // 备件名称
-      "quantity": 2, // 建议装配量 (该模具标准配置需要的数量)
-      "current_stock": 15, // 备件当前的仓库总库存
-      "min_stock": 5 // 备件的安全库存报警阈值
-    }
-  ]
+  {
+    "total": 50, // 模具总数
+    "list": [
+      {
+        "mold_id": "MOLD-001",
+        "mold_code": "T100",
+        "mold_name": "上模组合件",
+        "department": "大材料",
+        "bindings": [ // 该模具已绑定的备件列表
+          {
+            "spare_id": "SP-001", // 备件唯一 ID
+            "spare_name": "上模顶针", // 备件名称
+            "quantity": 2, // 建议装配量 (该模具标准配置需要的数量)
+            "current_stock": 15, // 备件当前的仓库总库存
+            "min_stock": 5 // 备件的安全库存报警阈值
+          }
+        ]
+      }
+    ]
+  }
   ```
 
-### 9.2 保存/更新绑定关系
+### 9.2 批量保存/更新绑定关系
 
-* **用途**: 新增绑定或修改已有绑定的装配数量。
-* **接口**: `POST /api/admin/mold/spare-bindings/save`
+* **用途**: 支持一次性为某个模具新增或修改多个备件的绑定装配数量。
+* **接口**: `POST /api/admin/mold/spare-bindings/batch-save`
 * **请求体**: 
   
   ```json
   { 
-    "mold_id": "MOLD-001", // 模具唯一 ID
-    "spare_id": "SP-001", // 备件唯一 ID
-    "quantity": 2 // 设定的建议装配数量 (正整数)
+    "user_id": "ADM001",
+    "mold_id": "MOLD-001", // 目标模具 ID
+    "items": [ // 待绑定/更新的备件列表
+      {
+        "spare_id": "SP-001", 
+        "quantity": 5 // 建议装配数量
+      },
+      {
+        "spare_id": "SP-002",
+        "quantity": 10
+      }
+    ]
   }
   ```
 * **返回数据**:
@@ -985,20 +1010,21 @@
   ```json
   {
     "success": true, // 操作是否成功
-    "message": "绑定关系已保存" // 返回的提示消息
+    "message": "批量绑定关系已保存" // 返回的提示消息
   }
   ```
 
-### 9.3 解除绑定
+### 9.3 批量解除绑定
 
-* **用途**: 删除模具与备件之间的关联。
-* **接口**: `POST /api/admin/mold/spare-bindings/remove`
+* **用途**: 支持一次性删除模具与多个备件之间的关联。
+* **接口**: `POST /api/admin/mold/spare-bindings/batch-remove`
 * **请求体**: 
   
   ```json
   { 
-    "mold_id": "MOLD-001", // 模具唯一 ID
-    "spare_id": "SP-001" // 备件唯一 ID
+    "user_id": "ADM001",
+    "mold_id": "MOLD-001", // 目标模具 ID
+    "spare_ids": ["SP-001", "SP-002"] // 待解除绑定的备件 ID 数组
   }
   ```
 * **返回数据**:
@@ -1006,7 +1032,7 @@
   ```json
   {
     "success": true, // 操作是否成功
-    "message": "绑定关系已解除" // 返回的提示消息
+    "message": "选定备件已成功解除绑定" // 返回的提示消息
   }
   ```
 
@@ -1031,7 +1057,8 @@
       { 
         "spare_id": "SP-005", // 备件 ID
         "name": "下模推板", // 备件名称
-        "spec": "Type-C" // 规格
+        "spec": "Type-C", // 规格
+        "current_stock": 25 // 当前仓库总库存 (新增字段)
       }
     ]
   }
