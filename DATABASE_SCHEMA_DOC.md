@@ -16,8 +16,8 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| DepartmentID | INT | PK, IDENTITY | 部门唯一标识 ID |
-| DepartmentName | NVARCHAR(50) | NOT NULL, UNIQUE | 部门名称 (如：大材料、小材料等) |
+| department_id | INT | PK, IDENTITY | 部门唯一标识 ID |
+| department_name | NVARCHAR(50) | NOT NULL, UNIQUE | 部门名称 (如：大材料、小材料等) |
 
 ---
 
@@ -26,8 +26,8 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| RoleCode | NVARCHAR(20) | PK | 角色代码 (唯一标识，如 SUPER_ADMIN) |
-| Description | NVARCHAR(100) | - | 角色中文描述 (如：超级管理员) |
+| role_code | NVARCHAR(20) | PK | 角色代码 (唯一标识，如 SUPER_ADMIN) |
+| description | NVARCHAR(100) | - | 角色中文描述 (如：超级管理员) |
 
 ---
 
@@ -36,8 +36,8 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| PermissionCode | NVARCHAR(50) | PK | 权限唯一代码 |
-| Description | NVARCHAR(100) | - | 权限功能描述 |
+| permission_code | NVARCHAR(50) | PK | 权限唯一代码 |
+| description | NVARCHAR(100) | - | 权限功能描述 |
 
 ---
 
@@ -46,8 +46,8 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| RoleCode | NVARCHAR(20) | PK, FK (Roles) | 所属角色代码 |
-| PermissionCode | NVARCHAR(50) | PK, FK (Permissions) | 拥有的权限代码 |
+| role_code | NVARCHAR(20) | PK, FK (Roles) | 所属角色代码 |
+| permission_code | NVARCHAR(50) | PK, FK (Permissions) | 拥有的权限代码 |
 
 ---
 
@@ -56,16 +56,16 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| UserID | INT | PK, IDENTITY | 用户唯一 ID |
-| UserCode | NVARCHAR(50) | NOT NULL, UNIQUE | 工号/登录账号 |
-| UserName | NVARCHAR(50) | NOT NULL | 用户真实姓名 |
-| Password | NVARCHAR(100) | - | 登录密码 (加密存储) |
-| CardNo | NVARCHAR(50) | UNIQUE | 员工卡号 (用于扫码登录/验证) |
-| RoleCode | NVARCHAR(20) | FK (Roles) | 角色代码 |
-| DepartmentID | INT | FK (Departments) | 所属部门 ID |
-| Status | NVARCHAR(20) | DEFAULT 'ACTIVE' | 账号状态 (ACTIVE/DISABLED) |
-| CreatedAt | DATETIME | DEFAULT GETDATE() | 创建时间 |
-| UpdatedAt | DATETIME | DEFAULT GETDATE() | 更新时间 |
+| user_id | INT | PK, IDENTITY | 用户唯一 ID |
+| user_code | NVARCHAR(50) | NOT NULL, UNIQUE | 工号/登录账号 |
+| user_name | NVARCHAR(50) | NOT NULL | 用户真实姓名 |
+| password | NVARCHAR(100) | - | 登录密码 (加密存储) |
+| card_no | NVARCHAR(50) | UNIQUE | 员工卡号 (用于扫码登录/验证) |
+| role_code | NVARCHAR(20) | FK (Roles) | 角色代码 |
+| department_id | INT | FK (Departments) | 所属部门 ID |
+| status | NVARCHAR(20) | DEFAULT 'ACTIVE' | 账号状态 (ACTIVE/DISABLED) |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 更新时间 |
 
 ---
 
@@ -74,13 +74,13 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| MachineID | INT | PK, IDENTITY | 机台唯一 ID |
-| MachineCode | NVARCHAR(50) | NOT NULL, UNIQUE | 机台编号 (物理标签编号) |
-| Status | NVARCHAR(20) | DEFAULT 'NORMAL' | 机台状态 (NORMAL/MAINTENANCE/FAULT) |
-| Location | NVARCHAR(100) | - | 物理位置 (如：A栋1F) |
-| DepartmentID | INT | FK (Departments) | 归属部门 ID |
-| TotalSlots | INT | DEFAULT 4 | 总槽位数 |
-| CreatedAt | DATETIME | DEFAULT GETDATE() | 登记时间 |
+| machine_id | INT | PK, IDENTITY | 机台唯一 ID |
+| machine_code | NVARCHAR(50) | NOT NULL, UNIQUE | 机台编号 (物理标签编号) |
+| status | NVARCHAR(20) | DEFAULT 'NORMAL' | 机台状态 (NORMAL/MAINTENANCE/FAULT) |
+| location | NVARCHAR(100) | - | 物理位置 (如：A栋1F) |
+| department_id | INT | FK (Departments) | 归属部门 ID |
+| total_slots | INT | DEFAULT 4 | 总槽位数 |
+| created_at | DATETIME | DEFAULT GETDATE() | 登记时间 |
 
 ---
 
@@ -89,29 +89,30 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| MoldID | INT | PK, IDENTITY | 模具唯一内部 ID |
-| MoldCode | NVARCHAR(50) | NOT NULL, UNIQUE | 模具编号 (业务主键) |
-| Name | NVARCHAR(100) | - | 模具简称/名称 |
-| FullName | NVARCHAR(200) | - | 模具完整名称 |
-| ShortName | NVARCHAR(50) | - | 模具缩写 |
-| Thickness | NVARCHAR(50) | - | 模具厚度规格 |
-| MoldCategory | NVARCHAR(50) | - | 模具类别 |
-| ProductType | NVARCHAR(50) | - | 产品类型 |
-| PackageType | NVARCHAR(50) | - | 封装类型 |
-| PinCode | NVARCHAR(50) | - | Pin码 |
-| DepartmentID | INT | FK (Departments) | 所属部门 ID |
-| LifeLimit | INT | DEFAULT 0 | 额定寿命 (次数) |
-| CurrentShots | INT | DEFAULT 0 | 当前已使用次数 (啤数) |
-| Status | NVARCHAR(20) | DEFAULT 'IDLE' | 状态 (IDLE/IN_USE/MAINTENANCE/SCRAP) |
-| HealthScore | DECIMAL(5,2) | DEFAULT 100.00 | 健康评分 (0-100) |
-| NextAuditDate | DATE | - | 下次点检日期 |
-| Vendor | NVARCHAR(100) | - | 供应商 |
-| CabinetCode | NVARCHAR(50) | - | 存放库柜编号 |
-| Location | NVARCHAR(100) | - | 具体存放位置 |
-| MaintenanceCycle | NVARCHAR(50) | - | 模具保养周期 (如：30天/50K) |
-| MaintenanceStartTime | DATE | - | 开始保养时间 |
-| CreatedAt | DATETIME | DEFAULT GETDATE() | 入库日期 |
-| UpdatedAt | DATETIME | DEFAULT GETDATE() | 最后更新日期 |
+| mold_id | INT | PK, IDENTITY | 模具唯一内部 ID |
+| mold_code | NVARCHAR(50) | NOT NULL, UNIQUE | 模具编号 (业务主键) |
+| name | NVARCHAR(100) | - | 模具名称 |
+| full_name | NVARCHAR(200) | - | 模具完整名称 |
+| short_name | NVARCHAR(50) | - | 模具缩写 |
+| thickness | NVARCHAR(50) | - | 模具厚度规格 |
+| mold_category | NVARCHAR(50) | - | 模具类别 |
+| product_type | NVARCHAR(50) | - | 产品类型 |
+| package_type | NVARCHAR(50) | - | 封装类型 |
+| package_size | NVARCHAR(50) | - | 封装尺寸 (HD/SD 等) |
+| pin_code | NVARCHAR(50) | - | Pin码 |
+| department_id | INT | FK (Departments) | 所属部门 ID |
+| life_limit | INT | DEFAULT 0 | 额定寿命 (次数) |
+| current_shots | INT | DEFAULT 0 | 当前已使用次数 (啤数) |
+| status | NVARCHAR(20) | DEFAULT 'IDLE' | 状态 (IDLE/IN_USE/MAINTENANCE/SCRAP) |
+| health_score | DECIMAL(5,2) | DEFAULT 100.00 | 健康评分 (0-100) |
+| next_audit_date | DATE | - | 下次点检日期 |
+| vendor | NVARCHAR(100) | - | 供应商 |
+| cabinet_code | NVARCHAR(50) | - | 存放库柜编号 |
+| location | NVARCHAR(100) | - | 具体存放位置 |
+| maintenance_cycle | NVARCHAR(50) | - | 模具保养周期 (如：30天/50K) |
+| start_time | DATE | - | 开始保养时间 |
+| created_at | DATETIME | DEFAULT GETDATE() | 入库日期 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 最后更新日期 |
 
 ---
 
@@ -120,14 +121,14 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| MachineID | INT | PK, FK (Machines) | 机台 ID |
-| Slot | NVARCHAR(10) | PK | 槽位编号 (如：1, 2, 3, 4) |
-| MoldID | INT | FK (Molds) | 当前加载的模具 ID |
-| Status | NVARCHAR(20) | DEFAULT 'NORMAL' | 槽位状态 |
-| ParamReady | BIT | DEFAULT 0 | 参数设定是否就绪 |
-| MoldReady | BIT | DEFAULT 0 | 模具安装是否就绪 |
-| BuyoffReady | BIT | DEFAULT 0 | 首件点检是否就绪 |
-| UpdatedAt | DATETIME | DEFAULT GETDATE() | 状态更新时间 |
+| machine_id | INT | PK, FK (Machines) | 机台 ID |
+| slot | NVARCHAR(10) | PK | 槽位编号 (如：1, 2, 3, 4) |
+| mold_id | INT | FK (Molds) | 当前加载的模具 ID |
+| status | NVARCHAR(20) | DEFAULT 'NORMAL' | 槽位状态 |
+| param_ready | BIT | DEFAULT 0 | 参数设定是否就绪 |
+| mold_ready | BIT | DEFAULT 0 | 模具安装是否就绪 |
+| buyoff_ready | BIT | DEFAULT 0 | 首件点检是否就绪 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 状态更新时间 |
 
 ---
 
@@ -136,14 +137,14 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| ComponentID | INT | PK, IDENTITY | 组件唯一 ID |
-| MoldID | INT | FK (Molds) | 所属模具 ID |
-| Name | NVARCHAR(100) | NOT NULL | 组件名称 |
-| SN | NVARCHAR(100) | - | 序列号/批次号 |
-| Category | NVARCHAR(50) | - | 组件类别 |
-| IsSpare | BIT | DEFAULT 0 | 是否为易损备件 (1:是, 0:否) |
-| LifeLimit | INT | - | 组件额定寿命 |
-| CreatedAt | DATETIME | DEFAULT GETDATE() | 登记时间 |
+| component_id | INT | PK, IDENTITY | 组件唯一 ID |
+| mold_id | INT | FK (Molds) | 所属模具 ID |
+| name | NVARCHAR(100) | NOT NULL | 组件名称 |
+| sn | NVARCHAR(100) | - | 序列号/批次号 |
+| category | NVARCHAR(50) | - | 组件类别 |
+| is_spare | BIT | DEFAULT 0 | 是否为易损备件 (1:是, 0:否) |
+| life_limit | INT | - | 组件额定寿命 |
+| created_at | DATETIME | DEFAULT GETDATE() | 登记时间 |
 
 ---
 
@@ -152,17 +153,19 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| SpareID | INT | PK, IDENTITY | 备件唯一 ID |
-| SpareCode | NVARCHAR(50) | NOT NULL, UNIQUE | 备件编号 (物料号) |
-| Name | NVARCHAR(100) | NOT NULL | 备件名称 |
-| Spec | NVARCHAR(100) | - | 规格型号 |
-| CurrentStock | INT | DEFAULT 0 | 当前库存量 |
-| MinStock | INT | DEFAULT 0 | 安全库存阈值 |
-| Unit | NVARCHAR(20) | - | 单位 (如：个, 件) |
-| DepartmentID | INT | FK (Departments) | 管理部门 ID |
-| Status | NVARCHAR(20) | DEFAULT 'NORMAL' | 备件状态 |
-| CreatedAt | DATETIME | DEFAULT GETDATE() | 登记时间 |
-| UpdatedAt | DATETIME | DEFAULT GETDATE() | 最后更新时间 |
+| spare_id | INT | PK, IDENTITY | 备件唯一 ID |
+| spare_code | NVARCHAR(50) | NOT NULL, UNIQUE | 备件编号 (物料号) |
+| name | NVARCHAR(100) | NOT NULL | 备件名称 |
+| category | NVARCHAR(50) | - | 备件分类 (电气件, Transfer件等) |
+| spec | NVARCHAR(100) | - | 规格型号 |
+| current_stock | INT | DEFAULT 0 | 当前库存量 |
+| min_stock | INT | DEFAULT 0 | 安全库存阈值 |
+| unit | NVARCHAR(20) | - | 单位 (如：个, 件) |
+| is_track_shots | BIT | DEFAULT 0 | 是否单独计算 shot count (1:是, 0:否) |
+| department_id | INT | FK (Departments) | 管理部门 ID |
+| status | NVARCHAR(20) | DEFAULT 'NORMAL' | 备件状态 |
+| created_at | DATETIME | DEFAULT GETDATE() | 登记时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 最后更新时间 |
 
 ---
 
@@ -171,9 +174,9 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| MoldID | INT | PK, FK (Molds) | 模具 ID |
-| SpareID | INT | PK, FK (SpareParts) | 备件 ID |
-| Quantity | INT | DEFAULT 1 | 额定安装/备用数量 |
+| mold_id | INT | PK, FK (Molds) | 模具 ID |
+| spare_id | INT | PK, FK (SpareParts) | 备件 ID |
+| quantity | INT | DEFAULT 1 | 额定安装/备用数量 |
 
 ---
 
@@ -182,10 +185,11 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| ItemID | INT | PK, IDENTITY | 检查项 ID |
-| Label | NVARCHAR(200) | NOT NULL | 检查项内容描述 (如：型腔清洁) |
-| IsRequired | BIT | DEFAULT 1 | 是否必填 |
-| CreatedAt | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| item_id | INT | PK, IDENTITY | 检查项 ID |
+| label | NVARCHAR(200) | NOT NULL | 检查项内容描述 (如：型腔清洁) |
+| department_id | INT | FK (Departments) | 所属部门 (用于区分大材料/小材料配置) |
+| is_required | BIT | DEFAULT 1 | 是否必填 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
 
 ---
 
@@ -194,10 +198,11 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| ItemID | INT | PK, IDENTITY | 检查项 ID |
-| Label | NVARCHAR(200) | NOT NULL | 故障/检查项内容描述 (如：顶针断裂) |
-| IsRequired | BIT | DEFAULT 1 | 是否必填 |
-| CreatedAt | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| item_id | INT | PK, IDENTITY | 检查项 ID |
+| label | NVARCHAR(200) | NOT NULL | 故障/检查项内容描述 (如：顶针断裂) |
+| department_id | INT | FK (Departments) | 所属部门 (用于区分大材料/小材料配置) |
+| is_required | BIT | DEFAULT 1 | 是否必填 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
 
 ---
 
@@ -206,22 +211,23 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| OrderID | INT | PK, IDENTITY | 工单 ID |
-| OrderNo | NVARCHAR(50) | NOT NULL, UNIQUE | 保养单号 (如 PM-20260305001) |
-| Priority | NVARCHAR(20) | DEFAULT 'MEDIUM' | 优先级 (LOW/MEDIUM/HIGH) |
-| Status | NVARCHAR(20) | DEFAULT 'PENDING' | 状态 (PENDING/IN_PROGRESS/COMPLETED/AUDITED) |
-| TaskSource | NVARCHAR(20) | DEFAULT 'MANUAL' | 任务来源 (SCHEDULED: 定时任务, MANUAL: 手工添加) |
-| MaintenanceResult | NVARCHAR(50) | - | 保养结果 (OK/NG/WAIT) |
-| BuyoffStatus | NVARCHAR(20) | DEFAULT 'NONE' | 验收状态 (NONE/PASSED/FAILED) |
-| MoldID | INT | FK (Molds) | 关联模具 ID |
-| CreatorID | INT | FK (Users) | 创建人 ID |
-| ExecutorID | INT | FK (Users) | 执行人 ID |
-| StartTime | DATETIME | - | 保养开始时间 |
-| EndTime | DATETIME | - | 保养结束时间 |
-| Remark | NVARCHAR(MAX) | - | 执行备注 |
-| AuditUserID | INT | FK (Users) | 审核人 ID |
-| AuditTime | DATETIME | - | 审核时间 |
-| CreatedAt | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| order_id | INT | PK, IDENTITY | 工单 ID |
+| order_no | NVARCHAR(50) | NOT NULL, UNIQUE | 保养单号 (如 PM-20260305001) |
+| priority | NVARCHAR(20) | DEFAULT 'MEDIUM' | 优先级 (LOW/MEDIUM/HIGH) |
+| status | NVARCHAR(20) | DEFAULT 'PENDING' | 状态 (PENDING/IN_PROGRESS/COMPLETED/AUDITED) |
+| task_source | NVARCHAR(20) | DEFAULT 'MANUAL' | 任务来源 (SCHEDULED: 定时任务, MANUAL: 手工添加) |
+| maintenance_result | NVARCHAR(50) | - | 保养结果 (OK/NG/WAIT) |
+| buyoff_status | NVARCHAR(20) | DEFAULT 'NONE' | 验收状态 (NONE/PASSED/FAILED) |
+| mold_id | INT | FK (Molds) | 关联模具 ID |
+| creator_id | INT | FK (Users) | 创建人 ID |
+| executor_id | INT | FK (Users) | 执行人 ID |
+| start_time | DATETIME | - | 保养开始时间 |
+| end_time | DATETIME | - | 保养结束时间 |
+| remark | NVARCHAR(MAX) | - | 执行备注 |
+| audit_user_id | INT | FK (Users) | 审核人 ID |
+| acceptor_id | INT | FK (Users) | 验收人 ID |
+| audit_time | DATETIME | - | 审核时间 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
 
 ---
 
@@ -230,112 +236,114 @@
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| OrderID | INT | PK, IDENTITY | 工单 ID |
-| OrderNo | NVARCHAR(50) | NOT NULL, UNIQUE | 维修单号 (如 RE-20260305001) |
-| Priority | NVARCHAR(20) | DEFAULT 'HIGH' | 优先级 (LOW/MEDIUM/HIGH/URGENT) |
-| Status | NVARCHAR(20) | DEFAULT 'PENDING' | 状态 (PENDING/IN_PROGRESS/COMPLETED/AUDITED) |
-| RepairCategory | NVARCHAR(50) | - | 维修类别 (小修/中修/大修/紧急) |
-| RepairMethod | NVARCHAR(50) | - | 维修方式 (内部维修/外委维修/更换备件) |
-| RootCause | NVARCHAR(MAX) | - | 故障根本原因 |
-| MachineID | INT | FK (Machines) | 报修时的机台 ID |
-| MoldID | INT | FK (Molds) | 关联模具 ID |
-| FaultDescription | NVARCHAR(MAX) | - | 故障现象描述 |
-| CreatorID | INT | FK (Users) | 报修人 ID |
-| ExecutorID | INT | FK (Users) | 维修人 ID |
-| StartTime | DATETIME | - | 维修开始时间 |
-| EndTime | DATETIME | - | 维修结束时间 |
-| Remark | NVARCHAR(MAX) | - | 维修执行备注 |
-| AuditUserID | INT | FK (Users) | 审核人 ID |
-| AuditTime | DATETIME | - | 审核时间 |
-| BuyoffBy | INT | FK (Users) | 验收人 (QA或工程师) |
-| CreatedAt | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| order_id | INT | PK, IDENTITY | 工单 ID |
+| order_no | NVARCHAR(50) | NOT NULL, UNIQUE | 维修单号 (如 RE-20260305001) |
+| priority | NVARCHAR(20) | DEFAULT 'HIGH' | 优先级 (LOW/MEDIUM/HIGH/URGENT) |
+| status | NVARCHAR(20) | DEFAULT 'PENDING' | 状态 (PENDING/IN_PROGRESS/COMPLETED/AUDITED) |
+| repair_category | NVARCHAR(50) | - | 维修类别 (小修/中修/大修/紧急) |
+| repair_method | NVARCHAR(50) | - | 维修方式 (内部维修/外委维修/更换备件) |
+| downtime_impact | NVARCHAR(100) | - | 停机影响 (机台已恢复, 借机停机等) |
+| final_location | NVARCHAR(100) | - | 最终归位 (存放库位或机台) |
+| root_cause | NVARCHAR(MAX) | - | 故障根本原因 |
+| machine_id | INT | FK (Machines) | 报修时的机台 ID |
+| mold_id | INT | FK (Molds) | 关联模具 ID |
+| fault_description | NVARCHAR(MAX) | - | 故障现象描述 |
+| creator_id | INT | FK (Users) | 报修人 ID |
+| executor_id | INT | FK (Users) | 维修人 ID |
+| start_time | DATETIME | - | 维修开始时间 |
+| end_time | DATETIME | - | 维修结束时间 |
+| remark | NVARCHAR(MAX) | - | 维修执行备注 |
+| audit_user_id | INT | FK (Users) | 审核人 ID |
+| audit_time | DATETIME | - | 审核时间 |
+| buyoff_by | INT | FK (Users) | 验收人 (QA或工程师) |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
 
 ---
 
-### 2.16 保养执行明细 (MaintenanceOrderDetails)
-保养工单与保养项的勾选关联。
+### 2.16 保养工单详情表 (MaintenanceOrderDetails)
+保养工单中各检查项的执行结果。
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| OrderID | INT | PK, FK (MaintenanceOrders) | 保养工单 ID |
-| ItemID | INT | PK, FK (MaintenanceItems) | 保养项 ID |
-| IsSelected | BIT | DEFAULT 0 | 是否已完成 |
+| order_id | INT | PK, FK (MaintenanceOrders) | 工单 ID |
+| item_id | INT | PK, FK (MaintenanceItems) | 检查项 ID |
+| is_selected | BIT | DEFAULT 0 | 是否已执行/勾选 |
 
 ---
 
-### 2.17 维修执行明细 (RepairOrderDetails)
-维修工单与故障/检查项的勾选关联。
+### 2.17 维修工单详情表 (RepairOrderDetails)
+维修工单中各检查项的执行结果。
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| OrderID | INT | PK, FK (RepairOrders) | 维修工单 ID |
-| ItemID | INT | PK, FK (RepairItems) | 故障/检查项 ID |
-| IsSelected | BIT | DEFAULT 0 | 是否已处理 |
+| order_id | INT | PK, FK (RepairOrders) | 工单 ID |
+| item_id | INT | PK, FK (RepairItems) | 检查项 ID |
+| is_selected | BIT | DEFAULT 0 | 是否已执行/勾选 |
 
 ---
 
-### 2.18 保养备件消耗记录 (MaintenanceOrderSpares)
-记录保养过程中消耗的备件及数量。
+### 2.18 保养工单备件消耗 (MaintenanceOrderSpares)
+保养过程中消耗的备件及数量。
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| OrderID | INT | PK, FK (MaintenanceOrders) | 保养工单 ID |
-| SpareID | INT | PK, FK (SpareParts) | 备件 ID |
-| Quantity | INT | DEFAULT 1 | 消耗数量 |
+| order_id | INT | PK, FK (MaintenanceOrders) | 工单 ID |
+| spare_id | INT | PK, FK (SpareParts) | 备件 ID |
+| quantity | INT | DEFAULT 1 | 消耗数量 |
 
 ---
 
-### 2.19 维修备件消耗记录 (RepairOrderSpares)
-记录维修过程中消耗的备件及数量。
+### 2.19 维修工单备件消耗 (RepairOrderSpares)
+维修过程中消耗的备件及数量。
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| OrderID | INT | PK, FK (RepairOrders) | 维修工单 ID |
-| SpareID | INT | PK, FK (SpareParts) | 备件 ID |
-| Quantity | INT | DEFAULT 1 | 消耗数量 |
+| order_id | INT | PK, FK (RepairOrders) | 工单 ID |
+| spare_id | INT | PK, FK (SpareParts) | 备件 ID |
+| quantity | INT | DEFAULT 1 | 消耗数量 |
 
 ---
 
-### 2.20 出入库记录 (StockRecords)
-备件库存变更的流水日志。
+### 2.20 备件出入库记录 (StockRecords)
+备件库存变动的历史流水。
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| RecordID | INT | PK, IDENTITY | 记录 ID |
-| SpareID | INT | FK (SpareParts) | 备件 ID |
-| Type | NVARCHAR(20) | NOT NULL | 类型 (IN:入库 / OUT:出库 / ADJUST:调整) |
-| Amount | INT | NOT NULL | 记录数量 |
-| Remark | NVARCHAR(MAX) | - | 变更原因/备注 |
-| UserID | INT | FK (Users) | 操作人 ID |
-| CreatedAt | DATETIME | DEFAULT GETDATE() | 操作时间 |
+| record_id | INT | PK, IDENTITY | 记录 ID |
+| spare_id | INT | FK (SpareParts) | 备件 ID |
+| type | NVARCHAR(20) | - | 类型 (IN:入库, OUT:出库) |
+| amount | INT | - | 变动数量 (正数) |
+| remark | NVARCHAR(200) | - | 变动原因 (如：采购入库、工单消耗) |
+| user_id | INT | FK (Users) | 操作人 ID |
+| created_at | DATETIME | DEFAULT GETDATE() | 操作时间 |
 
 ---
 
-### 2.21 模具流转/生命周期日志 (MoldHistory)
-记录模具在整个生命周期中的关键节点（上下机、状态变更等）。
+### 2.21 模具履历记录 (MoldHistory)
+记录模具的全生命周期关键事件。
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| HistoryID | INT | PK, IDENTITY | 日志 ID |
-| MoldID | INT | FK (Molds) | 模具 ID |
-| Type | NVARCHAR(20) | NOT NULL | 记录类型 (MOUNT:上机 / UNMOUNT:下机 / STATUS_CHANGE:状态变更) |
-| Description | NVARCHAR(MAX) | - | 事件详细描述 |
-| OperatorID | INT | FK (Users) | 操作人 ID |
-| MachineID | INT | - | 关联机台 ID |
-| Slot | NVARCHAR(10) | - | 关联槽位 |
-| CreatedAt | DATETIME | DEFAULT GETDATE() | 发生时间 |
+| history_id | INT | PK, IDENTITY | 记录 ID |
+| mold_id | INT | FK (Molds) | 关联模具 ID |
+| type | NVARCHAR(50) | - | 事件类型 (MAINTENANCE/REPAIR/TRANSFER/SCRAP) |
+| description | NVARCHAR(MAX) | - | 事件详细描述 |
+| operator_id | INT | FK (Users) | 操作人 ID |
+| machine_id | INT | FK (Machines) | 关联机台 (可选) |
+| slot | NVARCHAR(10) | - | 关联槽位 (可选) |
+| created_at | DATETIME | DEFAULT GETDATE() | 事件发生时间 |
 
 ---
 
-### 2.22 文件/图片上传记录 (Uploads)
-系统内附件、模具照片、维修凭证等的统一管理。
+### 2.22 附件上传记录 (Uploads)
+系统内所有图片、文档附件的存储记录。
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
-| UploadID | INT | PK, IDENTITY | 上传记录 ID |
-| URL | NVARCHAR(MAX) | NOT NULL | 文件存储路径或云端 URL |
-| FileName | NVARCHAR(255) | - | 原始文件名 |
-| UserID | INT | FK (Users) | 上传人 ID |
-| SourceModule | NVARCHAR(50) | - | 来源模块 (如: WORK_ORDER, MOLD) |
-| SourceID | NVARCHAR(50) | - | 来源业务 ID (如: 工单号, 模具号) |
-| CreatedAt | DATETIME | DEFAULT GETDATE() | 上传时间 |
+| upload_id | INT | PK, IDENTITY | 附件 ID |
+| url | NVARCHAR(500) | NOT NULL | 文件访问地址 |
+| file_name | NVARCHAR(200) | - | 原始文件名 |
+| user_id | INT | FK (Users) | 上传人 ID |
+| source_module | NVARCHAR(50) | - | 来源模块 (MOLD/MAINTENANCE/REPAIR) |
+| source_id | INT | - | 来源业务 ID (如工单ID) |
+| created_at | DATETIME | DEFAULT GETDATE() | 上传时间 |
