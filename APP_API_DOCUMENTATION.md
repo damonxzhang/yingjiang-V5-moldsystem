@@ -266,27 +266,33 @@
   
   ```json
   {
-    "mold_id": "UUID-TY71-001",
+    "mold_id": 1,
     "mold_code": "TY71",
     "components": [
       {
+        "component_id": 101,
+        "mold_id": 1,
         "name": "上模核心针",
         "sn": "SN-99821",
         "category": "上模件",
+        "is_spare": true,
         "life_limit": 100000,
-        "is_spare": true
+        "created_at": "2026-01-01 10:00:00"
       }
     ]
   }
   ```
-  * `mold_id`: String - 模具系统唯一 ID。
+  * `mold_id`: Number - 模具系统唯一 ID。
   * `mold_code`: String - 模具显示编号。
   * `components`: Array[Object] - 组件列表。
+    * `component_id`: Number - 组件唯一 ID。
+    * `mold_id`: Number - 所属模具 ID。
     * `name`: String - 组件名称。
-    * `sn`: String - 序列号。
-    * `category`: String - 类别。
-    * `life_limit`: Number - 设计寿命。
-    * `is_spare`: Boolean - 是否为备件。
+    * `sn`: String - 序列号/批次号。
+    * `category`: String - 组件类别。
+    * `is_spare`: Boolean - 是否为易损备件 (true:是, false:否)。
+    * `life_limit`: Number - 组件额定寿命。
+    * `created_at`: String - 登记时间 (YYYY-MM-DD HH:mm:ss)。
 
 ---
 
