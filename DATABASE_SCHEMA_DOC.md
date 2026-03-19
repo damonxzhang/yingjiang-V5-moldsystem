@@ -18,16 +18,20 @@
 | :--- | :--- | :--- | :--- |
 | department_id | INT | PK, IDENTITY | 部门唯一标识 ID |
 | department_name | NVARCHAR(50) | NOT NULL, UNIQUE | 部门名称 (如：大材料、小材料等) |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
 ### 2.2 角色表 (Roles)
-定义系统中的用户角色。
+定义系统中的用户角色.
 
 | 字段名 | 数据类型 | 约束 | 说明 |
 | :--- | :--- | :--- | :--- |
 | role_code | NVARCHAR(20) | PK | 角色代码 (唯一标识，如 SUPER_ADMIN) |
 | description | NVARCHAR(100) | - | 角色中文描述 (如：超级管理员) |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -38,6 +42,8 @@
 | :--- | :--- | :--- | :--- |
 | permission_code | NVARCHAR(50) | PK | 权限唯一代码 |
 | description | NVARCHAR(100) | - | 权限功能描述 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -48,6 +54,8 @@
 | :--- | :--- | :--- | :--- |
 | role_code | NVARCHAR(20) | PK, FK (Roles) | 所属角色代码 |
 | permission_code | NVARCHAR(50) | PK, FK (Permissions) | 拥有的权限代码 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -65,7 +73,7 @@
 | department_id | INT | FK (Departments) | 所属部门 ID |
 | status | NVARCHAR(20) | DEFAULT 'ACTIVE' | 账号状态 (ACTIVE/DISABLED) |
 | created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
-| updated_at | DATETIME | DEFAULT GETDATE() | 更新时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -80,7 +88,8 @@
 | location | NVARCHAR(100) | - | 物理位置 (如：A栋1F) |
 | department_id | INT | FK (Departments) | 归属部门 ID |
 | total_slots | INT | DEFAULT 4 | 总槽位数 |
-| created_at | DATETIME | DEFAULT GETDATE() | 登记时间 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -111,8 +120,8 @@
 | location | NVARCHAR(100) | - | 具体存放位置 |
 | maintenance_cycle | NVARCHAR(50) | - | 模具保养周期 (如：30天/50K) |
 | start_time | DATE | - | 开始保养时间 |
-| created_at | DATETIME | DEFAULT GETDATE() | 入库日期 |
-| updated_at | DATETIME | DEFAULT GETDATE() | 最后更新日期 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -128,7 +137,8 @@
 | param_ready | BIT | DEFAULT 0 | 参数设定是否就绪 |
 | mold_ready | BIT | DEFAULT 0 | 模具安装是否就绪 |
 | buyoff_ready | BIT | DEFAULT 0 | 首件点检是否就绪 |
-| updated_at | DATETIME | DEFAULT GETDATE() | 状态更新时间 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -144,7 +154,8 @@
 | category | NVARCHAR(50) | - | 组件类别 |
 | is_spare | BIT | DEFAULT 0 | 是否为易损备件 (1:是, 0:否) |
 | life_limit | INT | - | 组件额定寿命 |
-| created_at | DATETIME | DEFAULT GETDATE() | 登记时间 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -164,8 +175,8 @@
 | is_track_shots | BIT | DEFAULT 0 | 是否单独计算 shot count (1:是, 0:否) |
 | department_id | INT | FK (Departments) | 管理部门 ID |
 | status | NVARCHAR(20) | DEFAULT 'NORMAL' | 备件状态 |
-| created_at | DATETIME | DEFAULT GETDATE() | 登记时间 |
-| updated_at | DATETIME | DEFAULT GETDATE() | 最后更新时间 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -177,6 +188,8 @@
 | mold_id | INT | PK, FK (Molds) | 模具 ID |
 | spare_id | INT | PK, FK (SpareParts) | 备件 ID |
 | quantity | INT | DEFAULT 1 | 额定安装/备用数量 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -190,6 +203,7 @@
 | department_id | INT | FK (Departments) | 所属部门 (用于区分大材料/小材料配置) |
 | is_required | BIT | DEFAULT 1 | 是否必填 |
 | created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -203,6 +217,7 @@
 | department_id | INT | FK (Departments) | 所属部门 (用于区分大材料/小材料配置) |
 | is_required | BIT | DEFAULT 1 | 是否必填 |
 | created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -227,6 +242,7 @@
 | acceptor_id | INT | FK (Users) | 验收人 ID |
 | audit_time | DATETIME | - | 审核时间 |
 | created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -255,6 +271,7 @@
 | audit_time | DATETIME | - | 审核时间 |
 | buyoff_by | INT | FK (Users) | 验收人 (QA或工程师) |
 | created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -266,6 +283,8 @@
 | order_id | INT | PK, FK (MaintenanceOrders) | 工单 ID |
 | item_id | INT | PK, FK (MaintenanceItems) | 检查项 ID |
 | is_selected | BIT | DEFAULT 0 | 是否已执行/勾选 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -277,6 +296,8 @@
 | order_id | INT | PK, FK (RepairOrders) | 工单 ID |
 | item_id | INT | PK, FK (RepairItems) | 检查项 ID |
 | is_selected | BIT | DEFAULT 0 | 是否已执行/勾选 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -288,6 +309,8 @@
 | order_id | INT | PK, FK (MaintenanceOrders) | 工单 ID |
 | spare_id | INT | PK, FK (SpareParts) | 备件 ID |
 | quantity | INT | DEFAULT 1 | 消耗数量 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -299,6 +322,8 @@
 | order_id | INT | PK, FK (RepairOrders) | 工单 ID |
 | spare_id | INT | PK, FK (SpareParts) | 备件 ID |
 | quantity | INT | DEFAULT 1 | 消耗数量 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -313,7 +338,8 @@
 | amount | INT | - | 变动数量 (正数) |
 | remark | NVARCHAR(200) | - | 变动原因 (如：采购入库、工单消耗) |
 | user_id | INT | FK (Users) | 操作人 ID |
-| created_at | DATETIME | DEFAULT GETDATE() | 操作时间 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -329,7 +355,8 @@
 | operator_id | INT | FK (Users) | 操作人 ID |
 | machine_id | INT | FK (Machines) | 关联机台 (可选) |
 | slot | NVARCHAR(10) | - | 关联槽位 (可选) |
-| created_at | DATETIME | DEFAULT GETDATE() | 事件发生时间 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -344,7 +371,8 @@
 | user_id | INT | FK (Users) | 上传人 ID |
 | source_module | NVARCHAR(50) | - | 来源模块 (MOLD/MAINTENANCE/REPAIR) |
 | source_id | INT | - | 来源业务 ID (如工单ID) |
-| created_at | DATETIME | DEFAULT GETDATE() | 上传时间 |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
 
 ---
 
@@ -360,4 +388,5 @@
 | life_limit | INT | - | 额定寿命限制 (LIMIT) |
 | machine_code | NVARCHAR(50) | - | 机台编号 (MACHINE) |
 | location | NVARCHAR(100) | - | 位置 (LOCATION) |
-| created_at | DATETIME | DEFAULT GETDATE() | 数据更新时间 (LAST UPDATE) |
+| created_at | DATETIME | DEFAULT GETDATE() | 创建时间 |
+| updated_at | DATETIME | DEFAULT GETDATE() | 修改时间 |
