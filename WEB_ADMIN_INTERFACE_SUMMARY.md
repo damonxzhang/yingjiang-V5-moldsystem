@@ -191,13 +191,23 @@
         "list": [ // 模具台账简要信息列表
             { 
                 "mold_id": "TY71", // 模具系统内唯一 ID
-                "mold_code": "T100", // 模具编号
+                "mold_code": "MD-2024-001", // 模具编号
                 "short_name": "BGA-01", // 模具简称
-                "package_type": "QFN", // 封装类型
-                "shot_total": 450000, // 当前累计总冲次
-                "status": "IDLE", // 当前状态
+                "mold_category": "大材料模具", // 分类
+                "product_type": "BGA", // 产品类型
+                "location": "CAB-A01", // 位置 (库位或机台)
+                "thickness": "250mm", // 厚度
+                "package_type": "QFN", // PACKAGE TYPE
+                "package_size": "HD", // PACKAGE SIZE
+                "current_shots": 45200, // 实时 SHOT COUNT
+                "max_shots": 500000, // SHOT 上限
+                "maintenance_cycle": "30天", // 保养周期
+                "start_date": "2026-01-01", // 开始时间
+                "current_machine": "离线/库房", // 所在设备 (机台编号或状态)
+                "machine_status": "闲置", // 设备上的状态 (闲置, 使用中, 保养中)
+                "is_active": true, // 状态是否有效
+                "status": "IDLE", // 业务状态 (IDLE, MAINTENANCE, USING)
                 "department": "大材料", // 所属部门
-                "next_audit_date": "2026-04-01", // 下次 Audit 日期 (仅在 Audit 模式下返回有效值)
                 "operate":[   // 列表右侧操作栏按钮
                     { 
                         "id": 11,  //按钮id
@@ -206,28 +216,6 @@
                     },
                     { 
                         "id": 12,      //按钮在列表页的id值是一致的,因为按钮显示隐藏以菜单栏页面权限为准
-                        "parent_id": 2,
-                        "name": "停用"
-                    }
-                ]
-            },
-            { 
-                "mold_id": "TY72", // 模具系统内唯一 ID
-                "mold_code": "T1001", // 模具编号
-                "short_name": "BGA-02", // 模具简称
-                "package_type": "QFN", // 封装类型
-                "shot_total": 50000, // 当前累计总冲次
-                "status": "IDLE", // 当前状态
-                "department": "大材料", // 所属部门
-                "next_audit_date": "2026-04-01", // 下次 Audit 日期 (仅在 Audit 模式下返回有效值)
-                "operate":[     
-                    { 
-                        "id": 11, //按钮id同上也是11
-                        "parent_id": 2,  //按钮所属页面id
-                        "name": "BOM"   //按钮名称
-                    },
-                    { 
-                        "id": 12,
                         "parent_id": 2,
                         "name": "停用"
                     }
@@ -301,13 +289,23 @@
     "list": [ // 模具台账简要信息列表
       { 
         "mold_id": "TY71", // 模具系统内唯一 ID
-        "mold_code": "T100", // 模具编号
+        "mold_code": "MD-2024-001", // 模具编号
         "short_name": "BGA-01", // 模具简称
-        "package_type": "QFN", // 封装类型
-        "shot_total": 450000, // 当前累计总冲次
-        "status": "IDLE", // 当前状态
-        "department": "大材料", // 所属部门
-        "next_audit_date": "2026-04-01" // 下次 Audit 日期 (仅在 Audit 模式下返回有效值)
+        "mold_category": "大材料模具", // 分类
+        "product_type": "BGA", // 产品类型
+        "location": "CAB-A01", // 位置 (库位或机台)
+        "thickness": "250mm", // 厚度
+        "package_type": "QFN", // PACKAGE TYPE
+        "package_size": "HD", // PACKAGE SIZE
+        "current_shots": 45200, // 实时 SHOT COUNT
+        "max_shots": 500000, // SHOT 上限
+        "maintenance_cycle": "30天", // 保养周期
+        "start_date": "2026-01-01", // 开始时间
+        "current_machine": "离线/库房", // 所在设备 (机台编号或状态)
+        "machine_status": "闲置", // 设备上的状态 (闲置, 使用中, 保养中)
+        "is_active": true, // 状态是否有效
+        "status": "IDLE", // 业务状态 (IDLE, MAINTENANCE, USING)
+        "department": "大材料" // 所属部门
       }
     ]
   }
