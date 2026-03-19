@@ -99,20 +99,21 @@
     "online_mold_count": 12,
     "pending_task_count": 3,
     "display_buttons": [
-      { "id": "inquiry", "name": "模具查询", "icon": "fa-search", "color": "bg-indigo-500", "enabled": true, "badge": 0 },
-      { "id": "transfer", "name": "模具转换", "icon": "fa-exchange-alt", "color": "bg-green-500", "enabled": true, "badge": 2 },
-      { "id": "maintenance", "name": "保养执行", "icon": "fa-tools", "color": "bg-amber-500", "enabled": true, "badge": 5 },
-      { "id": "repair", "name": "维修执行", "icon": "fa-wrench", "color": "bg-red-500", "enabled": true, "badge": 1 }
+      { "id": "inquiry", "name": "模具查询", "enabled": true, "badge": 0 },
+      { "id": "transfer", "name": "模具转换", "enabled": true, "badge": 2 },
+      { "id": "maintenance", "name": "保养执行", "enabled": true, "badge": 5 },
+      { "id": "repair", "name": "维修执行", "enabled": true, "badge": 1 }
     ]
   }
   ```
   * `online_mold_count`: Number - 当前在线（机台上）的模具总数。
   * `pending_task_count`: Number - 待该用户处理的任务总数。
-  * `display_buttons`: Array[Object] - 快捷功能按钮列表。
-    * `id`: String - 按钮唯一标识（如 inquiry, transfer, maintenance, repair）。
+  * `display_buttons`: Array[Object] - 快捷功能按钮列表。**根据用户角色返回不同的按钮集合**：
+    * **带班 (LEADER)**: 返回所有按钮 (`inquiry`, `transfer`, `maintenance`, `repair`)。
+    * **操作员 (OPERATOR)**: 返回生产流转相关按钮 (`inquiry`, `transfer`)。
+    * **工程师 (ENGINEER)**: 返回维保相关按钮 (`inquiry`, `maintenance`, `repair`)。
+    * `id`: String - 按钮唯一标识。
     * `name`: String - 按钮显示名称。
-    * `icon`: String - 按钮图标类名 (FontAwesome)。
-    * `color`: String - 按钮背景颜色 (Tailwind 类名)。
     * `enabled`: Boolean - 按钮是否对该用户可用。
     * `badge`: Number - 该功能模块下的待办任务数。
 
