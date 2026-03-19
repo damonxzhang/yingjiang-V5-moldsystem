@@ -146,17 +146,30 @@
     "page_size": 20,
     "list": [
       {
-        "mold_id": "UUID-TY71-001",
+        "mold_id": 1,
         "mold_code": "TY71",
         "name": "QFN-64 上模",
-        "status": "IN_PRODUCTION", 
-        "location": "MC-102",
-        "vendor": "NXP_INTERNAL",
+        "full_name": "QFN-64 Upper Mold - Type A",
+        "short_name": "QFN64-U",
+        "thickness": "2.5mm",
+        "mold_category": "Upper Mold",
+        "product_type": "QFN",
         "package_type": "QFN",
+        "package_size": "7x7",
         "pin_code": "64",
-        "shot_total": 450000,
+        "department_id": 1,
         "life_limit": 500000,
-        "buyoff_status": "PASS" 
+        "current_shots": 450000,
+        "status": "IDLE",
+        "health_score": 98.50,
+        "next_audit_date": "2026-04-01",
+        "vendor": "NXP_INTERNAL",
+        "cabinet_code": "CAB-01",
+        "location": "A-12-03",
+        "maintenance_cycle": "50K",
+        "start_time": "2026-03-01",
+        "created_at": "2026-01-01 10:00:00",
+        "updated_at": "2026-03-19 09:00:00"
       }
     ]
   }
@@ -165,17 +178,30 @@
   * `page`: Number - 当前页码。
   * `page_size`: Number - 每页条数。
   * `list`: Array[Object] - 模具列表。
-    * `mold_id`: String - 模具系统唯一 ID。
-    * `mold_code`: String - 模具显示编号（如 TY71）。
+    * `mold_id`: Number - 模具系统唯一 ID。
+    * `mold_code`: String - 模具显示编号。
     * `name`: String - 模具名称。
-    * `status`: Enum - 状态 (IN_PRODUCTION, MAINTENANCE, REPAIR, BACKUP, SCRAPPED)。
-    * `location`: String - 当前机台或柜位编号。
-    * `vendor`: String - 供应商。
+    * `full_name`: String - 模具完整名称。
+    * `short_name`: String - 模具缩写。
+    * `thickness`: String - 模具厚度规格。
+    * `mold_category`: String - 模具类别。
+    * `product_type`: String - 产品类型。
     * `package_type`: String - 封装类型。
-    * `pin_code`: String - Pin 数。
-    * `shot_total`: Number - 当前累计冲次。
-    * `life_limit`: Number - 设计寿命。
-    * `buyoff_status`: Enum - BUYOFF 状态 (PASS, FAIL, PENDING)。
+    * `package_size`: String - 封装尺寸。
+    * `pin_code`: String - Pin 码。
+    * `department_id`: Number - 所属部门 ID。
+    * `life_limit`: Number - 额定寿命 (次数)。
+    * `current_shots`: Number - 当前已使用次数 (啤数)。
+    * `status`: Enum - 状态 (IDLE, IN_USE, MAINTENANCE, SCRAP)。
+    * `health_score`: Number - 健康评分 (0-100)。
+    * `next_audit_date`: String - 下次点检日期 (YYYY-MM-DD)。
+    * `vendor`: String - 供应商。
+    * `cabinet_code`: String - 存放库柜编号。
+    * `location`: String - 具体存放位置。
+    * `maintenance_cycle`: String - 模具保养周期。
+    * `start_time`: String - 开始保养时间 (YYYY-MM-DD)。
+    * `created_at`: String - 入库日期 (YYYY-MM-DD HH:mm:ss)。
+    * `updated_at`: String - 最后更新日期 (YYYY-MM-DD HH:mm:ss)。
 
 ### 3.2 获取模具详情
 
