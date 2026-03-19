@@ -52,8 +52,15 @@
         "message": "success",
         "data": {
             "token": "Bearer",  // 访问令牌，后续请求需携带在 Header (Authorization: Bearer <token>) 中
-            "userid": ADM001, // 用户唯一标识 (工号/UUID)
-            "username": "看板管理员" // 用户真实姓名
+            "userid": "ADM001", // 用户唯一标识 (工号/UUID)
+            "username": "看板管理员", // 用户真实姓名
+            "role": "SUPER_ADMIN", // 角色代码：SUPER_ADMIN(超级管理), MAINTAINER(维保员), OPERATOR(操作员)
+            "permissions": [ // 拥有的功能权限点列表
+              "DASHBOARD_VIEW",   // 查看看板权限
+              "MACHINE_CONFIG",   // 机台配置权限
+              "MOLD_MANAGEMENT",  // 模具管理权限
+              "REPORT_EXPORT"     // 报表导出权限
+            ]
         }
     }
   ```
