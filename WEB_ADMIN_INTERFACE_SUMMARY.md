@@ -603,15 +603,15 @@
     "list": [
       {
         "task_id": "MT-2026-001", 
-        "order_no": "PM-20260305001",
-        "machine_id": "BMD-01", 
-        "mold_code": "T100", 
-        "start_time": "2026-03-05 08:00", 
-        "end_time": "2026-03-05 10:00", 
-        "status": "PENDING", 
-        "operator": "张工",
-        "check_items_count": 15, // 保养项目总数
-        "completed_items_count": 0 // 已完成项目数
+        "order_no": "WO-M-240501-01", // 工单编号
+        "task_source": "SCHEDULED",   // 任务来源：SCHEDULED(定时任务), TEMPORARY(临时添加)
+        "mold_code": "MD-2024-001",   // 模具对象 (编号)
+        "operator": "张三",           // 执行人员
+        "result": "OK",               // 保养结果：OK, WAIT, NG
+        "acceptance_status": "PASSED", // 验收状态：PASSED(通过), NONE(未验收), REJECTED(驳回)
+        "action_count": 2,            // 执行项数 (XX 项动作)
+        "completion_time": "2024-05-01 10:15", // 完成时间
+        "storage_location": "CAB-B2-01" // 归位 (存放库位/机台)
       }
     ]
   }
