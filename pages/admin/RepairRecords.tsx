@@ -8,10 +8,6 @@ const RepairRecords: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<WorkOrder | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  const handleGenerateReport = () => {
-    alert("正在生成《模具故障统计与根本原因分析报表》...\n系统正在分析：主要故障部件、平均维修时长、备件消耗趋势。");
-  };
-
   const openDetail = (record: WorkOrder) => {
     setSelectedRecord(record);
     setIsDetailModalOpen(true);
@@ -21,15 +17,6 @@ const RepairRecords: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800 tracking-tight italic">APP 维修执行全链追溯</h2>
-        <div className="flex gap-2">
-          <button 
-            onClick={handleGenerateReport}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
-          >
-            <i className="fas fa-chart-bar"></i>
-            发起故障分析报表
-          </button>
-        </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl border border-slate-200 flex items-center gap-4 shadow-sm">

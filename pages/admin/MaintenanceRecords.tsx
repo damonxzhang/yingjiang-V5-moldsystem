@@ -8,14 +8,6 @@ const MaintenanceRecords: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<WorkOrder | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  const handleExportPDF = () => {
-    alert("正在生成 PDF 保养鉴定报告...\n包含：工单流水、执行项目勾选、现场备件消耗及人员确认。");
-  };
-
-  const handleBatchExport = () => {
-    alert("正在准备 Excel 数据导出...\n包含当前筛选条件下的所有保养记录。");
-  };
-
   const openDetail = (record: WorkOrder) => {
     setSelectedRecord(record);
     setIsDetailModalOpen(true);
@@ -25,22 +17,6 @@ const MaintenanceRecords: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800 tracking-tight italic">APP 保养执行记录汇总</h2>
-        <div className="flex gap-2">
-          <button 
-            onClick={handleExportPDF}
-            className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2"
-          >
-            <i className="fas fa-file-pdf text-red-500"></i>
-            打印保养鉴定书
-          </button>
-          <button 
-            onClick={handleBatchExport}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
-          >
-            <i className="fas fa-file-excel"></i>
-            批量导出数据
-          </button>
-        </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl border border-slate-200 flex items-center gap-4 shadow-sm">

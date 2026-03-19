@@ -767,28 +767,6 @@
   }
   ```
 
-### 6.6 导出保养记录
-
-* **用途**: 导出保养记录报表。
-* **接口**: `GET /api/admin/tasks/maintenance/export`
-* **请求参数**: 
-  * `user_id`: "ADM001",
-  * `status`: "ALL",
-  * `start_date`: "2026-01-01",
-  * `end_date`: "2026-03-31"
-* **返回**: 二进制流 (Excel 文件)
-
-### 6.7 导出维修记录
-
-* **用途**: 导出维修记录报表。
-* **接口**: `GET /api/admin/tasks/repair/export`
-* **请求参数**: 
-  * `user_id`: "ADM001",
-  * `status`: "ALL",
-  * `start_date`: "2026-01-01",
-  * `end_date`: "2026-03-31"
-* **返回**: 二进制流 (Excel 文件)
-
 ---
 
 ## 7. 备件管理 (Spare Parts)
