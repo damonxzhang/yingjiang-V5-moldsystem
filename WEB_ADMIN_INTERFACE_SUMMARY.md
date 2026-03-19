@@ -642,14 +642,16 @@
     "list": [
       {
         "task_id": "RT-2026-001", 
-        "order_no": "RE-20260305001",
-        "machine_id": "BMD-01", 
-        "mold_code": "T100", 
-        "fault_description": "顶针复位不良",
-        "start_time": "2026-03-05 09:00",
-        "end_time": "2026-03-05 11:30",
-        "status": "IN_PROGRESS", 
-        "operator": "李工" 
+        "order_no": "WO-R-240510-01", // 工单编号
+        "mold_code": "MD-2024-071",   // 模具对象 (编号)
+        "main_operator": "王技师",    // 主修人
+        "repair_category": "小修",    // 维修类别：小修, 中修, 大修
+        "repair_method": "内部维修",  // 维修方式：内部维修, 外委维修
+        "acceptor": "李工",           // 验收人
+        "action_count": 3,            // 维修项目数 (XX 项动作)
+        "downtime_impact": "机台已恢复", // 停机影响：机台已恢复, 借机停机
+        "final_location": "MT-08",    // 最终归位
+        "status": "IN_PROGRESS"      // 任务状态
       }
     ]
   }
