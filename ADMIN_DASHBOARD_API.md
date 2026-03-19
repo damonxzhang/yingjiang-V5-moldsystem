@@ -65,6 +65,7 @@
       {
         "machine_id": "BMD-01", // 机台唯一标识符 (ID/编号)
         "status": "NORMAL", // 机台实时状态 (NORMAL, MAINTENANCE_DUE, OVERDUE, BUYOFF, DISABLED, OFFLINE)
+        "batch_no": "B20260319001", // 当前正在生产的批次号
         "mold_count": 4, // 当前挂载的模具数量
         "molds": [ // 挂载模具详情列表
           {
@@ -104,6 +105,7 @@
   {
     "machine_id": "BMD-01", // 机台 ID
     "production": { // 生产数据统计
+      "batch_no": "B20260319001", // 当前生产批次号
       "planned": 24288, // 计划生产总数
       "completed": 8368 // 实际完成生产总数
     },
