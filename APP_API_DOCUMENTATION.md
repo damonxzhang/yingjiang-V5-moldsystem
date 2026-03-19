@@ -604,22 +604,6 @@
   }
   ```
 
-### 9.2 Socket.io 实时推送
-
-* **用途**: 实时同步冲次。
-* **事件**: `machine:shot_update`
-* **Payload**: 
-  
-  ```json
-  { 
-    "machine_id": "MC-102", // 机台 ID
-    "mold_id": "UUID-TY71-001", // 模具 ID
-    "mold_code": "TY71", // 模具编号
-    "current_shots": 450012, // 实时累计冲次
-    "timestamp": "2026-03-05T08:15:00Z" // 时间戳
-  }
-  ```
-
 ---
 
 ## 10. 异常与通用逻辑说明
