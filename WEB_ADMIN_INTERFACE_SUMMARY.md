@@ -684,15 +684,41 @@
   ```json
   {
     "total": 30, // 符合条件的备件总数
+    "summary": { // 顶部概览数据
+      "total_categories": 2, // 备件总品类
+      "stock_alerts": 1, // 库存预警品类
+      "shot_alerts": 0, // 冲次预警品类
+      "monthly_consumption": 12450 // 本月消耗额 (¥)
+    },
     "list": [ // 备件信息列表
       {
-        "spare_id": "SP-001", // 备件唯一 ID
-        "name": "上模顶针", // 备件名称
-        "spec": "2.0mm * 150mm", // 规格型号描述
-        "current_stock": 5, // 当前库存数量
-        "min_stock": 10, // 安全库存阈值 (低于此值将触发预警)
-        "unit": "PCS", // 计量单位
-        "status": "LOW_STOCK" // 状态：NORMAL(正常), LOW_STOCK(库存不足)
+        "spare_id": "SP-001", // 备件唯一 ID (对应图中的编号)
+        "name": "加热棒 220V", // 备件名称
+        "category": "电气件", // 备件分类
+        "current_stock": 15, // 当前库存数量
+        "min_stock": 5, // 最低阈值 (安全库存)
+        "shot_count": "无需统计", // 冲次统计描述 (如 "452,000" 或 "无需统计")
+        "is_track_shots": false, // 是否单独计算 shot count：true(是), false(否)
+        "status": "NORMAL", // 状态：NORMAL(正常), LOW_STOCK(库存不足), SHOT_EXPIRED(寿命到期)
+        "suggested_purchase": { // 建议采购数量 (AI 预测)
+          "amount": 0, // 建议数量
+          "message": "库存充足，暂无建议" // 建议描述
+        }
+      },
+      {
+        "spare_id": "SP-003", 
+        "name": "精密 POT (15mm)", 
+        "category": "Transfer件", 
+        "current_stock": 2, 
+        "min_stock": 5, 
+        "shot_count": "无需统计", 
+        "is_track_shots": false,
+        "status": "LOW_STOCK", 
+        "suggested_purchase": {
+          "amount": 13, 
+          "message": "库存已跌破阈值",
+          "is_recommended": true // 是否为推荐操作 (对应图中的 RECOMMENDED 标签)
+        }
       }
     ]
   }
