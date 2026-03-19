@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Role, AuthData } from './types';
 import { AuthService } from './services/authService';
@@ -98,11 +97,10 @@ const App: React.FC = () => {
           <i className={`fas ${isGuestMode ? 'fa-user-secret' : 'fa-user-shield'} mr-1.5`}></i>
           {userData.username}
         </div>
-      </div>
         {isGuestMode && (
           <button 
             onClick={() => window.location.href = window.location.pathname}
-            className="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-white hover:bg-slate-900 transition-colors"
+            className="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-white hover:bg-slate-900 transition-colors ml-2"
           >
             返回登录
           </button>
