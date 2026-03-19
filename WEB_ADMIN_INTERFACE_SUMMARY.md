@@ -676,7 +676,9 @@
     "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
     "department": "大材料", // 部门筛选：大材料, 小材料, ALL(全部)
     "filter_alerts": false, // 是否仅查看预警项：true(仅看库存不足), false(全部)
-    "keyword": "" // 备件名称/规格模糊搜索关键词
+    "keyword": "", // 备件名称/规格模糊搜索关键词
+    "page": 1, // 当前页码
+    "page_size": 20 // 每页记录数
   }
   ```
 * **返回数据**:
@@ -749,7 +751,7 @@
   }
   ```
 
-### 7.3 备件购买预测
+### 7.3 备件购买预测【待定】
 
 * **用途**: 根据模具生产计划及当前配件消耗率，预测未来备件需求。
 * **接口**: `POST /api/admin/spare-parts/prediction/list`
@@ -779,6 +781,36 @@
     ]
   }
   ```
+
+### 7.4 批量导入备件
+
+* **用途**: 支持通过 Excel 批量导入备件基础档案信息。
+* **接口**: `POST /api/admin/spare-parts/import`
+* **请求**: `Multipart/form-data`
+* **参数**:
+  * `file`: Excel 文件对象 (支持 .xls, .xlsx)
+  * `user_id`: "ADM001" // 操作人 ID
+* **返回数据**:
+  
+  ```json
+  {
+    "success": true,
+    "imported_count": 150, // 成功导入数量
+    "failed_count": 2, // 导入失败数量
+    "errors": [ // 失败详情 (如有)
+      { "row": 12, "reason": "备件编号已存在" }
+    ],
+    "message": "导入完成，成功 150 条，失败 2 条"
+  }
+  ```
+
+### 7.5 下载备件导入模板
+
+* **用途**: 提供标准的 Excel 模板供用户下载填写。
+* **接口**: `GET /api/admin/spare-parts/template`
+* **请求参数**: 
+  * `user_id`: "ADM001"
+* **返回**: 二进制流 (Excel 模板文件)
 
 ---
 
