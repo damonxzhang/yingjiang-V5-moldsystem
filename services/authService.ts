@@ -88,6 +88,9 @@ function mockLogin(username: string, password: string): Promise<LoginResponse> {
   });
 }
 
+// Mock Windows 用户名 (在原型方案中展示从系统获取的真实值)
+export const MOCK_WINDOWS_USER = 'laptop-gmj4rotp\\user';
+
 /**
  * 认证服务
  */
@@ -98,20 +101,17 @@ export const AuthService = {
    */
   async windowsLogin(): Promise<LoginResponse> {
     return new Promise((resolve) => {
-      // 模拟获取 Windows 用户名 (例如: NXP\Admin)
-      const mockWindowsUser = 'NXP\\Admin';
-      
       // 模拟延迟并返回成功结果 (默认关联到 admin 账号进行演示)
       setTimeout(() => {
         const adminUser = MOCK_USERS.find(u => u.username === 'admin');
         if (adminUser) {
           resolve({
             code: 200,
-            message: `已通过 Windows 账号 [${mockWindowsUser}] 登录`,
+            message: `已通过 Windows 账号 [${MOCK_WINDOWS_USER}] 登录`,
             data: {
               token: 'mock_windows_token_' + adminUser.data.userid + '_' + Date.now(),
               ...adminUser.data,
-              username: `${adminUser.data.username} (${mockWindowsUser})`
+              username: `${adminUser.data.username} (${MOCK_WINDOWS_USER})`
             }
           });
         }

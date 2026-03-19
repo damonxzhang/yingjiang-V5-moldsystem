@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { AuthService } from '../../services/authService';
+import { AuthService, MOCK_WINDOWS_USER } from '../../services/authService';
 
 interface LoginPageProps {
   onLoginSuccess: (userData: any) => void;
@@ -211,14 +211,26 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             type="button"
             onClick={handleWindowsLogin}
             disabled={isLoading || isWindowsLoading}
-            className="w-full py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-200 active:scale-95 transition-all flex items-center justify-center gap-2 border border-slate-200 disabled:opacity-50"
+            className="w-full py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-0.5 border border-slate-200 disabled:opacity-50 group"
           >
-            {isWindowsLoading ? (
-              <i className="fas fa-spinner fa-spin"></i>
-            ) : (
-              <i className="fab fa-windows text-blue-500"></i>
+            <div className="flex items-center justify-center gap-2">
+              {isWindowsLoading ? (
+                <i className="fas fa-spinner fa-spin"></i>
+              ) : (
+                <i className="fab fa-windows text-blue-500 group-hover:scale-110 transition-transform"></i>
+              )}
+              <span>{isWindowsLoading ? '正在验证 Windows 凭据...' : 'Windows 账号自动登录'}</span>
+            </div>
+            {!isWindowsLoading && (
+              <div className="flex items-center gap-1 mt-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                <span className="text-[8px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-tighter font-mono">
+                  DETECTED
+                </span>
+                <span className="text-[9px] text-slate-500 font-mono">
+                  {MOCK_WINDOWS_USER}
+                </span>
+              </div>
             )}
-            {isWindowsLoading ? '正在验证 Windows 凭据...' : 'Windows 账号自动登录'}
           </button>
         </form>
 
