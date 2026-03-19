@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { AuthService, MOCK_WINDOWS_USER } from '../../services/authService';
+import { AuthService } from '../../services/authService';
 
 interface LoginPageProps {
   onLoginSuccess: (userData: any) => void;
@@ -9,7 +9,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isWindowsLoading, setIsWindowsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const usernameInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,30 +33,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     }
 
     return null;
-  };
-
-  /**
-   * 处理 Windows 账号登录
-   */
-  const handleWindowsLogin = async () => {
-    setError(null);
-    setIsWindowsLoading(true);
-
-    try {
-      // 在实际生产中，此方法会通过 SSO 或本地代理获取当前 Windows 用户名
-      // 此处原型方案模拟获取 NXP 域账号过程
-      const response = await AuthService.windowsLogin();
-      
-      if (response.code === 200) {
-        onLoginSuccess(response.data);
-      } else {
-        setError(response.message || 'Windows 登录失败');
-      }
-    } catch (err: any) {
-      setError('无法获取当前 Windows 账户信息，请检查系统设置');
-    } finally {
-      setIsWindowsLoading(false);
-    }
   };
 
   /**
@@ -184,7 +159,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           {/* 登录按钮 */}
           <button
             type="submit"
-            disabled={isLoading || isWindowsLoading}
+            disabled={isLoading}
             className="w-full py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
             {isLoading ? (
@@ -194,42 +169,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               </span>
             ) : (
               '登录系统'
-            )}
-          </button>
-
-          {/* Windows 快捷登录 */}
-          <div className="relative py-2">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-100"></div>
-            </div>
-            <div className="relative flex justify-center text-[10px] uppercase">
-              <span className="bg-white px-2 text-slate-400 font-bold">或</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleWindowsLogin}
-            disabled={isLoading || isWindowsLoading}
-            className="w-full py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-0.5 border border-slate-200 disabled:opacity-50 group"
-          >
-            <div className="flex items-center justify-center gap-2">
-              {isWindowsLoading ? (
-                <i className="fas fa-spinner fa-spin"></i>
-              ) : (
-                <i className="fab fa-windows text-blue-500 group-hover:scale-110 transition-transform"></i>
-              )}
-              <span>{isWindowsLoading ? '正在验证 Windows 凭据...' : 'Windows 账号自动登录'}</span>
-            </div>
-            {!isWindowsLoading && (
-              <div className="flex items-center gap-1 mt-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                <span className="text-[8px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-tighter font-mono">
-                  DETECTED
-                </span>
-                <span className="text-[9px] text-slate-500 font-mono">
-                  {MOCK_WINDOWS_USER}
-                </span>
-              </div>
             )}
           </button>
         </form>
