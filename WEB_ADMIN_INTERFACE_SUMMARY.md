@@ -812,6 +812,35 @@
   * `user_id`: "ADM001"
 * **返回**: 二进制流 (Excel 模板文件)
 
+### 7.6 新增/编辑备件档案
+
+* **用途**: 手动创建新备件记录或修改现有备件信息。
+* **接口**: `POST /api/admin/spare-parts/save`
+* **请求体**: 
+  
+  ```json
+  { 
+    "user_id": "ADM001", // 操作人 ID
+    "spare_id": "", // 备件唯一 ID (新增时为空，编辑时必传)
+    "name": "加热棒 220V", // 备件名称
+    "category": "电气件", // 备件分类
+    "unit": "PCS", // 计量单位
+    "min_stock": 5, // 最低库存阈值
+    "is_track_shots": false, // 是否单独计算 shot count
+    "department": "大材料", // 所属部门
+    "remark": "备品备注信息" // 备注
+  }
+  ```
+* **返回数据**:
+  
+  ```json
+  {
+    "success": true, // 是否成功
+    "spare_id": "SP-001", // 生成或更新的备件 ID
+    "message": "保存成功" // 提示消息
+  }
+  ```
+
 ---
 
 ## 8. 生产配置与监控 (Production Config & Monitor)
