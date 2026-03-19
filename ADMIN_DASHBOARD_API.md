@@ -104,11 +104,6 @@
   ```json
   {
     "machine_id": "BMD-01", // 机台 ID
-    "production": { // 生产数据统计
-      "part_no": "P20260319001", // 当前生产料号
-      "planned": 24288, // 计划生产总数
-      "completed": 8368 // 实际完成生产总数
-    },
     "slots": [ // 该机台所有槽位的状态
       { "slot": "P1", "mold_code": "T100", "status": "NORMAL" }, // 槽位1状态及模具编号
       { "slot": "P2", "mold_code": "T104", "status": "NORMAL" }, // 槽位2状态及模具编号
