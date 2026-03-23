@@ -391,6 +391,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         <h1 className="text-lg font-black tracking-tighter text-blue-100 flex items-center gap-2">
           <i className="fas fa-microchip text-blue-400 text-sm"></i>
           NXP SMART MOLD BOARD - 24 UNITS / 72 MOLDS
+          <span className="ml-2 px-2 py-0.5 bg-blue-900/50 text-blue-300 text-[10px] rounded-full border border-blue-700/50 font-bold">
+            【大材料使用还是小材料使用】
+          </span>
         </h1>
         <div className="bg-blue-900/30 px-3 py-0.5 rounded border border-blue-800/50 text-blue-400 font-mono text-[10px]">
           {formatDate(currentTime)}
