@@ -14,7 +14,7 @@
         "code": 200,          //状态码
         "message": "success", //返回信息
         "data": {             //返回的data信息
-            "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+            "user_id": "1", // 用户唯一标识 (工号/UUID)
             "user_name": "看板管理员" // 用户真实姓名
         }
     }
@@ -52,7 +52,7 @@
         "message": "success",
         "data": {
             "token": "Bearer",  // 访问令牌，后续请求需携带在 Header (Authorization: Bearer <token>) 中
-            "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+            "user_id": "1", // 用户唯一标识 (工号/UUID)
             "user_name": "看板管理员", // 用户真实姓名
             "role": "SUPER_ADMIN", // 角色代码：SUPER_ADMIN(超级管理), MAINTAINER(维保员), OPERATOR(操作员)
             "permissions": [ // 拥有的功能权限点列表
@@ -74,7 +74,7 @@
   ```json
   {
      "token": "Bearer",  // 访问令牌，需携带在 Header (Authorization: Bearer <token>) 中
-     "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+     "user_id": "1", // 用户唯一标识 (工号/UUID)
   }
   ```
 * **返回数据**:
@@ -172,7 +172,7 @@
   
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "keyword": "", // 搜索词：支持模具编号或名称模糊查询
     "is_audit_mode": false, // 是否为 Audit 模式：true(仅看需 Audit 的模具), false(普通台账)
     "status": "ALL", // 状态筛选：IDLE, IN_USE, MAINTENANCE, REPAIR, DEACTIVATED, ALL
@@ -235,14 +235,14 @@
   
   ```json
   {
-    "user_id": "ADM001" // 用户唯一标识 (工号/UUID)
+    "user_id": "1" // 用户唯一标识 (工号/UUID)
   }
   ```
 * **返回数据**:
   
   ```json
   {
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "user_name": "看板管理员", // 用户姓名
     "role": "SUPER_ADMIN", // 角色代码：SUPER_ADMIN(超级管理), MAINTAINER(维保员), OPERATOR(操作员)
     "permissions": [ // 拥有的功能权限点列表
@@ -272,7 +272,7 @@
   
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "keyword": "", // 搜索词：支持模具编号或名称模糊查询
     "department": "大材料", // 部门筛选：大材料, 小材料, ALL(全部)
     "is_audit_mode": false, // 是否为 Audit 模式：true(仅看需 Audit 的模具), false(普通台账)
@@ -319,7 +319,7 @@
   
   ```json
   {
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "mold_id": "MD-2024-001", // 编辑时必填，新增时传空串或不传
     "mold_code": "T100", // 模具编号
     "short_name": "BGA-01", // 模具简称
@@ -361,7 +361,7 @@
   
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "mold_id": "MD-2024-001" // 模具唯一 ID
   }
   ```
@@ -405,7 +405,7 @@
   { 
     "mold_id": "MD-2024-001", // 模具唯一 ID
     "reason": "寿命已满且无法修复", // 停用或报废的原因描述
-    "user_id": "ADM001" // 执行操作的管理员 ID
+    "user_id": "1" // 执行操作的管理员 ID
   }
   ```
 * **返回数据**:
@@ -429,7 +429,7 @@
   
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "keyword": "", // 搜索词：支持模具编号或名称模糊查询
     "department": "大材料", // 部门筛选：大材料, 小材料, ALL(全部)
     "is_audit_mode": true, // 是否为 Audit 模式：在此接口中默认为 true
@@ -476,7 +476,7 @@
   
   ```json
   {
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "mold_id": "MD-2024-001", // 编辑时必填，新增时传空串或不传
     "mold_code": "T100", // 模具编号
     "short_name": "BGA-01", // 模具简称
@@ -518,7 +518,7 @@
   
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "mold_id": "MD-2024-001" // 模具唯一 ID
   }
   ```
@@ -562,7 +562,7 @@
   { 
     "mold_id": "MD-2024-001", // 模具唯一 ID
     "reason": "寿命已满且无法修复", // 停用或报废的原因描述
-    "user_id": "ADM001" // 执行操作的管理员 ID
+    "user_id": "1" // 执行操作的管理员 ID
   }
   ```
 * **返回数据**:
@@ -586,7 +586,7 @@
 
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "status": "PENDING",   // 任务状态：PENDING(待执行), COMPLETED(已完成), ALL(全部)
     "keyword": "",         // 搜索词 (模具编号/工单号)
     "start_date": "",      // 筛选开始日期
@@ -625,7 +625,7 @@
 
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "status": "PENDING",   // 任务状态
     "keyword": "",         // 搜索词
     "start_date": "", 
@@ -665,7 +665,7 @@
 
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "task_id": "MT-2026-001", // 任务单号
     "task_type": "MAINTENANCE", // 任务类型 (MAINTENANCE, REPAIR)
     "status": "APPROVED", // 审核结果：APPROVED(通过), REJECTED(驳回)
@@ -686,7 +686,7 @@
 
   ```json
   { 
-    "user_id": "ADM001", 
+    "user_id": "1", 
     "task_id": "MT-2026-001" 
   }
   ```
@@ -737,7 +737,7 @@
 
   ```json
   { 
-    "user_id": "ADM001", 
+    "user_id": "1", 
     "task_id": "RT-2026-001" 
   }
   ```
@@ -779,7 +779,7 @@
   
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "department": "大材料", // 部门筛选：大材料, 小材料, ALL(全部)
     "filter_alerts": false, // 是否仅查看预警项：true(仅看库存不足), false(全部)
     "keyword": "", // 备件名称/规格模糊搜索关键词
@@ -840,7 +840,7 @@
   
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "spare_id": "SP-001", // 备件唯一 ID
     "type": "STOCK_IN", // 动作类型：STOCK_IN(入库), STOCK_OUT(出库)
     "amount": 10,       // 操作数量 (正整数)
@@ -865,7 +865,7 @@
   
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "plan_id": "PLAN-2026-Q2", // 关联的生产计划 ID
     "time_horizon": "30d"      // 预测时间跨度：7d(一周), 30d(一月), 90d(一季)
   }
@@ -926,7 +926,7 @@
   
   ```json
   { 
-    "user_id": "ADM001", // 操作人 ID
+    "user_id": "1", // 操作人 ID
     "spare_id": "", // 备件唯一 ID (新增时为空，编辑时必传)
     "name": "加热棒 220V", // 备件名称
     "category": "电气件", // 备件分类
@@ -959,7 +959,7 @@
   
   ```json
   {
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "department": "大材料" // 部门过滤：大材料, 小材料, ALL
   }
   ```
@@ -995,7 +995,7 @@
   
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "machine_id": "BMD-14", // 机台 ID
     "sku": "5220", // 产品 SKU
     "slot_id": "P1", // 槽位 ID
@@ -1020,7 +1020,7 @@
   
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "process": "注塑", // 工序过滤
     "package_type": "BGA" // 封装类型过滤
   }
@@ -1050,7 +1050,7 @@
 
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "mold_code": "MD-2024-071", // 模具编号筛选 (可选)
     "machine_code": "MT-12", // 机台编号筛选 (可选)
     "start_date": "2024-05-20", // 开始日期 (可选)
@@ -1097,7 +1097,7 @@
   
   ```json
   { 
-    "user_id": "ADM001", // 用户唯一标识 (工号/UUID)
+    "user_id": "1", // 用户唯一标识 (工号/UUID)
     "department": "大材料", // 部门过滤：大材料, 小材料, ALL(全部)
     "keyword": "", // 模具编号/名称搜索
     "mold_id": "", // 特定模具 ID (可选，若传此值则仅返回该模具的绑定详情)
@@ -1138,7 +1138,7 @@
   
   ```json
   { 
-    "user_id": "ADM001",
+    "user_id": "1",
     "mold_id": "MOLD-001", // 目标模具 ID
     "items": [ // 待绑定/更新的备件列表
       {
@@ -1169,7 +1169,7 @@
   
   ```json
   { 
-    "user_id": "ADM001",
+    "user_id": "1",
     "mold_id": "MOLD-001", // 目标模具 ID
     "spare_ids": ["SP-001", "SP-002"] // 待解除绑定的备件 ID 数组
   }
@@ -1219,7 +1219,7 @@
 
 * **用途**: 管理员自定义保养的任务选项（Checklist 项目）。
 * **获取列表**: `POST /api/admin/system/maintenance-items/list`
-  * **请求体**: `{ "user_id": "ADM001", "department": "大材料" }`
+  * **请求体**: `{ "user_id": "1", "department": "大材料" }`
   * **返回数据**: 
     ```json
     [
@@ -1231,7 +1231,7 @@
   * **请求体**: 
     ```json
     { 
-      "user_id": "ADM001", 
+      "user_id": "1", 
       "item_id": "", // 新增为空，编辑传 ID
       "name": "检查冷却水路", 
       "category": "定期保养",
@@ -1240,14 +1240,14 @@
     ```
   * **返回数据**: `{ "success": true, "item_id": "CHK-003" }`
 * **删除**: `POST /api/admin/system/maintenance-items/delete`
-  * **请求体**: `{ "user_id": "ADM001", "item_id": "CHK-001" }`
+  * **请求体**: `{ "user_id": "1", "item_id": "CHK-001" }`
   * **返回数据**: `{ "success": true }`
 
 ### 10.2 维修故障项配置管理
 
 * **用途**: 管理员自定义维修的任务选项（故障分类/原因项）。
 * **获取列表**: `POST /api/admin/system/repair-items/list`
-  * **请求体**: `{ "user_id": "ADM001", "department": "大材料" }`
+  * **请求体**: `{ "user_id": "1", "department": "大材料" }`
   * **返回数据**: 
     ```json
     [
@@ -1259,7 +1259,7 @@
   * **请求体**: 
     ```json
     { 
-      "user_id": "ADM001", 
+      "user_id": "1", 
       "item_id": "", 
       "name": "滑块磨损", 
       "category": "机构类",
@@ -1268,7 +1268,7 @@
     ```
   * **返回数据**: `{ "success": true, "item_id": "FLT-003" }`
 * **删除**: `POST /api/admin/system/repair-items/delete`
-  * **请求体**: `{ "user_id": "ADM001", "item_id": "FLT-001" }`
+  * **请求体**: `{ "user_id": "1", "item_id": "FLT-001" }`
   * **返回数据**: `{ "success": true }`
 
 ### 10.3 字典数据管理 (通用)
