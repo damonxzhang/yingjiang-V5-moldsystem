@@ -578,7 +578,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 <span className="text-[14px] font-black text-blue-300">{machine.id}</span>
                 <div className="flex flex-col items-end">
                   <span className="text-[12px] font-black text-blue-100 truncate max-w-[100px] leading-tight">{machine.currentProduct}</span>
-                  <span className="text-[10px] text-slate-500 font-mono leading-tight">{machine.batchNo}</span>
                 </div>
               </div>
             </div>
