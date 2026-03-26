@@ -74,8 +74,8 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* 开发模式切换器 - 生产环境中应移除 - 调整至顶部中央避免遮挡 Header 按钮 */}
-      <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[60] p-1 flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-indigo-100 opacity-40 hover:opacity-100 transition-all duration-300">
+      {/* 开发模式切换器 - 生产环境中应移除 - 调整至右下角避免遮挡 Header 按钮 */}
+      <div className="fixed bottom-4 right-4 z-[60] p-1 flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-indigo-100 opacity-40 hover:opacity-100 transition-all duration-300">
         <div className="pl-3 pr-1 text-[9px] font-black text-slate-400 uppercase tracking-tighter">Debug Mode</div>
         {!isGuestMode && (
           <div className="flex bg-slate-100 p-0.5 rounded-full border border-slate-200">
