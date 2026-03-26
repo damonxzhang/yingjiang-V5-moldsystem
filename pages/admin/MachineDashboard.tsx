@@ -12,7 +12,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedMachine, setSelectedMachine] = useState<any>(null);
   const [selectedMoldPos, setSelectedMoldPos] = useState<'P1' | 'P2' | 'P3'>('P1');
-  const [materialType, setMaterialType] = useState<'大材料' | '小材料'>('大材料');
+  // 确定当前材料类型（优先从 prop 获取，其次从 URL 获取，最后默认大材料）
+  const currentMaterialType = useMemo(() => {
+    if (department) return department === '小材料' ? '小材料' : '大材料';
+    const params = new URLSearchParams(window.location.search);
+    const dept = params.get('dept');
+    return dept === 'small' ? '小材料' : '大材料';
+  }, [department]);
   const [showInventory, setShowInventory] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showTodoList, setShowTodoList] = useState(false);
@@ -448,14 +454,24 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
           {/* 大小材料切换按钮 */}
           <div className="flex bg-slate-900/80 p-1 rounded-lg border border-slate-700 ml-2">
             <button 
-              onClick={() => setMaterialType('大材料')}
-              className={`px-4 py-0.5 rounded text-[10px] font-black transition-all ${materialType === '大材料' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-500 hover:text-slate-300'}`}
+              onClick={() => {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('dept') !== 'big' || params.get('guest') !== 'true') {
+                  window.location.search = '?guest=true&dept=big';
+                }
+              }}
+              className={`px-4 py-0.5 rounded text-[10px] font-black transition-all ${currentMaterialType === '大材料' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-500 hover:text-slate-300'}`}
             >
               大材料模式
             </button>
             <button 
-              onClick={() => setMaterialType('小材料')}
-              className={`px-4 py-0.5 rounded text-[10px] font-black transition-all ${materialType === '小材料' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-500 hover:text-slate-300'}`}
+              onClick={() => {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('dept') !== 'small' || params.get('guest') !== 'true') {
+                  window.location.search = '?guest=true&dept=small';
+                }
+              }}
+              className={`px-4 py-0.5 rounded text-[10px] font-black transition-all ${currentMaterialType === '小材料' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-500 hover:text-slate-300'}`}
             >
               小材料模式
             </button>
