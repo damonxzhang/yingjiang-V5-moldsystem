@@ -12,6 +12,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedMachine, setSelectedMachine] = useState<any>(null);
   const [selectedMoldPos, setSelectedMoldPos] = useState<'P1' | 'P2' | 'P3'>('P1');
+  const [materialType, setMaterialType] = useState<'大材料' | '小材料'>('大材料');
   const [showInventory, setShowInventory] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showTodoList, setShowTodoList] = useState(false);
@@ -276,36 +277,93 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 </div>
               </section>
 
-              {/* 进度条说明 */}
-              <section className="col-span-2 space-y-6 pt-4">
+              {/* 设备边框说明 */}
+              <section className="col-span-2 space-y-6 pt-4 border-t border-white/5">
                 <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest flex items-center gap-2 border-b border-blue-500/20 pb-2">
                   <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
-                  进度条含义说明
+                  设备边框颜色说明 (以设备为维度)
                 </h3>
-                <div className="flex justify-center">
-                  <div className="flex gap-4 items-start bg-white/5 p-4 rounded-2xl border border-white/5 max-w-xl">
-                    <div className="w-24 shrink-0 space-y-2">
-                      <div className="flex gap-1">
-                        <div className="h-1.5 flex-1 bg-slate-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-green-500 w-1/2"></div>
-                        </div>
-                        <div className="h-1.5 flex-1 bg-slate-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-yellow-500 w-4/5"></div>
-                        </div>
-                        <div className="h-1.5 flex-1 bg-slate-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-red-500 w-full"></div>
-                        </div>
+                <div className="grid grid-cols-4 gap-4">
+                  {[
+                    { color: 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]', title: '异常/超期', desc: '机台内有任一模具处于“超期”或“停用”状态，需立即干预。', icon: 'fa-triangle-exclamation text-red-500' },
+                    { color: 'border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.4)]', title: '预警/关注', desc: '机台内所有模具均未超期，但有模具处于“即将保养”阶段。', icon: 'fa-circle-exclamation text-yellow-500' },
+                    { color: 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.4)]', title: '验证中 (BUYOFF)', desc: '机台内有模具处于“BUYOFF验证”阶段，生产需严格监控。', icon: 'fa-microscope text-blue-500' },
+                    { color: 'border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)]', title: '运行正常', desc: '机台内所有模具状态均为“正常”，无待办维保任务。', icon: 'fa-check-circle text-green-500' }
+                  ].map((item, idx) => (
+                    <div key={idx} className={`bg-slate-800/80 p-4 rounded-2xl border-[3px] ${item.color} flex flex-col gap-3 group hover:scale-[1.02] transition-all`}>
+                      <div className="flex justify-between items-start">
+                        <span className="text-sm font-black text-slate-100 tracking-tight">{item.title}</span>
+                        <i className={`fas ${item.icon} text-lg`}></i>
                       </div>
-                      <div className="text-[9px] text-center text-slate-400 font-black uppercase">累计冲次 (Shot Count)</div>
+                      <p className="text-[10px] text-slate-400 font-bold leading-relaxed">{item.desc}</p>
+                      <div className="mt-auto pt-2 border-t border-white/5 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                        <span className="text-[9px] text-blue-500/60 font-black uppercase tracking-widest">Device Border Legend</span>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-sm font-black text-slate-100">模具累计冲次进度条</h4>
-                      <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
-                        显示模具当前已累计运行的冲次（Shot Count）占总寿命阈值的比例。
-                        <span className="text-green-500 ml-1">绿色</span>表示运行在安全冲次内，
-                        <span className="text-yellow-500 ml-1">黄色</span>表示接近预警阈值，
-                        <span className="text-red-500 ml-1">红色</span>表示已达到或超过寿命极限。
-                      </p>
+                  ))}
+                </div>
+              </section>
+
+              {/* 进度条说明 */}
+              <section className="col-span-2 space-y-6 pt-4 border-t border-white/5">
+                <div className="grid grid-cols-2 gap-12">
+                  <div className="space-y-6">
+                    <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest flex items-center gap-2 border-b border-blue-500/20 pb-2">
+                      <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
+                      进度条含义说明
+                    </h3>
+                    <div className="flex gap-4 items-start bg-white/5 p-4 rounded-2xl border border-white/5">
+                      <div className="w-24 shrink-0 space-y-2">
+                        <div className="flex gap-1">
+                          <div className="h-1.5 flex-1 bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-green-500 w-1/2"></div>
+                          </div>
+                          <div className="h-1.5 flex-1 bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-yellow-500 w-4/5"></div>
+                          </div>
+                          <div className="h-1.5 flex-1 bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-red-500 w-full"></div>
+                          </div>
+                        </div>
+                        <div className="text-[9px] text-center text-slate-400 font-black uppercase">累计冲次 (Shot Count)</div>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-100">模具累计冲次进度条</h4>
+                        <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
+                          显示模具当前已累计运行的冲次占总寿命比例。
+                          <span className="text-green-500 ml-1">绿色</span>安全，
+                          <span className="text-yellow-500 ml-1">黄色</span>预警，
+                          <span className="text-red-500 ml-1">红色</span>超期。
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest flex items-center gap-2 border-b border-blue-500/20 pb-2">
+                      <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
+                      生产负荷说明
+                    </h3>
+                    <div className="flex gap-4 items-start bg-white/5 p-4 rounded-2xl border border-white/5">
+                      <div className="w-24 shrink-0 space-y-1.5">
+                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-blue-500 w-2/3"></div>
+                        </div>
+                        <div className="flex justify-between text-[8px] font-black text-blue-500/50">
+                          <span>0%</span>
+                          <span>100%</span>
+                        </div>
+                        <div className="text-[9px] text-center text-slate-400 font-black uppercase">生产进度 (Progress)</div>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-100">机台生产达成率</h4>
+                        <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
+                          展示当前机台批次任务的完成进度。
+                          <span className="text-blue-500 font-black">蓝色进度条</span>
+                          代表已完成产量占目标产量的百分比。
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -387,15 +445,30 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             <i className="fas fa-circle-info text-blue-400 group-hover:scale-110 transition-transform"></i>
             看板说明
           </button>
+          {/* 大小材料切换按钮 */}
+          <div className="flex bg-slate-900/80 p-1 rounded-lg border border-slate-700 ml-2">
+            <button 
+              onClick={() => setMaterialType('大材料')}
+              className={`px-4 py-0.5 rounded text-[10px] font-black transition-all ${materialType === '大材料' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              大材料模式
+            </button>
+            <button 
+              onClick={() => setMaterialType('小材料')}
+              className={`px-4 py-0.5 rounded text-[10px] font-black transition-all ${materialType === '小材料' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              小材料模式
+            </button>
+          </div>
         </div>
         <h1 className="text-lg font-black tracking-tighter text-blue-100 flex items-center gap-2">
           <i className="fas fa-microchip text-blue-400 text-sm"></i>
           NXP SMART MOLD BOARD - 24 UNITS / 72 MOLDS
-          <span className="ml-2 px-2 py-0.5 bg-blue-900/50 text-blue-300 text-[10px] rounded-full border border-blue-700/50 font-bold">
-            【大材料使用还是小材料使用】
+          <span className={`ml-2 px-2 py-0.5 text-[10px] rounded-full border font-bold transition-all ${materialType === '大材料' ? 'bg-blue-900/50 text-blue-300 border-blue-700/50' : 'bg-indigo-900/50 text-indigo-300 border-indigo-700/50'}`}>
+            【{materialType}使用】
           </span>
         </h1>
-        <div className="bg-blue-900/30 px-3 py-0.5 rounded border border-blue-800/50 text-blue-400 font-mono text-[10px]">
+        <div className="bg-blue-900/30 px-5 py-2 rounded-xl border border-blue-800/50 text-blue-400 font-mono text-sm font-bold shadow-[0_0_15px_rgba(30,58,138,0.3)]">
           {formatDate(currentTime)}
         </div>
       </div>
