@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Role, AuthData } from './types';
+import { AuthData } from './types';
 import { AuthService } from './services/authService';
 import LoginPage from './pages/auth/LoginPage';
 import AdminLayout from './pages/admin/AdminLayout';
@@ -23,10 +23,9 @@ const App: React.FC = () => {
       setIsGuestMode(true);
       // 访客模式下，模拟一个受限的访客用户
       setUserData({
-        userid: 'GUEST',
-        username: `访客 (${dept === 'big' ? '大材料' : '小材料'})`,
-        role: dept === 'big' ? Role.MoldEngineerBig : Role.MoldEngineerSmall,
-        department: dept === 'big' ? '大材料' : '小材料',
+        user_id: 'GUEST',
+        user_name: `访客 (${dept === 'big' ? '大材料' : '小材料'})`,
+        role: dept === 'big' ? 'MOLD_ENGINEER_BIG' : 'MOLD_ENGINEER_SMALL',
         token: 'guest_token',
         loginTime: new Date().toISOString()
       });
@@ -95,7 +94,7 @@ const App: React.FC = () => {
         )}
         <div className={`px-3 py-1 rounded-full text-[10px] font-black shadow-sm border ${isGuestMode ? 'bg-amber-500 text-white border-amber-600' : 'bg-green-500 text-white border-green-600'}`}>
           <i className={`fas ${isGuestMode ? 'fa-user-secret' : 'fa-user-shield'} mr-1.5`}></i>
-          {userData.username}
+          {userData.user_name}
         </div>
         {isGuestMode && (
           <button 

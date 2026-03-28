@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { Role } from '../../types';
 import { MOCK_USERS } from '../../services/mockData';
 import Home from './Home';
 import MoldInquiry from './MoldInquiry';
@@ -9,7 +8,7 @@ import MaintenanceFlow from './MaintenanceFlow';
 import RepairFlow from './RepairFlow';
 
 interface AppLayoutProps {
-  userRole: Role;
+  userRole: string;
   onLogout: () => void;
 }
 
@@ -30,24 +29,28 @@ const AppLayout: React.FC<AppLayoutProps> = ({ userRole, onLogout }) => {
     }
   };
 
-  const getRoleLabel = (role: Role) => {
+  const getRoleLabel = (role: string) => {
     switch(role) {
-      case Role.Admin: return '管理员';
-      case Role.MoldEngineerBig: return '大材料工程师';
-      case Role.MoldEngineerSmall: return '小材料工程师';
-      case Role.ShiftLeader: return '带班';
-      case Role.Operator: return '操作员';
+      case 'ADMIN': return '管理员';
+      case 'MOLD_ENGINEER_BIG': return '大材料工程师';
+      case 'MOLD_ENGINEER_SMALL': return '小材料工程师';
+      case 'SHIFT_LEADER': return '带班';
+      case 'OPERATOR': return '操作员';
+      case 'SUPER_ADMIN': return '超级管理员';
+      case 'MAINTAINER': return '维保员';
       default: return role;
     }
   };
 
-  const getRoleShortLabel = (role: Role) => {
+  const getRoleShortLabel = (role: string) => {
     switch(role) {
-      case Role.Admin: return '管';
-      case Role.MoldEngineerBig: return '大';
-      case Role.MoldEngineerSmall: return '小';
-      case Role.ShiftLeader: return '带';
-      case Role.Operator: return '员';
+      case 'ADMIN': return '管';
+      case 'MOLD_ENGINEER_BIG': return '大';
+      case 'MOLD_ENGINEER_SMALL': return '小';
+      case 'SHIFT_LEADER': return '带';
+      case 'OPERATOR': return '员';
+      case 'SUPER_ADMIN': return '超';
+      case 'MAINTAINER': return '维';
       default: return 'U';
     }
   };

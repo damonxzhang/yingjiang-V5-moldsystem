@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MoldStatus, BuyoffStatus } from '../../types';
 import { MOCK_MOLDS } from '../../services/mockData';
+import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, MoldActionRequest } from '../../services/dashboardService';
 
 interface MachineDashboardProps {
   onSwitchView?: (view: 'tooling' | 'machine') => void;
@@ -27,6 +28,26 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [taskType, setTaskType] = useState<string>('');
   const [maintenanceTimeRange, setMaintenanceTimeRange] = useState({ start: '', end: '' });
   const [showLegendModal, setShowLegendModal] = useState(false);
+  // 存储API返回的看板数据
+  const [dashboardData, setDashboardData] = useState<DashboardStatusResponse | null>(null);
+  // 创建保养任务加载状态
+  const [isCreatingMaintenance, setIsCreatingMaintenance] = useState(false);
+  // 创建保养任务错误信息
+  const [maintenanceError, setMaintenanceError] = useState<string>('');
+  // 创建报修任务加载状态
+  const [isCreatingRepair, setIsCreatingRepair] = useState(false);
+  // 创建报修任务错误信息
+  const [repairError, setRepairError] = useState<string>('');
+  // 模具停用加载状态
+  const [isDisablingMold, setIsDisablingMold] = useState(false);
+  // 模具停用错误信息
+  const [disableMoldError, setDisableMoldError] = useState<string>('');
+  // 模具安装加载状态
+  const [isInstallingMold, setIsInstallingMold] = useState(false);
+  // 模具卸载加载状态
+  const [isUninstallingMold, setIsUninstallingMold] = useState(false);
+  // 模具安装/卸载错误信息
+  const [moldActionError, setMoldActionError] = useState<string>('');
 
   // 筛选状态
   const [filterProduct, setFilterProduct] = useState('');
@@ -39,6 +60,40 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+  // 用于防抖的定时器ref
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 调用API获取看板数据
+  useEffect(() => {
+    // 清除之前的定时器
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // 设置防抖延迟（机器码和模具编号输入完成后500ms再请求）
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        const data = await DashboardService.fetchDashboardMachinesStatus({
+          product_type: filterProduct,
+          machine_code: filterMachine,
+          mold_code: filterMold,
+          only_producible: onlyProducible,
+          only_abnormal: onlyAbnormal
+        });
+        console.log('Dashboard data:', data);
+        setDashboardData(data);
+      } catch (error) {
+        console.error('获取看板数据失败:', error);
+      }
+    }, 500);
+
+    // 清理函数
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [filterProduct, filterMachine, filterMold, onlyProducible, onlyAbnormal]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleString('zh-CN', {
@@ -59,81 +114,103 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     if (department) {
       availableMolds = availableMolds.filter(m => m.department === department);
     }
-    
-    return Array.from({ length: 24 }).map((_, i) => {
-      const machineId = `BMD-${String(i + 1).padStart(2, '0')}`;
-      
-      const createMoldData = (pos: string, index: number) => {
-        // 获取模拟模具数据，确保即使 MOCK_MOLDS 为空也能有兜底
-        const moldInfo = availableMolds.length > 0 
-          ? availableMolds[(index * 3 + (pos === 'P1' ? 0 : pos === 'P2' ? 1 : 2)) % availableMolds.length]
-          : { id: `M-TEMP-${index}`, name: '临时占位模具', type: '未知', vendor: 'N/A', shotTotal: 0, lifeLimit: 100000, status: MoldStatus.Idle, location: 'N/A', buyoffStatus: BuyoffStatus.NotInitiated };
+    return (dashboardData?.machines || []).map((item, i) => {
+      // 使用 API 原始字段名，保持与接口一致
+      const machine_code = item.machine_code;
+      const machine_id = item.machine_id;
+      const status = item.status; // 机台状态: NORMAL, MAINTENANCE_DUE, OVERDUE, BUYOFF, DISABLED, OFFLINE
+      const pending_tasks = item.pending_tasks || 0;
+      const part_no = item.part_no;
+      const mold_count = item.mold_count;
 
-        const statusSeed = Math.random();
-        let status = 'NORMAL';
-        let statusText = '正常';
-        let color = 'green';
+      // 根据 life_percent 计算前端状态
+      const getStatusByLifePercent = (life_percent: number) => {
+        if (life_percent >= 90) return { status: 'OVERDUE', statusText: '超期', color: 'red' };
+        if (life_percent >= 75) return { status: 'UPCOMING', statusText: '即将保养', color: 'yellow' };
+        return { status: 'NORMAL', statusText: '正常', color: 'green' };
+      };
 
-        if (statusSeed > 0.92) {
-          status = 'BUYOFF';
-          statusText = 'BUYOFF';
-          color = 'blue';
-        } else if (statusSeed > 0.85) {
-          status = 'OVERDUE';
-          statusText = '超期';
-          color = 'red';
-        } else if (statusSeed > 0.75) {
-          status = 'UPCOMING';
-          statusText = '即将保养';
-          color = 'yellow';
-        }
+      const createMoldData = (pos: string, moldItemInfo: any) => {
+        const life_percent = moldItemInfo.life_percent || 0;
+        const statusInfo = getStatusByLifePercent(life_percent);
 
-        const currentShots = Math.floor(Math.random() * 1000000);
-        const shotThreshold = 800000; // 预警阈值
-        const isShotWarning = currentShots > shotThreshold;
+        // 计算剩余冲次
+        const max_shots = moldItemInfo.max_shots || 500000;
+        const current_shots = moldItemInfo.current_shots || 0;
+        const remaining_shots = max_shots - current_shots;
+        const shotThreshold = max_shots * 0.75; // 预警阈值为75%
+        const isShotWarning = current_shots > shotThreshold;
+
+        // 获取模拟模具数据用于补充信息
+        const mockMoldInfo = availableMolds.length > 0
+          ? availableMolds[(i * 3 + parseInt(pos.replace('P', '')) - 1) % availableMolds.length]
+          : { id: `M-TEMP-${i}`, name: moldItemInfo.name || '未知模具', type: '未知', vendor: 'N/A', shotTotal: 0, lifeLimit: max_shots, status: MoldStatus.Idle, location: 'N/A', buyoffStatus: BuyoffStatus.NotInitiated };
 
         return {
           pos,
-          id: `T${100 + index * 3 + (pos === 'P1' ? 0 : pos === 'P2' ? 1 : 2)}`,
-          status,
-          statusText,
-          color,
-          maintenanceCountdown: Math.floor(Math.random() * 5000),
-          isOffline: Math.random() > 0.95,
-          taskCount: Math.floor(Math.random() * 2),
-          currentShots,
+          // 使用 API 原始字段名
+          mold_id: String(moldItemInfo.mold_id),
+          mold_code: moldItemInfo.mold_code,
+          name: moldItemInfo.name,
+          short_name: moldItemInfo.short_name,
+          // 前端状态字段
+          status: statusInfo.status,
+          statusText: statusInfo.statusText,
+          color: statusInfo.color,
+          // 其他字段保持 API 原始命名
+          life_percent,
+          current_shots,
+          max_shots,
+          remaining_shots,
           shotThreshold,
           isShotWarning,
-          moldInfo
+          isOffline: moldItemInfo.status === 'OFFLINE',
+          taskCount: 0, // 模具级别任务数，API未提供，暂时设为0
+          // 保留 moldInfo 用于兼容现有代码
+          moldInfo: {
+            ...mockMoldInfo,
+            id: String(moldItemInfo.mold_id),
+            name: moldItemInfo.name || mockMoldInfo.name,
+            lifeLimit: max_shots,
+            shotTotal: current_shots
+          }
         };
       };
 
-      const moldCount = [2, 3, 4][Math.floor(Math.random() * 3)];
+      const moldCount = item?.molds?.length || 0;
       const moldPositions = Array.from({ length: moldCount }, (_, index) => `P${index + 1}`);
-      
+      const moldArr = item?.molds || [];
       const molds = moldPositions.reduce((acc, pos, idx) => {
-        acc[pos] = createMoldData(pos, i + idx);
+        acc[pos] = createMoldData(pos, moldArr[idx]);
         return acc;
       }, {} as any);
 
-      // 整体状态逻辑：如果有任何一个超期，则整体边框显红；如果有即将保养，显黄；否则绿
-      let machineColorClass = 'border-[3px] border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)]';
-      if (Object.values(molds).some(m => m.status === 'OVERDUE')) {
-        machineColorClass = 'border-[3px] border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]';
-      } else if (Object.values(molds).some(m => m.status === 'UPCOMING')) {
-        machineColorClass = 'border-[3px] border-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.4)]';
-      } else if (Object.values(molds).some(m => m.status === 'BUYOFF')) {
-        machineColorClass = 'border-[3px] border-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.4)]';
+      // 整体状态逻辑：使用机台状态优先，其次根据模具状态计算
+      let colorClass = 'border-[3px] border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)]';
+      if (status === 'OVERDUE' || status === 'DISABLED' || status === 'OFFLINE' || Object.values(molds).some((m: any) => m.status === 'OVERDUE')) {
+        colorClass = 'border-[3px] border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]';
+      } else if (status === 'MAINTENANCE_DUE' || Object.values(molds).some((m: any) => m.status === 'UPCOMING')) {
+        colorClass = 'border-[3px] border-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.4)]';
+      } else if (status === 'BUYOFF' || Object.values(molds).some((m: any) => m.status === 'BUYOFF')) {
+        colorClass = 'border-[3px] border-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.4)]';
       }
 
+      // 生产数据 - 使用 API 数据或默认值
       const targetQty = 10000 + Math.floor(Math.random() * 20000);
       const completedQty = Math.floor(Math.random() * targetQty);
       const productionProgress = (completedQty / targetQty) * 100;
 
       return {
-        id: machineId,
-        colorClass: machineColorClass,
-        currentProduct: ['QFN-16', 'BGA-64', 'SOP-8', 'LQFP-100'][Math.floor(Math.random() * 4)],
+        // 使用 API 原始字段名
+        machine_code,
+        machine_id,
+        status,
+        pending_tasks,
+        part_no,
+        mold_count,
+        // 前端需要的额外字段
+        colorClass,
+        currentProduct: part_no || ['QFN-16', 'BGA-64', 'SOP-8', 'LQFP-100'][Math.floor(Math.random() * 4)],
         batchNo: `LOT-${Math.floor(Math.random() * 900000 + 100000)}`,
         targetQty,
         completedQty,
@@ -141,23 +218,23 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         molds
       };
     });
-  }, []);
+  }, [dashboardData]);
 
   // 筛选逻辑
   const filteredMachines = useMemo(() => {
     return allMachines.filter(m => {
       const matchProduct = !filterProduct || m.currentProduct.toLowerCase().includes(filterProduct.toLowerCase());
-      const matchMachine = !filterMachine || m.id.toLowerCase().includes(filterMachine.toLowerCase());
-      
-      const moldsArray = Object.values(m.molds);
-      const matchMold = !filterMold || moldsArray.some(mold => mold.id.toLowerCase().includes(filterMold.toLowerCase()));
-      
+      const matchMachine = !filterMachine || m.machine_code.toLowerCase().includes(filterMachine.toLowerCase());
+
+      const moldsArray = Object.values(m.molds) as any[];
+      const matchMold = !filterMold || moldsArray.some((mold: any) => String(mold.mold_id).toLowerCase().includes(filterMold.toLowerCase()) || String(mold.mold_code).toLowerCase().includes(filterMold.toLowerCase()));
+
       // 可生产设备定义：所有模具均非下线 且 均非超期
-      const matchProducible = !onlyProducible || moldsArray.every(mold => !mold.isOffline && mold.status !== 'OVERDUE');
-      
+      const matchProducible = !onlyProducible || moldsArray.every((mold: any) => !mold.isOffline && mold.status !== 'OVERDUE');
+
       // 异常生产设备定义：机台下有任何一个模具处于 OVERDUE 或 UPCOMING 状态，或者处于 OFFLine 状态
-      const matchAbnormal = !onlyAbnormal || moldsArray.some(mold => mold.isOffline || mold.status === 'OVERDUE' || mold.status === 'UPCOMING');
-      
+      const matchAbnormal = !onlyAbnormal || moldsArray.some((mold: any) => mold.isOffline || mold.status === 'OVERDUE' || mold.status === 'UPCOMING');
+
       return matchProduct && matchMachine && matchMold && matchProducible && matchAbnormal;
     });
   }, [allMachines, filterProduct, filterMachine, filterMold, onlyProducible, onlyAbnormal]);
@@ -165,8 +242,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const productOptions = Array.from(new Set(allMachines.map(m => m.currentProduct)));
 
   const handleMachineClick = (machine: any) => {
-    if (!machine || !machine.id || !machine.molds || Object.keys(machine.molds).length === 0) {
-      alert(`设备 ${machine?.id || '未知'} 当前无模具生产数据，无法查看详情`);
+    if (!machine || !machine.machine_code || !machine.molds || Object.keys(machine.molds).length === 0) {
+      alert(`设备 ${machine?.machine_code || '未知'} 当前无模具生产数据，无法查看详情`);
       return;
     }
     setSelectedMachine(machine);
@@ -186,6 +263,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         start: now.toISOString().slice(0, 16),
         end: end.toISOString().slice(0, 16)
       });
+      // 重置错误状态
+      setMaintenanceError('');
     }
     setTaskType(type);
     setShowTaskModal(true);
@@ -210,6 +289,183 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     });
   };
 
+  // 处理创建保养任务
+  const handleCreateMaintenanceTask = async () => {
+    if (!selectedMachine || !selectedMoldPos) {
+      setMaintenanceError('请选择机台和模具位置');
+      return;
+    }
+
+    // 从 selectedMachine.molds 中获取对应位置的模具信息
+    const molds = selectedMachine.molds;
+    const moldInfo = molds && molds[selectedMoldPos];
+    if (!moldInfo) {
+      setMaintenanceError('未找到对应的模具信息');
+      return;
+    }
+
+    setIsCreatingMaintenance(true);
+    setMaintenanceError('');
+
+    try {
+      const requestData: CreateMaintenanceTaskRequest = {
+        machine_id: selectedMachine.machine_id,
+        mold_id: String(moldInfo.mold_id),
+        user_id: '', // 将由 service 自动填充
+        start_time: maintenanceTimeRange.start.replace('T', ' '),
+        end_time: maintenanceTimeRange.end.replace('T', ' '),
+        // description: '例行保养'
+      };
+
+      const response = await DashboardService.createMaintenanceTask(requestData);
+
+      if (response.success) {
+        setTaskType('SUCCESS');
+      } else {
+        setMaintenanceError(response.message || '创建保养任务失败');
+      }
+    } catch (error: any) {
+      setMaintenanceError(error.message || '创建保养任务失败');
+    } finally {
+      setIsCreatingMaintenance(false);
+    }
+  };
+
+  // 处理创建报修任务
+  const handleCreateRepairTask = async () => {
+    if (!selectedMachine || !selectedMoldPos) {
+      setRepairError('请选择机台和模具位置');
+      return;
+    }
+
+    // 从 selectedMachine.molds 中获取对应位置的模具信息
+    const molds = selectedMachine.molds;
+    const moldInfo = molds && molds[selectedMoldPos];
+    if (!moldInfo) {
+      setRepairError('未找到对应的模具信息');
+      return;
+    }
+
+    setIsCreatingRepair(true);
+    setRepairError('');
+
+    try {
+      const requestData = {
+        machine_id: String(selectedMachine.machine_id),
+        mold_id: String(moldInfo.mold_id)
+      };
+
+      const response = await DashboardService.createRepairTask(requestData as CreateRepairTaskRequest);
+
+      if (response.success) {
+        setTaskType('REPAIR_SUCCESS');
+      } else {
+        setRepairError(response.message || '创建报修任务失败');
+      }
+    } catch (error: any) {
+      setRepairError(error.message || '创建报修任务失败');
+    } finally {
+      setIsCreatingRepair(false);
+    }
+  };
+
+  // 处理模具停用
+  const handleDisableMold = async () => {
+    if (!selectedMachine || !selectedMoldPos) {
+      setDisableMoldError('请选择机台和模具位置');
+      return;
+    }
+
+    // 从 selectedMachine.molds 中获取对应位置的模具信息
+    const molds = selectedMachine.molds;
+    const moldInfo = molds && molds[selectedMoldPos];
+    if (!moldInfo) {
+      setDisableMoldError('未找到对应的模具信息');
+      return;
+    }
+
+    setIsDisablingMold(true);
+    setDisableMoldError('');
+
+    try {
+      const requestData = {
+        mold_id: String(moldInfo.mold_id),
+        reason: '手动触发停用'
+      };
+
+      const response = await DashboardService.disableMold(requestData as DisableMoldRequest);
+
+      if (response.success) {
+        setTaskType('DEACTIVATE_SUCCESS');
+      } else {
+        setDisableMoldError(response.message || '模具停用失败');
+      }
+    } catch (error: any) {
+      setDisableMoldError(error.message || '模具停用失败');
+    } finally {
+      setIsDisablingMold(false);
+    }
+  };
+
+  // 处理模具安装/卸载
+  const handleMoldAction = async (action: 'INSTALL' | 'UNINSTALL') => {
+    if (!selectedMachine || !selectedMoldPos) {
+      setMoldActionError('请选择机台和模具位置');
+      return;
+    }
+
+    // 从 selectedMachine.molds 中获取对应位置的模具信息
+    const molds = selectedMachine.molds;
+    const moldInfo = molds && molds[selectedMoldPos];
+    if (!moldInfo) {
+      setMoldActionError('未找到对应的模具信息');
+      return;
+    }
+
+    if (action === 'INSTALL') {
+      setIsInstallingMold(true);
+    } else {
+      setIsUninstallingMold(true);
+    }
+    setMoldActionError('');
+
+    try {
+      // 从 API 数据中获取 mold_number 作为 slot
+      // mold_number 在 API 中返回，如 "P1", "P2", "P3"
+      const slot = moldInfo.mold_number || selectedMoldPos;
+
+      const requestData = {
+        action,
+        machine_id: String(selectedMachine.machine_id),
+        slot,
+        mold_id: String(moldInfo.mold_id)
+      };
+
+      const response = await DashboardService.moldAction(requestData as MoldActionRequest);
+
+      if (response.success) {
+        if (action === 'INSTALL') {
+          setTaskType('INSTALL_SUCCESS');
+        } else {
+          setTaskType('UNINSTALL_SUCCESS');
+        }
+      } else {
+        setMoldActionError(response.message || '模具操作失败');
+      }
+    } catch (error: any) {
+      setMoldActionError(error.message || '模具操作失败');
+    } finally {
+      if (action === 'INSTALL') {
+        setIsInstallingMold(false);
+      } else {
+        setIsUninstallingMold(false);
+      }
+    }
+  };
+  console.log('allMachines:', allMachines);
+  console.log("selectedMoldPos:",selectedMoldPos)
+  console.log("selectedMachine:",selectedMachine)
+  
   return (
     <div className="h-screen bg-[#020617] text-white p-2 font-sans overflow-hidden flex flex-col">
       {/* 看板说明弹窗 */}
@@ -566,16 +822,16 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
       {/* Main Grid - 6x4 */}
       <div className="grid grid-cols-6 gap-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-        {filteredMachines.map(machine => (
-          <div 
-            key={machine.id} 
+        {filteredMachines.map(machine=> (
+          <div
+            key={machine.machine_code}
             onClick={() => handleMachineClick(machine)}
             className={`bg-slate-900/40 ${machine.colorClass} rounded-xl p-2.5 flex flex-col justify-between cursor-pointer hover:bg-slate-800/60 transition-all relative group`}
           >
             {/* Machine Header */}
             <div className="flex flex-col mb-2">
               <div className="flex justify-between items-start">
-                <span className="text-[14px] font-black text-blue-300">{machine.id}</span>
+                <span className="text-[14px] font-black text-blue-300">{machine.machine_code}</span>
                 <div className="flex flex-col items-end">
                   <span className="text-[12px] font-black text-blue-100 truncate max-w-[100px] leading-tight">{machine.currentProduct}</span>
                 </div>
@@ -584,7 +840,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
             {/* Dynamic Molds Row (2, 3, or 4 molds) */}
             <div className={`grid ${
-              Object.keys(machine.molds).length === 4 ? 'grid-cols-4' : 
+              Object.keys(machine.molds).length === 4 ? 'grid-cols-4' :
               Object.keys(machine.molds).length === 2 ? 'grid-cols-2' : 'grid-cols-3'
             } gap-1.5 my-2 flex-1`}>
               {Object.entries(machine.molds).map(([pos, mold]: [string, any]) => {
@@ -601,26 +857,26 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       mold.color === 'yellow' ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500' :
                       'bg-red-500/10 border-red-500/50 text-red-500'
                     }`}>
-                      <span>{mold.id}</span>
+                      <span>{mold.mold_code || mold.mold_id}</span>
                       {mold.isShotWarning && (
                         <i className="fas fa-bolt text-[11px] text-amber-500 animate-pulse"></i>
                       )}
                     </div>
-                    {/* Tiny Progress Bar */}
+                    {/* Tiny Progress Bar - 使用 life_percent */}
                     <div className="space-y-1">
                       <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                         <div className={`h-full ${
-                          (mold.maintenanceCountdown / 5000) * 100 > 90 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 
-                          (mold.maintenanceCountdown / 5000) * 100 > 60 ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]' : 'bg-green-500'
-                        }`} style={{ width: `${Math.min(100, (mold.maintenanceCountdown / 5000) * 100)}%` }}></div>
+                          mold.life_percent > 90 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' :
+                          mold.life_percent > 60 ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]' : 'bg-green-500'
+                        }`} style={{ width: `${Math.min(100, mold.life_percent)}%` }}></div>
                       </div>
                       <div className="flex justify-between items-center px-0.5">
                         <span className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">Life</span>
                         <span className={`text-[9px] font-black ${
-                          (mold.maintenanceCountdown / 5000) * 100 > 90 ? 'text-red-400' : 
-                          (mold.maintenanceCountdown / 5000) * 100 > 60 ? 'text-yellow-400' : 'text-green-400'
+                          mold.life_percent > 90 ? 'text-red-400' :
+                          mold.life_percent > 60 ? 'text-yellow-400' : 'text-green-400'
                         }`}>
-                          {Math.round(Math.min(100, (mold.maintenanceCountdown / 5000) * 100))}%
+                          {Math.round(mold.life_percent)}%
                         </span>
                       </div>
                     </div>
@@ -630,13 +886,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             </div>
 
             {/* Todo Badge in bottom-right corner */}
-            {Object.values(machine.molds).reduce((acc: number, m: any) => acc + m.taskCount, 0) > 0 && (
-              <div 
+            {(Object.values(machine.molds) as any[]).reduce((acc: number, m: any) => acc + (m.taskCount || 0), 0) > 0 && (
+              <div
                 onClick={(e) => handleShowTodo(e, machine)}
                 className="absolute bottom-1 right-1 bg-indigo-600 hover:bg-indigo-500 text-white min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-black shadow-lg shadow-indigo-900/50 transition-all hover:scale-110 border border-indigo-400/50 z-10"
                 title="点击查看待办清单"
               >
-                {Object.values(machine.molds).reduce((acc: number, m: any) => acc + m.taskCount, 0)}
+                {(Object.values(machine.molds) as any[]).reduce((acc: number, m: any) => acc + (m.taskCount || 0), 0)}
               </div>
             )}
           </div>
@@ -649,7 +905,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
           <div className="bg-slate-900 border border-blue-500/50 rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl">
             <div className="bg-blue-900/30 p-6 border-b border-blue-500/30 flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-black text-blue-100 uppercase tracking-widest">设备指挥中心: {selectedMachine.id}</h2>
+                <h2 className="text-xl font-black text-blue-100 uppercase tracking-widest">设备指挥中心: {selectedMachine.machine_code}</h2>
                 <div className="flex gap-4 mt-1">
                   <p className="text-blue-400 text-xs font-bold">当前产品: {selectedMachine.currentProduct}</p>
                   <p className="text-slate-500 text-xs font-mono">批次号: {selectedMachine.batchNo}</p>
@@ -659,7 +915,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 <i className="fas fa-times text-2xl"></i>
               </button>
             </div>
-            
+
             <div className="flex">
               {/* Left Sidebar: Pos Selector */}
               <div className="w-24 bg-slate-950/50 border-r border-blue-900/30 flex flex-col p-2 gap-2">
@@ -668,21 +924,21 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   if (!mold) return null;
                   const isActive = selectedMoldPos === pos;
                   return (
-                    <button 
+                    <button
                       key={pos}
                       onClick={() => setSelectedMoldPos(pos as any)}
                       className={`p-3 rounded-xl border flex flex-col items-center gap-1 transition-all ${
-                        isActive 
-                          ? 'bg-blue-600 border-blue-400 scale-105 shadow-lg shadow-blue-900/50' 
+                        isActive
+                          ? 'bg-blue-600 border-blue-400 scale-105 shadow-lg shadow-blue-900/50'
                           : 'bg-slate-900 border-slate-800 hover:border-blue-500/50'
                       }`}
                     >
                       <span className={`text-xs font-black ${isActive ? 'text-white' : 'text-slate-500'}`}>{pos}</span>
                       <span className={`text-[9px] font-bold ${
-                        mold.color === 'red' ? 'text-red-500' : 
-                        mold.color === 'yellow' ? 'text-yellow-500' : 
+                        mold.color === 'red' ? 'text-red-500' :
+                        mold.color === 'yellow' ? 'text-yellow-500' :
                         isActive ? 'text-blue-100' : 'text-green-500'
-                      }`}>{mold.id}</span>
+                      }`}>{mold.mold_code || mold.mold_id}</span>
                     </button>
                   );
                 })}
@@ -705,26 +961,31 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           }`}>{mold.statusText}</span>
                         </div>
                         <div className="grid grid-cols-2 gap-y-3 text-xs">
-                          <span className="text-slate-400">模具编号:</span> <span className="text-blue-200 font-bold">{mold.id}</span>
-                          <span className="text-slate-400">模具全称:</span> <span className="text-blue-200 font-bold">{mold.moldInfo.name}</span>
-                          <span className="text-slate-400">模具简称:</span> <span className="text-blue-200 font-bold">{mold.moldInfo.shortName || '-'}</span>
+                          <span className="text-slate-400">模具编号:</span> <span className="text-blue-200 font-bold">{mold.mold_code || mold.mold_id}</span>
+                          <span className="text-slate-400">模具全称:</span> <span className="text-blue-200 font-bold">{mold.name || mold.moldInfo.name}</span>
+                          <span className="text-slate-400">模具简称:</span> <span className="text-blue-200 font-bold">{mold.short_name || '-'}</span>
                           <span className="text-slate-400">待办任务:</span> <span className="text-indigo-400 font-black">{mold.taskCount} 项</span>
                           <span className="text-slate-400">模具型号:</span> <span className="text-blue-200">{mold.moldInfo.type}</span>
-                          <span className="text-slate-400">累计冲次:</span> <span className={`font-bold ${mold.isShotWarning ? 'text-amber-500' : 'text-blue-200'}`}>{mold.currentShots.toLocaleString()}</span>
+                          <span className="text-slate-400">累计冲次:</span> <span className={`font-bold ${mold.isShotWarning ? 'text-amber-500' : 'text-blue-200'}`}>{mold.current_shots.toLocaleString()}</span>
                           <span className="text-slate-400">预警阈值:</span> <span className="text-slate-400">{mold.shotThreshold.toLocaleString()}</span>
+                          <span className="text-slate-400">寿命使用:</span> <span className={mold.life_percent >= 90 ? 'text-red-500 font-bold' : mold.life_percent >= 75 ? 'text-yellow-500' : 'text-green-500'}>{mold.life_percent.toFixed(1)}%</span>
                           <span className="text-slate-400">维修状态:</span> <span className={mold.isOffline ? 'text-red-500 font-bold' : 'text-green-500'}>{mold.isOffline ? '已下线' : '正常'}</span>
                         </div>
                       </div>
-                      
+
                       <div className="bg-blue-950/50 p-5 rounded-2xl border border-blue-900">
                         <h3 className="text-[10px] font-black text-blue-500 uppercase mb-4">保养指标</h3>
                         <div className="space-y-2">
                           <div className="flex justify-between text-[10px] font-bold">
                             <span className="text-slate-400">剩余寿命 (Shots)</span>
-                            <span className={mold.status === 'OVERDUE' ? 'text-red-500' : 'text-blue-400'}>{mold.maintenanceCountdown} / 5000</span>
+                            <span className={mold.status === 'OVERDUE' ? 'text-red-500' : 'text-blue-400'}>{mold.remaining_shots.toLocaleString()} / {mold.max_shots.toLocaleString()}</span>
                           </div>
                           <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                            <div className={`h-full ${mold.status === 'OVERDUE' ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${(mold.maintenanceCountdown / 5000) * 100}%` }}></div>
+                            <div className={`h-full ${mold.status === 'OVERDUE' ? 'bg-red-500' : mold.status === 'UPCOMING' ? 'bg-yellow-500' : 'bg-blue-500'}`} style={{ width: `${Math.max(0, Math.min(100, (mold.remaining_shots / mold.max_shots) * 100))}%` }}></div>
+                          </div>
+                          <div className="flex justify-between text-[10px] font-bold mt-2">
+                            <span className="text-slate-400">寿命使用率</span>
+                            <span className={mold.life_percent >= 90 ? 'text-red-500' : mold.life_percent >= 75 ? 'text-yellow-500' : 'text-green-500'}>{mold.life_percent.toFixed(1)}%</span>
                           </div>
                         </div>
                       </div>
@@ -739,11 +1000,41 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                         <i className="fas fa-exclamation-triangle"></i> 创建报修任务
                       </button>
                       <div className="grid grid-cols-2 gap-3 mt-4">
-                        <button onClick={() => handleAction('UNINSTALL')} className="bg-amber-600/20 text-amber-500 border border-amber-600/30 hover:bg-amber-600/30 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all">
-                          卸载模具
+                        <button
+                          onClick={() => handleMoldAction('UNINSTALL')}
+                          disabled={isUninstallingMold || isInstallingMold}
+                          className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                            isUninstallingMold
+                              ? 'bg-amber-600/40 text-amber-400 border border-amber-600/50 opacity-75'
+                              : 'bg-amber-600/20 text-amber-500 border border-amber-600/30 hover:bg-amber-600/30'
+                          } ${isInstallingMold ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {isUninstallingMold ? (
+                            <>
+                              <i className="fas fa-spinner fa-spin"></i> 处理中...
+                            </>
+                          ) : (
+                            '卸载模具'
+                          )}
                         </button>
-                        <button onClick={() => setShowInventory(true)} className="bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2">
-                          <i className="fas fa-plus-circle"></i> 安装模具
+                        <button
+                          onClick={() => handleMoldAction('INSTALL')}
+                          disabled={isInstallingMold || isUninstallingMold}
+                          className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                            isInstallingMold
+                              ? 'bg-blue-600/40 text-blue-300 border border-blue-500/50 opacity-75'
+                              : 'bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30'
+                          } ${isUninstallingMold ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {isInstallingMold ? (
+                            <>
+                              <i className="fas fa-spinner fa-spin"></i> 处理中...
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-plus-circle"></i> 安装模具
+                            </>
+                          )}
                         </button>
                       </div>
                       <button onClick={() => handleAction('DEACTIVATE')} className="w-full bg-slate-800/50 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 mt-1">
@@ -771,7 +1062,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 {selectedMachine && (
                   <div className="flex items-center gap-2 text-[10px] font-bold">
                     <span className="text-slate-500 uppercase">当前设备:</span>
-                    <span className="text-blue-400">{selectedMachine.id}</span>
+                    <span className="text-blue-400">{selectedMachine.machine_code}</span>
                     <span className="text-slate-700">|</span>
                     <span className="text-slate-500 uppercase">正在生产:</span>
                     <span className="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30">{selectedMachine.currentProduct}</span>
@@ -788,10 +1079,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             <div className="flex-1 overflow-y-auto p-6">
               <div className="grid grid-cols-4 gap-4">
                 {MOCK_MOLDS.filter(mold => mold.status !== MoldStatus.Deactivated).map(mold => {
-                  const machine = allMachines.find(m => 
+                  const machine = allMachines.find(m =>
                     Object.values(m.molds).some((mm: any) => mm.moldInfo.id === mold.id)
                   );
-                  
+
                   return (
                     <div key={mold.id} className={`bg-blue-950/50 border ${mold.status === MoldStatus.Idle ? 'border-blue-900 hover:border-blue-500/50' : 'border-slate-800 opacity-70'} rounded-2xl p-4 space-y-3 transition-all group`}>
                       <div className="flex justify-between items-start">
@@ -808,7 +1099,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           </span>
                           {mold.status !== MoldStatus.Idle && machine && (
                             <span className="text-[9px] font-bold text-slate-500 block uppercase tracking-tighter mt-0.5">
-                              设备号: {machine.id}
+                              设备号: {machine.machine_code}
                             </span>
                           )}
                            {mold.status === MoldStatus.Idle && (
@@ -876,7 +1167,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
               <div>
                 <h2 className="text-xl font-black text-white flex items-center gap-3">
                   <i className="fas fa-clipboard-list text-indigo-400"></i>
-                  {todoMachine.id} 待办清单
+                  {todoMachine.machine_code} 待办清单
                 </h2>
                 <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Pending Task List</p>
               </div>
@@ -908,16 +1199,16 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   <div key={pos} className="space-y-3">
                     <div className="flex items-center gap-2 border-b border-white/5 pb-1">
                       <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{pos}</span>
-                      <span className="text-[10px] font-bold text-slate-500">{mold.id}</span>
+                      <span className="text-[10px] font-bold text-slate-500">{mold.mold_code || mold.mold_id}</span>
                     </div>
                     {tasks.map((task, idx) => {
-                      const taskId = `${todoMachine.id}-${mold.id}-${task.type}`;
+                      const taskId = `${todoMachine.machine_code}-${mold.mold_id}-${task.type}`;
                       const isCompleted = completedTasks.has(taskId);
-                      
+
                       return (
                         <div key={idx} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
-                          isCompleted 
-                            ? 'bg-green-500/10 border-green-500/30' 
+                          isCompleted
+                            ? 'bg-green-500/10 border-green-500/30'
                             : 'bg-white/5 border-white/5 hover:border-indigo-500/30'
                         }`}>
                           <div className="flex items-center gap-3">
@@ -929,8 +1220,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                               </p>
                             </div>
                           </div>
-                          <button 
-                            onClick={() => toggleTaskComplete(todoMachine.id, mold.id, task.type)}
+                          <button
+                            onClick={() => toggleTaskComplete(todoMachine.machine_code, mold.mold_id, task.type)}
                             className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
                               isCompleted
                                 ? 'bg-green-600 text-white border-green-500'
@@ -1010,20 +1301,106 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   </div>
                 </div>
 
+                {maintenanceError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
+                    <p className="text-red-400 text-xs font-bold">{maintenanceError}</p>
+                  </div>
+                )}
+
                 <div className="flex gap-3">
                   <button 
                     onClick={() => setShowTaskModal(false)}
-                    className="flex-1 bg-slate-800 hover:bg-slate-700 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                    disabled={isCreatingMaintenance}
+                    className="flex-1 bg-slate-800 hover:bg-slate-700 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50"
                   >
                     取消
                   </button>
                   <button 
-                    onClick={() => setTaskType('SUCCESS')}
-                    className="flex-1 bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"
+                    onClick={handleCreateMaintenanceTask}
+                    disabled={isCreatingMaintenance}
+                    className="flex-1 bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    确认创建
+                    {isCreatingMaintenance ? '创建中...' : '确认创建'}
                   </button>
                 </div>
+              </div>
+            ) : taskType === 'REPAIR' ? (
+              <div className="space-y-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i className="fas fa-exclamation-triangle"></i>
+                  </div>
+                  <h2 className="text-xl font-black text-white mb-2 uppercase tracking-widest">创建报修任务</h2>
+                  <p className="text-slate-400 text-xs">
+                    请确认为机台 {selectedMachine?.machine_code} 模具 {(selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id} 创建报修任务。
+                  </p>
+                </div>
+
+                <div className="bg-slate-950/50 p-4 rounded-2xl border border-red-900/30">
+                  <p className="text-[10px] text-red-400 uppercase font-bold mb-2">报修信息</p>
+                  <div className="space-y-2 text-xs">
+                    <p className="text-slate-300">
+                      机台编号: <span className="text-blue-400 font-bold">{selectedMachine?.machine_code}</span>
+                    </p>
+                    <p className="text-slate-300">
+                      模具编号: <span className="text-blue-400 font-bold">{(selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id}</span>
+                    </p>
+                    <p className="text-slate-300">
+                      模具位置: <span className="text-blue-400 font-bold">{selectedMoldPos}</span>
+                    </p>
+                  </div>
+                </div>
+
+                {repairError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
+                    <p className="text-red-400 text-xs font-bold">{repairError}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowTaskModal(false)}
+                    disabled={isCreatingRepair}
+                    className="flex-1 bg-slate-800 hover:bg-slate-700 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50"
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={handleCreateRepairTask}
+                    disabled={isCreatingRepair}
+                    className="flex-1 bg-red-600 hover:bg-red-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCreatingRepair ? '创建中...' : '确认报修'}
+                  </button>
+                </div>
+              </div>
+            ) : taskType === 'REPAIR_SUCCESS' ? (
+              <div className="text-center">
+                <div className="w-20 h-20 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+                  <i className="fas fa-check-circle"></i>
+                </div>
+                <h2 className="text-xl font-black text-white mb-2 uppercase tracking-widest">报修任务已提交</h2>
+                <div className="bg-slate-950/50 p-4 rounded-2xl border border-red-900/30 mb-8 text-left space-y-2">
+                  <p className="text-[10px] text-slate-500 uppercase font-bold">任务详情</p>
+                  <p className="text-xs text-slate-300">
+                    机台: <span className="text-blue-400 font-bold">{selectedMachine?.machine_code}</span>
+                  </p>
+                  <p className="text-xs text-slate-300">
+                    模具: <span className="text-blue-400 font-bold">{(selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id}</span>
+                  </p>
+                  <p className="text-xs text-slate-300">
+                    状态: <span className="text-red-400 font-bold">等待维修</span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowTaskModal(false);
+                    setSelectedMachine(null);
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"
+                >
+                  返回看板
+                </button>
               </div>
             ) : taskType === 'SUCCESS' ? (
               <div className="text-center">
@@ -1034,16 +1411,16 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 <div className="bg-slate-950/50 p-4 rounded-2xl border border-green-900/30 mb-8 text-left space-y-2">
                   <p className="text-[10px] text-slate-500 uppercase font-bold">任务详情</p>
                   <p className="text-xs text-slate-300">
-                    机台: <span className="text-blue-400 font-bold">{selectedMachine?.id}</span>
+                    机台: <span className="text-blue-400 font-bold">{selectedMachine?.machine_code}</span>
                   </p>
                   <p className="text-xs text-slate-300">
-                    模具: <span className="text-blue-400 font-bold">{(selectedMachine?.molds as any)[selectedMoldPos]?.id}</span>
+                    模具: <span className="text-blue-400 font-bold">{(selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id}</span>
                   </p>
                   <p className="text-xs text-slate-300">
                     时间: <span className="text-green-400 font-bold">{maintenanceTimeRange.start.replace('T', ' ')} 至 {maintenanceTimeRange.end.replace('T', ' ')}</span>
                   </p>
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     setShowTaskModal(false);
                     setSelectedMachine(null);
@@ -1058,25 +1435,59 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 <div className="w-20 h-20 bg-blue-500/20 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
                   <i className="fas fa-check-double"></i>
                 </div>
-                <h2 className="text-xl font-black text-white mb-2 uppercase tracking-widest">安装任务已确认</h2>
+                <h2 className="text-xl font-black text-white mb-2 uppercase tracking-widest">模具安装成功</h2>
                 <div className="bg-slate-950/50 p-4 rounded-2xl border border-blue-900/30 mb-8 text-left space-y-2">
                   <p className="text-[10px] text-slate-500 uppercase font-bold">安装详情</p>
                   <p className="text-xs text-slate-300">
-                    目标设备: <span className="text-blue-400 font-bold">{selectedMachine?.id}</span>
+                    目标设备: <span className="text-blue-400 font-bold">{selectedMachine?.machine_code}</span>
                   </p>
                   <p className="text-xs text-slate-300">
                     安装位置: <span className="text-blue-400 font-bold">{selectedMoldPos}</span>
                   </p>
                   <p className="text-xs text-slate-300">
+                    模具编号: <span className="text-blue-400 font-bold">{(selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id}</span>
+                  </p>
+                  <p className="text-xs text-slate-300">
                     状态更新: <span className="text-green-400 font-bold">已同步至生产看板</span>
                   </p>
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     setShowTaskModal(false);
                     setSelectedMachine(null);
                   }}
                   className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"
+                >
+                  确认并关闭
+                </button>
+              </div>
+            ) : taskType === 'UNINSTALL_SUCCESS' ? (
+              <div className="text-center">
+                <div className="w-20 h-20 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+                  <i className="fas fa-check-double"></i>
+                </div>
+                <h2 className="text-xl font-black text-white mb-2 uppercase tracking-widest">模具卸载成功</h2>
+                <div className="bg-slate-950/50 p-4 rounded-2xl border border-amber-900/30 mb-8 text-left space-y-2">
+                  <p className="text-[10px] text-slate-500 uppercase font-bold">卸载详情</p>
+                  <p className="text-xs text-slate-300">
+                    来源设备: <span className="text-blue-400 font-bold">{selectedMachine?.machine_code}</span>
+                  </p>
+                  <p className="text-xs text-slate-300">
+                    卸载位置: <span className="text-blue-400 font-bold">{selectedMoldPos}</span>
+                  </p>
+                  <p className="text-xs text-slate-300">
+                    模具编号: <span className="text-blue-400 font-bold">{(selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id}</span>
+                  </p>
+                  <p className="text-xs text-slate-300">
+                    状态更新: <span className="text-green-400 font-bold">已同步至生产看板</span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowTaskModal(false);
+                    setSelectedMachine(null);
+                  }}
+                  className="w-full bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-amber-900/20"
                 >
                   确认并关闭
                 </button>
@@ -1090,26 +1501,32 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 <div className="bg-red-950/20 p-4 rounded-2xl border border-red-900/30 mb-8 text-left space-y-2">
                   <p className="text-[10px] text-red-400 uppercase font-bold tracking-widest">警告事项</p>
                   <p className="text-xs text-slate-300">
-                    您正在停用模具: <span className="text-red-400 font-bold">{(selectedMachine?.molds as any)[selectedMoldPos]?.id}</span>
+                    您正在停用模具: <span className="text-red-400 font-bold">{(selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id}</span>
                   </p>
                   <p className="text-xs text-slate-400 leading-relaxed">
                     停用后，该模具将无法再被安装到任何机台上，且会从生产可用列表中移除。此操作不可逆，请谨慎操作。
                   </p>
                 </div>
+                {disableMoldError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4 text-center">
+                    <p className="text-red-400 text-xs font-bold">{disableMoldError}</p>
+                  </div>
+                )}
+
                 <div className="flex gap-3">
-                  <button 
+                  <button
                     onClick={() => setShowTaskModal(false)}
-                    className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-black text-sm uppercase tracking-widest transition-all"
+                    disabled={isDisablingMold}
+                    className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-black text-sm uppercase tracking-widest transition-all disabled:opacity-50"
                   >
                     取消
                   </button>
-                  <button 
-                    onClick={() => {
-                      setTaskType('DEACTIVATE_SUCCESS');
-                    }}
-                    className="flex-1 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-red-900/20"
+                  <button
+                    onClick={handleDisableMold}
+                    disabled={isDisablingMold}
+                    className="flex-1 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    确认停用
+                    {isDisablingMold ? '停用中...' : '确认停用'}
                   </button>
                 </div>
               </div>
@@ -1120,7 +1537,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 </div>
                 <h2 className="text-xl font-black text-white mb-2 uppercase tracking-widest">模具已停用</h2>
                 <p className="text-slate-400 text-sm mb-8 leading-relaxed">
-                  模具 {(selectedMachine?.molds as any)[selectedMoldPos]?.id} 已标记为“已停用”状态。相关数据已同步至模具台账。
+                  模具 {(selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id} 已标记为"已停用"状态。相关数据已同步至模具台账。
                 </p>
                 <button 
                   onClick={() => {

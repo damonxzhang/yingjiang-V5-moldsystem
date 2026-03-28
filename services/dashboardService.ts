@@ -1,0 +1,308 @@
+import { AuthService } from './authService';
+
+// API 基础URL
+const API_BASE_URL = 'http://212.64.29.230:8087';
+
+// 模具状态类型
+export interface DashboardMold {
+  mold_id: string;
+  mold_code: string;
+  name: string;
+  current_shots: number;
+  max_shots: number;
+  status: 'RUNNING' | 'IDLE' | 'MAINTENANCE' | 'OFFLINE';
+  slot?: string;
+}
+
+// 机台状态类型
+export interface DashboardMachine {
+  machine_id: string;
+  status: 'NORMAL' | 'MAINTENANCE_DUE' | 'OVERDUE' | 'BUYOFF' | 'DISABLED' | 'OFFLINE';
+  part_no: string;
+  mold_count: number;
+  molds: DashboardMold[];
+  pending_tasks: number;
+}
+
+// 看板统计摘要
+export interface DashboardSummary {
+  total: number;
+  normal: number;
+  warning: number;
+  critical: number;
+}
+
+// 看板数据响应
+export interface DashboardStatusResponse {
+  department: string;
+  summary: DashboardSummary;
+  machines: DashboardMachine[];
+}
+
+// 请求参数类型
+export interface DashboardStatusRequest {
+  user_id: string;
+  only_alerts?: boolean;
+  product_type?: string;
+  machine_code?: string;
+  mold_code?: string;
+  only_producible?: boolean;
+  only_abnormal?: boolean;
+}
+
+/**
+ * 获取看板机台状态数据
+ */
+export async function fetchDashboardMachinesStatus(
+  params: Partial<DashboardStatusRequest> = {}
+): Promise<DashboardStatusResponse> {
+  // 从认证信息中获取 user_id
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody: DashboardStatusRequest = {
+    user_id: authData.user_id,
+    only_alerts: false,
+    product_type: '',
+    machine_code: '',
+    mold_code: '',
+    only_producible: false,
+    only_abnormal: false,
+    ...params
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/machines/status`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || '获取看板数据失败');
+  }
+
+  // 处理返回数据，兼容不同的响应格式
+  if (data.code !== undefined && data.data !== undefined) {
+    // 格式: { code: 200, message: 'success', data: {...} }
+    if (data.code !== 200) {
+      throw new Error(data.message || '获取看板数据失败');
+    }
+    return data.data as DashboardStatusResponse;
+  }
+
+  // 直接返回数据格式
+  return data as DashboardStatusResponse;
+}
+
+// 创建保养任务请求参数
+export interface CreateMaintenanceTaskRequest {
+  machine_id: string;
+  mold_id: string;
+  user_id: string;
+  start_time: string;
+  end_time: string;
+  description?: string;
+}
+
+// 创建保养任务响应
+export interface CreateMaintenanceTaskResponse {
+  success: boolean;
+  task_id?: string;
+  message?: string;
+}
+
+/**
+ * 创建保养任务
+ */
+export async function createMaintenanceTask(
+  params: CreateMaintenanceTaskRequest
+): Promise<CreateMaintenanceTaskResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody = {
+    ...params,
+    user_id: authData.user_id
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/tasks/maintenance/create`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || '创建保养任务失败');
+  }
+
+  return data as CreateMaintenanceTaskResponse;
+}
+
+// 创建报修任务请求参数
+export interface CreateRepairTaskRequest {
+  machine_id: string;
+  mold_id: string;
+  user_id: string;
+}
+
+// 创建报修任务响应
+export interface CreateRepairTaskResponse {
+  success: boolean;
+  task_id?: string;
+  message?: string;
+}
+
+/**
+ * 创建报修任务
+ */
+export async function createRepairTask(
+  params: CreateRepairTaskRequest
+): Promise<CreateRepairTaskResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody = {
+    ...params,
+    user_id: String(authData.user_id)
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/tasks/repair/create`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || '创建报修任务失败');
+  }
+
+  return data as CreateRepairTaskResponse;
+}
+
+// 模具停用请求参数
+export interface DisableMoldRequest {
+  mold_id: string;
+  reason: string;
+  user_id: string;
+}
+
+// 模具停用响应
+export interface DisableMoldResponse {
+  success: boolean;
+  message?: string;
+}
+
+/**
+ * 模具停用
+ */
+export async function disableMold(
+  params: DisableMoldRequest
+): Promise<DisableMoldResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody = {
+    ...params,
+    user_id: String(authData.user_id)
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/mold/disable`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || '模具停用失败');
+  }
+
+  return data as DisableMoldResponse;
+}
+
+// 模具安装/卸载请求参数
+export interface MoldActionRequest {
+  action: 'INSTALL' | 'UNINSTALL';
+  machine_id: string;
+  slot: string;
+  mold_id: string;
+  user_id: string;
+}
+
+// 模具安装/卸载响应
+export interface MoldActionResponse {
+  success: boolean;
+  message?: string;
+}
+
+/**
+ * 模具安装/卸载操作
+ */
+export async function moldAction(
+  params: MoldActionRequest
+): Promise<MoldActionResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody = {
+    ...params,
+    user_id: String(authData.user_id)
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/machine/mold-action`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || '模具操作失败');
+  }
+
+  return data as MoldActionResponse;
+}
+
+/**
+ * Dashboard 服务
+ */
+export const DashboardService = {
+  fetchDashboardMachinesStatus,
+  createMaintenanceTask,
+  createRepairTask,
+  disableMold,
+  moldAction
+};

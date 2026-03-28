@@ -3,89 +3,45 @@ import { Role, LoginRequest, LoginResponse, AuthData } from '../types';
 // Session Storage 键名
 const AUTH_STORAGE_KEY = 'smartmold_auth';
 
-// Mock 用户数据
-const MOCK_USERS = [
-  {
-    username: 'admin',
-    password: 'admin123',
-    data: {
-      userid: 'ADM001',
-      username: '系统管理员',
-      role: Role.Admin,
-      department: '管理部门'
-    }
-  },
-  {
-    username: 'engineer_big',
-    password: 'eng123',
-    data: {
-      userid: 'ENG001',
-      username: '大材料工程师',
-      role: Role.MoldEngineerBig,
-      department: '大材料'
-    }
-  },
-  {
-    username: 'engineer_small',
-    password: 'eng123',
-    data: {
-      userid: 'ENG002',
-      username: '小材料工程师',
-      role: Role.MoldEngineerSmall,
-      department: '小材料'
-    }
-  },
-  {
-    username: 'leader',
-    password: 'lead123',
-    data: {
-      userid: 'LEAD001',
-      username: '带班长',
-      role: Role.ShiftLeader,
-      department: '生产部门'
-    }
-  },
-  {
-    username: 'operator',
-    password: 'op123',
-    data: {
-      userid: 'OP001',
-      username: '操作员',
-      role: Role.Operator,
-      department: '生产部门'
-    }
-  }
-];
+// API 基础URL
+const API_BASE_URL = 'http://212.64.29.230:8087';
 
 /**
- * Mock 登录函数
- * 模拟网络延迟和后端验证
+ * 实际登录API调用 (暂时使用固定返回值，后期联调接口)
  */
-function mockLogin(username: string, password: string): Promise<LoginResponse> {
-  return new Promise((resolve, reject) => {
-    // 模拟网络延迟 800ms
-    setTimeout(() => {
-      const user = MOCK_USERS.find(
-        u => u.username === username && u.password === password
-      );
-      
-      if (user) {
-        resolve({
-          code: 200,
-          message: 'success',
-          data: {
-            token: 'mock_token_' + user.data.userid + '_' + Date.now(),
-            ...user.data
-          }
-        });
-      } else {
-        reject({
-          code: 401,
-          message: '用户名或密码错误'
-        });
-      }
-    }, 800);
+async function loginApi(credentials: LoginRequest): Promise<LoginResponse> {
+  // TODO: 后期联调接口时取消注释以下代码
+  const response = await fetch(`${API_BASE_URL}/api/admin/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      user_name: credentials.username,
+      password: credentials.password
+    })
   });
+  
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw data;
+  }
+  
+  return data;
+
+  // 临时固定返回值，模拟登录成功
+  // return {
+  //   code: 200,
+  //   message: 'success',
+  //   data: {
+  //     token: 'mock_token_' + Date.now(),
+  //     user_id: '4',
+  //     user_name: '系统管理员',
+  //     role: 'SUPER_ADMIN',
+  //     permissions: ['DASHBOARD_VIEW', 'MACHINE_CONFIG', 'MOLD_MANAGEMENT', 'REPORT_EXPORT']
+  //   }
+  // };
 }
 
 /**
@@ -97,7 +53,7 @@ export const AuthService = {
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      const response = await mockLogin(credentials.username, credentials.password);
+      const response = await loginApi(credentials);
       
       // 登录成功，存储认证数据
       if (response.code === 200) {
@@ -145,7 +101,7 @@ export const AuthService = {
       const authData = JSON.parse(stored) as AuthData;
       
       // 验证数据完整性
-      if (!authData.token || !authData.userid || !authData.role) {
+      if (!authData.token || !authData.user_id || !authData.role) {
         console.warn('Invalid auth data in storage');
         this.logout();
         return null;

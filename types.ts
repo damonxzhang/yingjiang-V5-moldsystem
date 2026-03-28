@@ -200,18 +200,18 @@ export interface LoginResponse {
   message: string;
   data: {
     token: string;
-    userid: string;
-    username: string;
-    role: Role;
-    department?: string;
+    user_id: string;
+    user_name: string;
+    role: string;
+    permissions?: string[];
   };
 }
 
 export interface AuthData {
   token: string;
-  userid: string;
-  username: string;
-  role: Role;
-  department?: string;
+  user_id: string;
+  user_name: string;
+  role: string;
+  permissions?: string[];
   loginTime: string;
 }
