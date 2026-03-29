@@ -97,7 +97,11 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     setLoading(true);
     setError(null);
     try {
+      // 根据 department 确定接口参数值
+      const departmentParam = department || 'ALL';
+
       const response = await fetchMoldList({
+        department: departmentParam,
         page: page,
         page_size: ITEMS_PER_PAGE
       });
@@ -106,11 +110,6 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
       if (response.code === 200 && response.data) {
         const mappedMolds = response.data.list.map(mapApiMoldToFrontend);
         console.log("mappedMolds:",mappedMolds);
-        // 如果指定了部门，进行前端过滤
-        const filteredMolds = department
-          ? mappedMolds.filter(m => m.department.includes(department))
-          : mappedMolds;
-          console.log("filteredMolds:",filteredMolds);
         setMolds(mappedMolds);
         setTotalRecords(response.data.total);
       } else {
@@ -153,11 +152,22 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     try {
       // 准备保存参数
       const saveParams = {
+        department: department || '大材料',         // 所属部门
         mold_id: modalMode === 'EDIT' ? currentMoldDetail?.mold_id : undefined,
         mold_code: currentMold.id || '',           // 模具编号
-        name: modalMode === 'EDIT' ? currentMoldDetail?.name : undefined,  // 编辑时使用详情中的 name
+        name: modalMode === 'EDIT' ? currentMoldDetail?.name : undefined,           // 编辑时使用详情中的 name
+        full_name: modalMode === 'EDIT' ? currentMoldDetail?.full_name : undefined, // 编辑时使用详情中的 full_name
         short_name: currentMold.shortName || '',   // 模具简名
-        life_limit: undefined                      // 暂时为空
+        thickness: currentMold.thickness || '',    // 模具厚度
+        mold_category: currentMold.moldCategory || '',  // 模具分类
+        product_type: currentMold.productType || '',     // 产品类型
+        package_type: currentMold.packageType || '',     // 封装规格
+        package_size: modalMode === 'EDIT' ? currentMoldDetail?.package_size : undefined,  // 编辑时使用详情中的 package_size
+        pin_code: currentMold.pinCode || '',       // PIN CODE
+        life_limit: modalMode === 'EDIT' ? currentMoldDetail?.life_limit : undefined,      // 编辑时使用详情中的 life_limit
+        maintenance_cycle: currentMold.maintenanceCycle || '',  // 保养周期
+        start_time: currentMold.maintenanceStartTime || '',     // 开始保养时间
+        location: modalMode === 'EDIT' ? currentMoldDetail?.location : undefined           // 编辑时使用详情中的 location
       };
 
       console.log('保存模具参数:', saveParams);

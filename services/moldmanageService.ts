@@ -39,6 +39,7 @@ export interface MoldListResponse {
 // 模具列表请求参数
 export interface FetchMoldListParams {
   user_id: string;
+  department: string;  // 必填, 过滤部门: 大材料, 小材料, ALL (查看全部)
   page?: number;
   page_size?: number;
 }
@@ -55,7 +56,8 @@ export async function fetchMoldList(
   }
 
   const requestBody: FetchMoldListParams = {
-    user_id: '5',
+    user_id: authData.user_id,
+    department: params.department,
     page: params.page || 1,
     page_size: params.page_size || 10
   };
@@ -155,11 +157,22 @@ export async function fetchMoldDetail(
 // 模具保存请求参数
 export interface SaveMoldParams {
   user_id: string;
-  mold_id?: number;      // 编辑时必填，新增时不传
-  mold_code: string;     // 模具编号
-  name?: string;         // 新增时为空，编辑时为详情接口中的 name
-  short_name: string;    // 模具简名
-  life_limit?: number;   // 暂时为空
+  department: string;           // 所属部门
+  mold_id?: number;             // 编辑时必填，新增时不传
+  mold_code: string;            // 模具编号
+  name?: string;                // 新增时为空，编辑时为详情接口中的 name
+  full_name?: string;           // 新增时为空，编辑时为详情接口中的 full_name
+  short_name: string;           // 模具简名
+  thickness: string;            // 模具厚度
+  mold_category: string;        // 模具分类
+  product_type: string;         // 产品类型
+  package_type: string;         // 封装规格
+  package_size?: string;        // 新增时为空，编辑时为详情接口中的 package_size
+  pin_code: string;             // PIN CODE
+  life_limit?: number;          // 新增时为空，编辑时为详情接口中的 life_limit
+  maintenance_cycle: string;    // 保养周期
+  start_time: string;           // 开始保养时间
+  location?: string;            // 新增时为空，编辑时为详情接口中的 location
 }
 
 // 模具保存响应
@@ -186,11 +199,22 @@ export async function saveMold(
 
   const requestBody: SaveMoldParams = {
     user_id: authData.user_id,
+    department: params.department,
     mold_id: params.mold_id,
     mold_code: params.mold_code,
     name: params.name,
+    full_name: params.full_name,
     short_name: params.short_name,
-    life_limit: params.life_limit
+    thickness: params.thickness,
+    mold_category: params.mold_category,
+    product_type: params.product_type,
+    package_type: params.package_type,
+    package_size: params.package_size,
+    pin_code: params.pin_code,
+    life_limit: params.life_limit,
+    maintenance_cycle: params.maintenance_cycle,
+    start_time: params.start_time,
+    location: params.location
   };
 
   const response = await fetch(`${API_BASE_URL}/api/admin/mold/save`, {
