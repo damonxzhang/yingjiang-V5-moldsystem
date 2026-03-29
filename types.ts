@@ -128,6 +128,9 @@ export interface Mold {
 
   // 扩展模具组件结构 (BOM)
   components: MoldComponent[];
+
+  // API 原始 mold_id，用于调用详情接口
+  moldId?: number;
 }
 
 export interface WorkOrderSpare {
@@ -214,4 +217,5 @@ export interface AuthData {
   role: string;
   permissions?: string[];
   loginTime: string;
+  expiresAt: number;
 }
