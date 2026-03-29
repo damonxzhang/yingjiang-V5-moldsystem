@@ -61,7 +61,7 @@ async function loginApi(credentials: LoginRequest): Promise<LoginResponse> {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      user_name: credentials.username,
+      username: credentials.username,
       password: credentials.password
     })
   });
