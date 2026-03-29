@@ -43,6 +43,7 @@ export interface DashboardStatusResponse {
 // 请求参数类型
 export interface DashboardStatusRequest {
   user_id: string;
+  department: string;           // 必填, 过滤部门: 大材料, 小材料, ALL (查看全部)
   only_alerts?: boolean;
   product_type?: string;
   machine_code?: string;
@@ -65,6 +66,7 @@ export async function fetchDashboardMachinesStatus(
 
   const requestBody: DashboardStatusRequest = {
     user_id: authData.user_id,
+    department: '大材料',         // 默认值为大材料
     only_alerts: false,
     product_type: '',
     machine_code: '',

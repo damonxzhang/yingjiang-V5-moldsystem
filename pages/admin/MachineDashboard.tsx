@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { MoldStatus, BuyoffStatus } from '../../types';
-import { MOCK_MOLDS } from '../../services/mockData';
 import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, MoldActionRequest, MachineDetailResponse } from '../../services/dashboardService';
 
 interface MachineDashboardProps {
@@ -55,10 +53,11 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
   // 筛选状态
   const [filterProduct, setFilterProduct] = useState('');
-  const [filterMachine, setFilterMachine] = useState('');
-  const [filterMold, setFilterMold] = useState('');
-  const [onlyProducible, setOnlyProducible] = useState(false);
-  const [onlyAbnormal, setOnlyAbnormal] = useState(false);
+  // 筛选状态
+  const [filterMachine, setFilterMachine] = useState('');      // 机台编号筛选关键字
+  const [filterMold, setFilterMold] = useState('');            // 模具编号筛选关键字
+  const [onlyProducible, setOnlyProducible] = useState(false); // 仅显示可生产设备（模具未下线且未超期）
+  const [onlyAbnormal, setOnlyAbnormal] = useState(false);     // 仅显示异常生产设备（模具超期、即将保养或下线）
   // Product 下拉列表选项
   const [productOptions, setProductOptions] = useState<string[]>([]);
 
@@ -96,6 +95,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     debounceTimerRef.current = setTimeout(async () => {
       try {
         const data = await DashboardService.fetchDashboardMachinesStatus({
+          department: currentMaterialType === '小材料' ? '小材料' : '大材料',
           product_type: filterProduct,
           machine_code: filterMachine,
           mold_code: filterMold,
@@ -129,14 +129,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     }).replace(/\//g, '-');
   };
 
-  // 固定的24台设备数据，每台设备包含 P1, P2, P3 三套模具
+  // 处理 API 返回的设备数据
   const allMachines = useMemo(() => {
-    // 根据部门过滤模具
-    let availableMolds = MOCK_MOLDS.filter(m => m.status !== MoldStatus.Deactivated);
-    if (department) {
-      availableMolds = availableMolds.filter(m => m.department === department);
-    }
-    return (dashboardData?.machines || []).map((item, i) => {
+    return (dashboardData?.machines || []).map((item) => {
       // 使用 API 原始字段名，保持与接口一致
       const machine_code = item.machine_code;
       const machine_id = item.machine_id;
@@ -168,11 +163,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         const shotThreshold = max_shots * 0.75; // 预警阈值为75%
         const isShotWarning = current_shots > shotThreshold;
 
-        // 获取模拟模具数据用于补充信息
-        const mockMoldInfo = availableMolds.length > 0
-          ? availableMolds[(i * 3 + parseInt(pos.replace('P', '')) - 1) % availableMolds.length]
-          : { id: `M-TEMP-${i}`, name: moldItemInfo.name || '未知模具', type: '未知', vendor: 'N/A', shotTotal: 0, lifeLimit: max_shots, status: MoldStatus.Idle, location: 'N/A', buyoffStatus: BuyoffStatus.NotInitiated };
-
         return {
           pos,
           // 使用 API 原始字段名
@@ -191,30 +181,20 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
           remaining_shots,
           shotThreshold,
           isShotWarning,
-          isOffline: moldItemInfo.status === 'OFFLINE',
-          taskCount: 0, // 模具级别任务数，API未提供，暂时设为0
-          // 保留 moldInfo 用于兼容现有代码
-          moldInfo: {
-            ...mockMoldInfo,
-            id: String(moldItemInfo.mold_id),
-            name: moldItemInfo.name || mockMoldInfo.name,
-            lifeLimit: max_shots,
-            shotTotal: current_shots
-          }
+          isOffline: moldItemInfo.status === 'OFFLINE'
         };
       };
 
-      const moldCount = item?.molds?.length || 0;
-      const moldPositions = Array.from({ length: moldCount }, (_, index) => `P${index + 1}`);
-      const moldArr = item?.molds || [];
-      const molds = moldPositions.reduce((acc, pos, idx) => {
-        const moldData = createMoldData(pos, moldArr[idx]);
+      // 直接使用 API 返回的 molds 数据
+      const molds = (item?.molds || []).reduce((acc: any, moldItem: any) => {
+        const pos = moldItem.mold_number || 'P1';
+        const moldData = createMoldData(pos, moldItem);
         // 只添加非 null 的模具数据
         if (moldData) {
           acc[pos] = moldData;
         }
         return acc;
-      }, {} as any);
+      }, {});
 
       // 整体状态逻辑：使用机台状态优先，其次根据模具状态计算
       // 过滤掉 null 值的模具数组
@@ -228,11 +208,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         colorClass = 'border-[3px] border-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.4)]';
       }
 
-      // 生产数据 - 使用 API 数据或默认值
-      const targetQty = 10000 + Math.floor(Math.random() * 20000);
-      const completedQty = Math.floor(Math.random() * targetQty);
-      const productionProgress = (completedQty / targetQty) * 100;
-
       return {
         // 使用 API 原始字段名
         machine_code,
@@ -245,33 +220,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         colorClass,
         currentProduct: part_no || ['QFN-16', 'BGA-64', 'SOP-8', 'LQFP-100'][Math.floor(Math.random() * 4)],
         batchNo: `LOT-${Math.floor(Math.random() * 900000 + 100000)}`,
-        targetQty,
-        completedQty,
-        productionProgress,
         molds
       };
     });
   }, [dashboardData]);
-
-  // 筛选逻辑（Product 筛选已由后端 API 处理，前端不再筛选）
-  const filteredMachines = useMemo(() => {
-    return allMachines.filter(m => {
-      // Product 筛选已由后端 API 处理，前端不再筛选
-      const matchMachine = !filterMachine || m.machine_code.toLowerCase().includes(filterMachine.toLowerCase());
-
-      // 过滤掉 null 值的模具数组
-      const moldsArray = Object.values(m.molds).filter(Boolean) as any[];
-      const matchMold = !filterMold || moldsArray.some((mold: any) => String(mold.mold_id).toLowerCase().includes(filterMold.toLowerCase()) || String(mold.mold_code).toLowerCase().includes(filterMold.toLowerCase()));
-
-      // 可生产设备定义：所有模具均非下线 且 均非超期
-      const matchProducible = !onlyProducible || moldsArray.every((mold: any) => !mold.isOffline && mold.status !== 'OVERDUE');
-
-      // 异常生产设备定义：机台下有任何一个模具处于 OVERDUE 或 UPCOMING 状态，或者处于 OFFLine 状态
-      const matchAbnormal = !onlyAbnormal || moldsArray.some((mold: any) => mold.isOffline || mold.status === 'OVERDUE' || mold.status === 'UPCOMING');
-
-      return matchMachine && matchMold && matchProducible && matchAbnormal;
-    });
-  }, [allMachines, filterMachine, filterMold, onlyProducible, onlyAbnormal]);
 
   const handleMachineClick = async (machine: any) => {
     // 过滤掉 null 值，获取有效的模具位置
@@ -397,7 +349,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       setIsCreatingMaintenance(false);
     }
   };
-console.log("taskType:",taskType)
+// console.log("taskType:",taskType)
   // 处理创建报修任务
   const handleCreateRepairTask = async () => {
     if (!selectedMachine || !selectedMoldPos) {
@@ -881,7 +833,7 @@ console.log("taskType:",taskType)
 
       {/* Main Grid - 6x4 */}
       <div className="grid grid-cols-6 gap-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-        {filteredMachines.map(machine=> (
+        {allMachines.map(machine=> (
           <div
             key={machine.machine_code}
             onClick={() => handleMachineClick(machine)}
@@ -1088,7 +1040,7 @@ console.log("taskType:",taskType)
                           <span className="text-blue-200 font-bold">{currentMold?.mold_code || mold.mold_code || mold.mold_id}</span>
 
                           <span className="text-slate-400">模具全称:</span>
-                          <span className="text-blue-200 font-bold">{currentMold?.full_name || mold.name || mold.moldInfo.name}</span>
+                          <span className="text-blue-200 font-bold">{currentMold?.full_name || mold.name || '-'}</span>
 
                           <span className="text-slate-400">模具简称:</span>
                           <span className="text-blue-200 font-bold">{currentMold?.short_name || mold.short_name || '-'}</span>
@@ -1097,7 +1049,7 @@ console.log("taskType:",taskType)
                           <span className="text-indigo-400 font-black">{currentMold?.pending_tasks ?? mold.taskCount} 项</span>
 
                           <span className="text-slate-400">模具型号:</span>
-                          <span className="text-blue-200">{currentMold?.type || mold.moldInfo.type}</span>
+                          <span className="text-blue-200">{currentMold?.type || '-'}</span>
 
                           <span className="text-slate-400">累计冲次:</span>
                           <span className={`font-bold ${(currentMold?.current_shots || mold.current_shots) > (currentMold?.warning_threshold || mold.shotThreshold) ? 'text-amber-500' : 'text-blue-200'}`}>
@@ -1231,63 +1183,58 @@ console.log("taskType:",taskType)
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               <div className="grid grid-cols-4 gap-4">
-                {MOCK_MOLDS.filter(mold => mold.status !== MoldStatus.Deactivated).map(mold => {
-                  const machine = allMachines.find(m =>
-                    Object.values(m.molds).some((mm: any) => mm.moldInfo.id === mold.id)
-                  );
-
-                  return (
-                    <div key={mold.id} className={`bg-blue-950/50 border ${mold.status === MoldStatus.Idle ? 'border-blue-900 hover:border-blue-500/50' : 'border-slate-800 opacity-70'} rounded-2xl p-4 space-y-3 transition-all group`}>
-                      <div className="flex justify-between items-start">
-                        <span className="bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">{mold.id}</span>
-                        <div className="text-right">
-                          <span className={`text-[10px] font-bold block ${
-                            mold.status === MoldStatus.Idle ? 'text-green-400' :
-                            mold.status === MoldStatus.InUse ? 'text-yellow-400' :
-                            mold.status === MoldStatus.Maintenance ? 'text-amber-400' : 'text-red-400'
-                          }`}>
-                            {mold.status === MoldStatus.Idle ? '闲置中' :
-                             mold.status === MoldStatus.InUse ? '使用中' :
-                             mold.status === MoldStatus.Maintenance ? '保养中' : '维修中'}
-                          </span>
-                          {mold.status !== MoldStatus.Idle && machine && (
-                            <span className="text-[9px] font-bold text-slate-500 block uppercase tracking-tighter mt-0.5">
-                              设备号: {machine.machine_code}
-                            </span>
-                          )}
-                           {mold.status === MoldStatus.Idle && (
-                             <span className="text-[9px] font-bold text-slate-500 block uppercase tracking-tighter mt-0.5">
-                               柜号: {mold.cabNo || '未入库'}
-                             </span>
-                           )}
-                         </div>
-                       </div>
+                {/* 从当前所有机台中收集模具数据展示 */}
+                {allMachines.flatMap(machine => 
+                  Object.entries(machine.molds || {}).map(([pos, mold]: [string, any]) => ({
+                    ...mold,
+                    machine_code: machine.machine_code,
+                    pos
+                  }))
+                ).filter(mold => mold.mold_id).map(mold => (
+                  <div key={`${mold.machine_code}-${mold.pos}`} className={`bg-blue-950/50 border ${mold.isOffline ? 'border-slate-800 opacity-70' : 'border-blue-900 hover:border-blue-500/50'} rounded-2xl p-4 space-y-3 transition-all group`}>
+                    <div className="flex justify-between items-start">
+                      <span className="bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">{mold.mold_code}</span>
+                      <div className="text-right">
+                        <span className={`text-[10px] font-bold block ${
+                          mold.isOffline ? 'text-red-400' :
+                          mold.status === 'NORMAL' ? 'text-green-400' :
+                          mold.status === 'UPCOMING' ? 'text-yellow-400' : 'text-red-400'
+                        }`}>
+                          {mold.isOffline ? '已下线' :
+                           mold.status === 'NORMAL' ? '运行中' :
+                           mold.status === 'UPCOMING' ? '即将保养' : '超期'}
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-500 block uppercase tracking-tighter mt-0.5">
+                          设备号: {mold.machine_code}
+                        </span>
+                      </div>
+                    </div>
                     <p className="text-xs font-bold text-blue-100 line-clamp-1">{mold.name}</p>
                     <div className="text-[10px] text-slate-400 space-y-1">
-                      <p>位置: {mold.location}</p>
-                      <p>Package: {mold.packageType}</p>
+                      <p>位置: {mold.pos}</p>
+                      <p>槽位: {mold.pos}</p>
                     </div>
                     
                     <div className="pt-2 border-t border-white/5">
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">实时 SHOT COUNT</span>
-                        <span className="text-[10px] font-black text-indigo-400">{mold.shotTotal.toLocaleString()}</span>
+                        <span className="text-[10px] font-black text-indigo-400">{(mold.current_shots || 0).toLocaleString()}</span>
                       </div>
                       <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
                         <div 
                           className={`h-full transition-all ${
-                            (mold.shotTotal / mold.lifeLimit) > 0.9 ? 'bg-red-500' : 
-                            (mold.shotTotal / mold.lifeLimit) > 0.7 ? 'bg-amber-500' : 'bg-blue-500'
+                            (mold.life_percent || 0) > 90 ? 'bg-red-500' : 
+                            (mold.life_percent || 0) > 75 ? 'bg-amber-500' : 'bg-blue-500'
                           }`}
-                          style={{ width: `${Math.min(100, (mold.shotTotal / mold.lifeLimit * 100))}%` }}
+                          style={{ width: `${Math.min(100, mold.life_percent || 0)}%` }}
                         />
                       </div>
                       <div className="flex justify-between items-center mt-1">
-                        <span className="text-[8px] font-bold text-slate-600 uppercase tracking-tighter">上限: {mold.lifeLimit.toLocaleString()}</span>
-                        <span className="text-[8px] font-bold text-slate-600">{(mold.shotTotal / mold.lifeLimit * 100).toFixed(1)}%</span>
+                        <span className="text-[8px] font-bold text-slate-600 uppercase tracking-tighter">上限: {(mold.max_shots || 0).toLocaleString()}</span>
+                        <span className="text-[8px] font-bold text-slate-600">{(mold.life_percent || 0).toFixed(1)}%</span>
                       </div>
                     </div>
-                    {mold.status === MoldStatus.Idle ? (
+                    {!mold.isOffline ? (
                       <button 
                         onClick={() => {
                           setTaskType('INSTALL_SUCCESS');
@@ -1300,12 +1247,11 @@ console.log("taskType:",taskType)
                       </button>
                     ) : (
                       <div className="w-full bg-slate-800/50 text-slate-500 text-[10px] font-black py-2 rounded-lg text-center uppercase tracking-widest cursor-not-allowed">
-                        不可用 ({mold.status === MoldStatus.InUse ? '生产中' : '处理中'})
+                        不可用 (已下线)
                       </div>
                     )}
                   </div>
-                );
-              })}
+                ))}
               </div>
             </div>
           </div>
