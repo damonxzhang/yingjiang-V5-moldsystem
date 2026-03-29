@@ -197,9 +197,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         <div className="mt-3 pt-3 border-t border-slate-200">
           <p className="text-xs text-slate-400 text-center mb-1.5">测试账号</p>
           <div className="text-xs text-slate-500 leading-relaxed">
-            <p>• admin / admin123</p>
-            <p>• engineer_big / eng123</p>
-            <p>• operator / op123</p>
+            <p>• 张英江 / 123456</p>
           </div>
         </div>
       </div>
