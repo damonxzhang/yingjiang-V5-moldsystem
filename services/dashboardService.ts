@@ -17,6 +17,7 @@ export interface DashboardMold {
 // 机台状态类型
 export interface DashboardMachine {
   machine_id: string;
+  machine_code: string;
   status: 'NORMAL' | 'MAINTENANCE_DUE' | 'OVERDUE' | 'BUYOFF' | 'DISABLED' | 'OFFLINE';
   part_no: string;
   mold_count: number;
@@ -113,6 +114,7 @@ export interface CreateMaintenanceTaskRequest {
 
 // 创建保养任务响应
 export interface CreateMaintenanceTaskResponse {
+  code: number;
   success: boolean;
   task_id?: string;
   message?: string;
@@ -161,6 +163,7 @@ export interface CreateRepairTaskRequest {
 
 // 创建报修任务响应
 export interface CreateRepairTaskResponse {
+  code: number;
   success: boolean;
   task_id?: string;
   message?: string;
@@ -209,6 +212,7 @@ export interface DisableMoldRequest {
 
 // 模具停用响应
 export interface DisableMoldResponse {
+  code: number;
   success: boolean;
   message?: string;
 }
@@ -258,6 +262,7 @@ export interface MoldActionRequest {
 
 // 模具安装/卸载响应
 export interface MoldActionResponse {
+  code: number;
   success: boolean;
   message?: string;
 }
@@ -296,11 +301,140 @@ export async function moldAction(
   return data as MoldActionResponse;
 }
 
+// 槽位信息
+export interface MachineSlot {
+  slot: string;
+  short_name: string;
+  status: string;
+}
+
+// 当前模具详细信息
+export interface CurrentMoldDetail {
+  mold_id: string;
+  mold_code: string;
+  short_name: string;
+  full_name: string;
+  type: string;
+  pending_tasks: number;
+  current_shots: number;
+  warning_threshold: number;
+  maintenance_status: string;
+  remaining_life: number;
+  total_life: number;
+  life_percent: number;
+}
+
+// 机台详情响应
+export interface MachineDetailResponse {
+  machine_id: string;
+  machine_code: string;
+  product_type: string;
+  batch_no: string;
+  pending_tasks: number;
+  slots: MachineSlot[];
+  current_mold: CurrentMoldDetail;
+}
+
+// 机台详情请求参数
+export interface MachineDetailRequest {
+  user_id: string;
+  machine_id: string;
+  slot?: string;
+}
+
+/**
+ * 获取机台及模具槽位详细信息
+ */
+export async function fetchMachineDetail(
+  params: Omit<MachineDetailRequest, 'user_id'>
+): Promise<MachineDetailResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody: MachineDetailRequest = {
+    user_id: authData.user_id,
+    machine_id: params.machine_id,
+    slot: params.slot
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/machine/detail`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || '获取机台详情失败');
+  }
+
+  // 处理返回数据，兼容不同的响应格式
+  if (data.code !== undefined && data.data !== undefined) {
+    // 格式: { code: 200, message: 'success', data: {...} }
+    if (data.code !== 200) {
+      throw new Error(data.message || '获取机台详情失败');
+    }
+    return data.data as MachineDetailResponse;
+  }
+
+  // 直接返回数据格式
+  return data as MachineDetailResponse;
+}
+
+// 机台编号列表响应
+export interface MachineCodesResponse {
+  code: number;
+  message: string;
+  data: string[];
+}
+
+/**
+ * 获取所有机台编号列表
+ */
+export async function fetchMachineCodes(): Promise<string[]> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/machines/codes`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    }
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || '获取机台编号列表失败');
+  }
+
+  // 处理返回数据，兼容不同的响应格式
+  if (data.code !== undefined && data.data !== undefined) {
+    if (data.code !== 200) {
+      throw new Error(data.message || '获取机台编号列表失败');
+    }
+    return data.data as string[];
+  }
+
+  return data as string[];
+}
+
 /**
  * Dashboard 服务
  */
 export const DashboardService = {
   fetchDashboardMachinesStatus,
+  fetchMachineDetail,
+  fetchMachineCodes,
   createMaintenanceTask,
   createRepairTask,
   disableMold,
