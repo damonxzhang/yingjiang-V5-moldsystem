@@ -78,16 +78,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
     { id: 'user_manage', name: '用户账号管理', icon: 'fa-users-gear', permission: Permission.USER_MANAGE },
   ];
 
-  // 过滤出有权限的菜单
-  let visibleMenuItems = menuItems.filter(item => hasPermission(item.permission));
+  // 过滤出有权限的菜单（已注释，显示所有页面）
+  // let visibleMenuItems = menuItems.filter(item => hasPermission(item.permission));
+  let visibleMenuItems = menuItems; // 显示所有页面
 
   // 访客模式限制：只能访问看板
-  const isGuest = new URLSearchParams(window.location.search).get('guest') === 'true';
-  if (isGuest) {
-    visibleMenuItems = visibleMenuItems.filter(item => 
-      item.id === 'machine_screen' || item.id === 'dashboard' || item.id === 'tooling_screen'
-    );
-  }
+  // const isGuest = new URLSearchParams(window.location.search).get('guest') === 'true';
+  // if (isGuest) {
+  //   visibleMenuItems = visibleMenuItems.filter(item => 
+  //     item.id === 'machine_screen' || item.id === 'dashboard' || item.id === 'tooling_screen'
+  //   );
+  // }
 
   const getRoleLabel = (role: string) => {
     switch(role) {
