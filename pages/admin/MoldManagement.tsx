@@ -1,64 +1,223 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MOCK_MOLDS } from '../../services/mockData';
 import { STATUS_COLORS, STATUS_LABELS } from '../../constants';
 import { Mold, MoldStatus, BuyoffStatus, MoldComponent } from '../../types';
+import { fetchMoldList, MoldListItem, fetchMoldDetail, MoldDetailItem, saveMold } from '../../services/moldmanageService';
+
+/**
+ * 将 API 模具数据映射为前端 Mold 类型
+ */
+function mapApiMoldToFrontend(apiMold: MoldListItem): Mold {
+  // 状态映射：API 状态 -> 前端 MoldStatus
+  const statusMap: Record<string, MoldStatus> = {
+    'IDLE': MoldStatus.Idle,
+    'IN_USE': MoldStatus.InUse,
+    'MAINTENANCE': MoldStatus.Maintenance,
+    'DEACTIVATED': MoldStatus.Deactivated
+  };
+  return {
+    id: apiMold.mold_code,           // mold.id -> mold_code
+    moldId: apiMold.mold_id,         // API 原始 mold_id
+    name: apiMold.full_name || apiMold.short_name,
+    type: apiMold.mold_category || '注塑模',
+    vendor: 'TOWA',                  // API 暂无此字段，使用默认值
+    shotTotal: apiMold.current_shots, // mold.shotTotal -> current_shots
+    lifeLimit: apiMold.max_shots,    // mold.lifeLimit -> max_shots
+    status: statusMap[apiMold.status] || MoldStatus.Idle,
+    location: apiMold.location,
+    machineId: apiMold.current_machine && apiMold.current_machine !== '离线/库房' 
+      ? apiMold.current_machine 
+      : undefined,
+    buyoffStatus: BuyoffStatus.NotInitiated,
+    serialNumber: apiMold.mold_code,
+    orderNumber: '-',
+    cabNo: '-',
+    packageType: apiMold.package_type,  // mold.packageType -> package_type
+    packageSize: apiMold.package_size,  // mold.packageSize -> package_size
+    packageThickness: '0',
+    substrateThickness: '0',
+    pinCode: '-',
+    components: [],
+    shortName: apiMold.short_name,      // mold.shortName -> short_name
+    thickness: apiMold.thickness,       // mold.thickness -> thickness
+    moldCategory: apiMold.mold_category, // mold.moldCategory -> mold_category
+    productType: apiMold.product_type,   // mold.productType -> product_type
+    department: apiMold.department === '大材料' ? '大材料' : '小材料',
+    maintenanceCycle: apiMold.maintenance_cycle,  // mold.maintenanceCycle -> maintenance_cycle
+    maintenanceStartTime: apiMold.start_time       // mold.maintenanceStartTime -> start_time
+  };
+}
+
+/**
+ * 将 API 模具详情映射为表单数据
+ */
+function mapApiMoldDetailToForm(apiMold: MoldDetailItem): Partial<Mold> {
+  return {
+    id: apiMold.mold_code,              // 模具编号 -> mold_code
+    shortName: apiMold.short_name,      // 模具简名 -> short_name
+    thickness: apiMold.thickness,       // 模具厚度 -> thickness
+    moldCategory: apiMold.mold_category, // 模具分类 -> mold_category
+    productType: apiMold.product_type,   // 产品类型 -> product_type
+    packageType: apiMold.package_type,   // 封装规格 -> package_type
+    pinCode: apiMold.pin_code,           // PIN CODE -> pin_code
+    maintenanceCycle: apiMold.maintenance_cycle,  // 保养周期 -> maintenance_cycle
+    maintenanceStartTime: apiMold.start_time      // 开始保养时间 -> start_time
+  };
+}
 
 interface MoldManagementProps {
   department?: '大材料' | '小材料';
   isAuditMode?: boolean;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode }) => {
-  const [molds, setMolds] = useState<Mold[]>(
-    department 
-      ? MOCK_MOLDS.filter(m => m.department === department)
-      : MOCK_MOLDS
-  );
+  console.log("department:",department);
+  console.log("isAuditMode:",isAuditMode);
+  const [molds, setMolds] = useState<Mold[]>([]);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'ADD' | 'EDIT' | 'VIEW'>('ADD');
   const [currentMold, setCurrentMold] = useState<Partial<Mold>>({});
+  const [currentMoldDetail, setCurrentMoldDetail] = useState<MoldDetailItem | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isFirstRender = useRef(true);
+  const isLoadingRef = useRef(false);
 
-  const handleSave = () => {
-    if (modalMode === 'ADD') {
-      const newMold: Mold = {
-        id: currentMold.id || `TY${Date.now().toString().slice(-3)}`,
-        name: currentMold.name || '新模具',
-        type: currentMold.type || '注塑模',
-        vendor: currentMold.vendor || 'TOWA',
-        shotTotal: Number(currentMold.shotTotal) || 0,
-        lifeLimit: Number(currentMold.lifeLimit) || 100000,
-        status: MoldStatus.Idle,
-        location: currentMold.location || '待定',
-        buyoffStatus: BuyoffStatus.NotInitiated,
-        serialNumber: currentMold.serialNumber || '-',
-        orderNumber: currentMold.orderNumber || '-',
-        cabNo: currentMold.cabNo || '-',
-        packageType: currentMold.packageType || 'BGA',
-        packageSize: currentMold.packageSize || 'STANDARD',
-        packageThickness: currentMold.packageThickness || '0',
-        substrateThickness: currentMold.substrateThickness || '0',
-        pinCode: currentMold.pinCode || 'A',
-        components: currentMold.components || [],
-        shortName: currentMold.shortName || '',
-        thickness: currentMold.thickness || '',
-        moldCategory: currentMold.moldCategory || '',
-        productType: currentMold.productType || '',
-        department: department || currentMold.department || '大材料',
-        maintenanceCycle: currentMold.maintenanceCycle || '',
-        maintenanceStartTime: currentMold.maintenanceStartTime || '',
-      };
-      setMolds([...molds, newMold]);
-    } else if (modalMode === 'EDIT') {
-      setMolds(molds.map(m => m.id === currentMold.id ? { ...m, ...currentMold } as Mold : m));
+  // 从 API 获取模具列表
+  const loadMolds = async (page: number = 1) => {
+    // 防止重复请求
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetchMoldList({
+        page: page,
+        page_size: ITEMS_PER_PAGE
+      });
+      console.log("response:",response);
+
+      if (response.code === 200 && response.data) {
+        const mappedMolds = response.data.list.map(mapApiMoldToFrontend);
+        console.log("mappedMolds:",mappedMolds);
+        // 如果指定了部门，进行前端过滤
+        const filteredMolds = department
+          ? mappedMolds.filter(m => m.department.includes(department))
+          : mappedMolds;
+          console.log("filteredMolds:",filteredMolds);
+        setMolds(mappedMolds);
+        setTotalRecords(response.data.total);
+      } else {
+        setError(response.message || '获取数据失败');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '获取数据失败');
+      // 如果 API 失败，使用 mock 数据作为 fallback
+      const fallbackMolds = department
+        ? MOCK_MOLDS.filter(m => m.department === department)
+        : MOCK_MOLDS;
+      setMolds(fallbackMolds);
+      setTotalRecords(fallbackMolds.length);
+    } finally {
+      setLoading(false);
+      isLoadingRef.current = false;
     }
+  };
+
+  // 组件挂载时加载数据
+  useEffect(() => {
+    // 防止 React StrictMode 导致的重复请求
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      loadMolds(currentPage);
+    }
+  }, []);
+
+  // 当页码或部门变化时重新加载
+  useEffect(() => {
+    if (!isFirstRender.current) {
+      loadMolds(currentPage);
+    }
+  }, [currentPage, department]);
+
+  const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
+  const paginatedMolds = molds;
+
+  const handleSave = async () => {
+    try {
+      // 准备保存参数
+      const saveParams = {
+        mold_id: modalMode === 'EDIT' ? currentMoldDetail?.mold_id : undefined,
+        mold_code: currentMold.id || '',           // 模具编号
+        name: modalMode === 'EDIT' ? currentMoldDetail?.name : undefined,  // 编辑时使用详情中的 name
+        short_name: currentMold.shortName || '',   // 模具简名
+        life_limit: undefined                      // 暂时为空
+      };
+
+      console.log('保存模具参数:', saveParams);
+
+      const response = await saveMold(saveParams);
+      console.log('保存模具响应:', response);
+
+      if (response.code === 200 && response.data?.success) {
+        // 保存成功，刷新列表
+        alert(response.data.message || '保存成功');
+        loadMolds(currentPage);
+      } else {
+        alert(response.message || '保存失败');
+      }
+    } catch (err) {
+      console.error('保存模具失败:', err);
+      alert(err instanceof Error ? err.message : '保存失败');
+    }
+
     setIsModalOpen(false);
     setCurrentMold({});
+    setCurrentMoldDetail(null);
   };
 
   const handleDeactivate = (id: string) => {
     if (confirm('确定要停用该模具吗？停用后将无法在生产看板中查看。')) {
       setMolds(molds.map(m => m.id === id ? { ...m, status: MoldStatus.Deactivated } : m));
+    }
+  };
+
+  // 查看 BOM 详情
+  const handleViewBOM = async (mold: Mold) => {
+    if (!mold.moldId) {
+      console.error('模具 ID 不存在');
+      return;
+    }
+
+    setModalMode('EDIT');
+    setIsModalOpen(true);
+    setCurrentMoldDetail(null);
+
+    try {
+      const response = await fetchMoldDetail(mold.moldId);
+      console.log('模具详情:', response);
+
+      if (response.code === 200 && response.data) {
+        // 保存详情数据，用于后续保存操作
+        setCurrentMoldDetail(response.data);
+        // 将详情数据映射到表单
+        const formData = mapApiMoldDetailToForm(response.data);
+        setCurrentMold(formData);
+      } else {
+        console.error('获取模具详情失败:', response.message);
+        // 如果接口失败，使用列表中的数据
+        setCurrentMold(mold);
+      }
+    } catch (err) {
+      console.error('获取模具详情失败:', err);
+      // 如果接口失败，使用列表中的数据
+      setCurrentMold(mold);
     }
   };
 
@@ -103,7 +262,8 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
       </div>
     );
   };
-
+console.log("loading:",loading)
+console.log("molds:",molds)
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -119,6 +279,33 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         )}
       </div>
 
+      {/* 加载状态 */}
+      {loading && (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <span className="ml-3 text-slate-500">加载中...</span>
+        </div>
+      )}
+
+      {/* 错误提示 */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-4">
+          <i className="fas fa-exclamation-circle mr-2"></i>
+          {error}
+        </div>
+      )}
+
+      {/* 空数据提示 */}
+      {!loading && !error && molds.length === 0 && (
+        <div className="flex justify-center items-center py-12 bg-white rounded-2xl border border-slate-200">
+          <div className="text-center">
+            <i className="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+            <p className="text-slate-500">暂无模具数据</p>
+          </div>
+        </div>
+      )}
+
+      {!loading && molds.length > 0 && (
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden overflow-x-auto">
         <table className="w-full text-left min-w-[1200px]">
           <thead className="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-widest">
@@ -139,7 +326,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {molds.map(mold => (
+            {paginatedMolds.map(mold => (
               <tr key={mold.id} className="hover:bg-slate-50 transition-colors">
                 <td className="px-4 py-4">
                   <p className="text-sm font-bold text-slate-800">{mold.id}</p>
@@ -212,7 +399,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
                 </td>
                 <td className="px-4 py-4 text-right">
                   <div className="flex justify-end gap-1">
-                    <button onClick={() => { setModalMode('EDIT'); setCurrentMold(mold); setIsModalOpen(true); }} className="text-indigo-600 p-2 hover:bg-indigo-50 rounded-lg transition-colors" title="查看 BOM 详情">
+                    <button onClick={() => handleViewBOM(mold)} className="text-indigo-600 p-2 hover:bg-indigo-50 rounded-lg transition-colors" title="查看 BOM 详情">
                       <i className="fas fa-sitemap mr-1"></i> BOM
                     </button>
                     {mold.status !== MoldStatus.Deactivated && (
@@ -231,6 +418,48 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
           </tbody>
         </table>
       </div>
+      )}
+
+      {/* 分页控件 */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <i className="fas fa-chevron-left mr-1"></i> 上一页
+          </button>
+          
+          <div className="flex gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-9 h-9 rounded-lg text-sm font-bold transition-colors ${
+                  currentPage === page
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+          
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            下一页 <i className="fas fa-chevron-right ml-1"></i>
+          </button>
+          
+          <span className="text-sm text-slate-500 ml-4">
+            共 {totalRecords} 条记录，第 {currentPage}/{totalPages} 页
+          </span>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
