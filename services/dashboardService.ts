@@ -87,10 +87,6 @@ export async function fetchDashboardMachinesStatus(
 
   const data = await response.json();
 
-  if (!response.ok) {
-    throw new Error(data.message || '获取看板数据失败');
-  }
-
   // 处理返回数据，兼容不同的响应格式
   if (data.code !== undefined && data.data !== undefined) {
     // 格式: { code: 200, message: 'success', data: {...} }
@@ -149,7 +145,7 @@ export async function createMaintenanceTask(
 
   const data = await response.json();
 
-  if (!response.ok) {
+  if (data.code !== 200) {
     throw new Error(data.message || '创建保养任务失败');
   }
 
@@ -198,7 +194,7 @@ export async function createRepairTask(
 
   const data = await response.json();
 
-  if (!response.ok) {
+  if (data.code !== 200) {
     throw new Error(data.message || '创建报修任务失败');
   }
 
@@ -246,7 +242,7 @@ export async function disableMold(
 
   const data = await response.json();
 
-  if (!response.ok) {
+  if (data.code !== 200) {
     throw new Error(data.message || '模具停用失败');
   }
 
@@ -296,7 +292,7 @@ export async function moldAction(
 
   const data = await response.json();
 
-  if (!response.ok) {
+  if (data.code !== 200) {
     throw new Error(data.message || '模具操作失败');
   }
 
@@ -372,7 +368,7 @@ export async function fetchMachineDetail(
 
   const data = await response.json();
 
-  if (!response.ok) {
+  if (data.code !== 200) {
     throw new Error(data.message || '获取机台详情失败');
   }
 
@@ -414,10 +410,6 @@ export async function fetchMachineCodes(): Promise<string[]> {
   });
 
   const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || '获取机台编号列表失败');
-  }
 
   // 处理返回数据，兼容不同的响应格式
   if (data.code !== undefined && data.data !== undefined) {

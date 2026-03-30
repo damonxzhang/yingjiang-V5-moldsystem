@@ -97,8 +97,8 @@ interface MoldManagementProps {
 const ITEMS_PER_PAGE = 20;
 
 const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode }) => {
-  console.log("department:",department);
-  console.log("isAuditMode:",isAuditMode);
+  // console.log("department:",department);
+  // console.log("isAuditMode:",isAuditMode);
   const [molds, setMolds] = useState<Mold[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -128,11 +128,8 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         page: page,
         page_size: ITEMS_PER_PAGE
       });
-      console.log("response:",response);
-
       if (response.code === 200 && response.data) {
         const mappedMolds = response.data.list.map(mapApiMoldToFrontend);
-        console.log("mappedMolds:",mappedMolds);
         setMolds(mappedMolds);
         setTotalRecords(response.data.total);
       } else {
@@ -192,12 +189,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         start_time: currentMold.maintenanceStartTime || '',     // 开始保养时间
         location: currentMold.location || ''                    // 存放位置
       };
-
-      console.log('保存模具参数:', saveParams);
-
       const response = await saveMold(saveParams);
-      console.log('保存模具响应:', response);
-
       if (response.code === 200 && response.data?.success) {
         // 保存成功，刷新列表
         alert(response.data.message || '保存成功');
@@ -234,8 +226,6 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
 
     try {
       const response = await fetchMoldDetail(mold.moldId);
-      console.log('模具详情:', response);
-
       if (response.code === 200 && response.data) {
         // 保存详情数据，用于后续保存操作
         setCurrentMoldDetail(response.data);
@@ -332,8 +322,6 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
       </div>
     );
   };
-console.log("loading:",loading)
-console.log("molds:",molds)
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">

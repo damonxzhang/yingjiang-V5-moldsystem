@@ -58,6 +58,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [filterMold, setFilterMold] = useState('');            // 模具编号筛选关键字
   const [onlyProducible, setOnlyProducible] = useState(false); // 仅显示可生产设备（模具未下线且未超期）
   const [onlyAbnormal, setOnlyAbnormal] = useState(false);     // 仅显示异常生产设备（模具超期、即将保养或下线）
+  // 数据刷新触发器
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   // Product 下拉列表选项
   const [productOptions, setProductOptions] = useState<string[]>([]);
 
@@ -102,7 +104,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
           only_producible: onlyProducible,
           only_abnormal: onlyAbnormal
         });
-        console.log('Dashboard data:', data);
         setDashboardData(data);
       } catch (error) {
         console.error('获取看板数据失败:', error);
@@ -115,7 +116,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [filterProduct, filterMachine, filterMold, onlyProducible, onlyAbnormal]);
+  }, [filterProduct, filterMachine, filterMold, onlyProducible, onlyAbnormal, refreshTrigger]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleString('zh-CN', {
@@ -388,7 +389,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
   // 处理模具停用
   const handleDisableMold = async () => {
-    debugger
     if (!selectedMachine || !selectedMoldPos) {
       setDisableMoldError('请选择机台和模具位置');
       return;
@@ -453,13 +453,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       };
 
       const response = await DashboardService.moldAction(requestData as MoldActionRequest);
-
       if (response?.code === 200) {
         if (action === 'INSTALL') {
           setTaskType('INSTALL_SUCCESS');
         } else {
           setTaskType('UNINSTALL_SUCCESS');
         }
+        setShowTaskModal(true);
       } else {
         setMoldActionError(response.message || '模具操作失败');
       }
@@ -832,12 +832,12 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       </div>
 
       {/* Main Grid - 6x4 */}
-      <div className="grid grid-cols-6 gap-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+      <div className="grid grid-cols-6 gap-3 h-[calc(100vh-120px)] overflow-y-auto pr-2 custom-scrollbar" style={{ gridAutoRows: 'calc((100vh - 120px - 45px) / 4)' }}>
         {allMachines.map(machine=> (
           <div
             key={machine.machine_code}
             onClick={() => handleMachineClick(machine)}
-            className={`bg-slate-900/40 ${machine.colorClass} rounded-xl p-2.5 flex flex-col justify-between cursor-pointer hover:bg-slate-800/60 transition-all relative group`}
+            className={`bg-slate-900/40 ${machine.colorClass} rounded-xl p-2.5 flex flex-col justify-between cursor-pointer hover:bg-slate-800/60 transition-all relative group h-full overflow-hidden`}
           >
             {/* Machine Header */}
             <div className="flex flex-col mb-2">
@@ -1554,6 +1554,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   onClick={() => {
                     setShowTaskModal(false);
                     setSelectedMachine(null);
+                    setRefreshTrigger(prev => prev + 1);
                   }}
                   className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"
                 >
@@ -1585,6 +1586,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   onClick={() => {
                     setShowTaskModal(false);
                     setSelectedMachine(null);
+                    setRefreshTrigger(prev => prev + 1);
                   }}
                   className="w-full bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-amber-900/20"
                 >
@@ -1643,6 +1645,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                     setShowTaskModal(false);
                     setSelectedMachine(null);
                     setMachineDetail(null);
+                    setRefreshTrigger(prev => prev + 1);
                   }}
                   className="w-full bg-slate-700 hover:bg-slate-600 py-3.5 rounded-xl font-bold text-sm transition-all"
                 >
