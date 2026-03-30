@@ -200,7 +200,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       // 整体状态逻辑：使用机台状态优先，其次根据模具状态计算
       // 过滤掉 null 值的模具数组
       const validMolds = Object.values(molds).filter(Boolean) as any[];
-      let colorClass = 'border-[3px] border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)]';
+      // molds 为空时显示灰色
+      let colorClass = validMolds.length === 0
+        ? 'border-[3px] border-slate-600 shadow-[0_0_12px_rgba(71,85,105,0.3)]'
+        : 'border-[3px] border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)]';
       if (status === 'OVERDUE' || status === 'DISABLED' || status === 'OFFLINE' || validMolds.some((m: any) => m.status === 'OVERDUE')) {
         colorClass = 'border-[3px] border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]';
       } else if (status === 'MAINTENANCE_DUE' || validMolds.some((m: any) => m.status === 'UPCOMING')) {
