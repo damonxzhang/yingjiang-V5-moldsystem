@@ -117,6 +117,7 @@ export interface Mold {
 
   // 2026-02-12 新增字段
   shortName?: string; // 模具简名
+  fullName?: string; // 模具完整名称
   thickness?: string; // 模具厚度
   moldCategory?: string; // 模具分类
   productType?: string; // 产品类型

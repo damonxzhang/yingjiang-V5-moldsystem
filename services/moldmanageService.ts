@@ -235,11 +235,66 @@ export async function saveMold(
   return data as SaveMoldResponse;
 }
 
+// ==================== 模具内部配件清单 API ====================
+
+export interface InternalComponentItem {
+  component_id: number;
+  mold_id: string;
+  category: string;
+  name: string;
+  is_spare: 'Y' | 'N';
+  sn: string;
+  life_limit: string;
+  current_shots: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InternalComponentsResponse {
+  code: number;
+  message: string;
+  data: {
+    upper?: InternalComponentItem[];
+    lower?: InternalComponentItem[];
+    transfer?: InternalComponentItem[];
+  };
+}
+
+/**
+ * 获取模具内部配件清单
+ */
+export async function fetchInternalComponents(
+  moldId: string
+): Promise<InternalComponentsResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/mold/internal-components`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify({ mold_id: moldId })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || '获取内部配件清单失败');
+  }
+
+  return data as InternalComponentsResponse;
+}
+
 /**
  * 模具管理服务
  */
 export const MoldManageService = {
   fetchMoldList,
   fetchMoldDetail,
-  saveMold
+  saveMold,
+  fetchInternalComponents
 };

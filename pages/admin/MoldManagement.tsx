@@ -3,7 +3,26 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MOCK_MOLDS } from '../../services/mockData';
 import { STATUS_COLORS, STATUS_LABELS } from '../../constants';
 import { Mold, MoldStatus, BuyoffStatus, MoldComponent } from '../../types';
-import { fetchMoldList, MoldListItem, fetchMoldDetail, MoldDetailItem, saveMold } from '../../services/moldmanageService';
+import { fetchMoldList, MoldListItem, fetchMoldDetail, MoldDetailItem, saveMold, fetchInternalComponents, InternalComponentItem } from '../../services/moldmanageService';
+
+/**
+ * 将 API 内部组件映射为前端 MoldComponent 类型
+ */
+function mapApiComponentToFrontend(apiComp: InternalComponentItem): MoldComponent {
+  const categoryMap: Record<string, '上模件' | '下模件' | 'Transfer件'> = {
+    'UPPER': '上模件',
+    'LOWER': '下模件',
+    'TRANSFER': 'Transfer件'
+  };
+
+  return {
+    category: categoryMap[apiComp.category] || '上模件',
+    name: apiComp.name,
+    isSpare: apiComp.is_spare === 'Y',
+    sn: apiComp.sn,
+    lifeLimit: apiComp.life_limit
+  };
+}
 
 /**
  * 将 API 模具数据映射为前端 Mold 类型
@@ -19,7 +38,8 @@ function mapApiMoldToFrontend(apiMold: MoldListItem): Mold {
   return {
     id: apiMold.mold_code,           // mold.id -> mold_code
     moldId: apiMold.mold_id,         // API 原始 mold_id
-    name: apiMold.full_name || apiMold.short_name,
+    name: apiMold.name || apiMold.full_name || apiMold.short_name,
+    fullName: apiMold.full_name,
     type: apiMold.mold_category || '注塑模',
     vendor: 'TOWA',                  // API 暂无此字段，使用默认值
     shotTotal: apiMold.current_shots, // mold.shotTotal -> current_shots
@@ -55,6 +75,9 @@ function mapApiMoldToFrontend(apiMold: MoldListItem): Mold {
 function mapApiMoldDetailToForm(apiMold: MoldDetailItem): Partial<Mold> {
   return {
     id: apiMold.mold_code,              // 模具编号 -> mold_code
+    name: apiMold.name,                 // 模具名称 -> name
+    fullName: apiMold.full_name,         // 模具完整名称 -> full_name
+    location: apiMold.location,          // 存放位置 -> location
     shortName: apiMold.short_name,      // 模具简名 -> short_name
     thickness: apiMold.thickness,       // 模具厚度 -> thickness
     moldCategory: apiMold.mold_category, // 模具分类 -> mold_category
@@ -155,8 +178,8 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         department: department || '大材料',         // 所属部门
         mold_id: modalMode === 'EDIT' ? currentMoldDetail?.mold_id : undefined,
         mold_code: currentMold.id || '',           // 模具编号
-        name: modalMode === 'EDIT' ? currentMoldDetail?.name : undefined,           // 编辑时使用详情中的 name
-        full_name: modalMode === 'EDIT' ? currentMoldDetail?.full_name : undefined, // 编辑时使用详情中的 full_name
+        name: currentMold.name || '',              // 模具名称
+        full_name: currentMold.fullName || '',      // 模具完整名称
         short_name: currentMold.shortName || '',   // 模具简名
         thickness: currentMold.thickness || '',    // 模具厚度
         mold_category: currentMold.moldCategory || '',  // 模具分类
@@ -167,7 +190,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         life_limit: modalMode === 'EDIT' ? currentMoldDetail?.life_limit : undefined,      // 编辑时使用详情中的 life_limit
         maintenance_cycle: currentMold.maintenanceCycle || '',  // 保养周期
         start_time: currentMold.maintenanceStartTime || '',     // 开始保养时间
-        location: modalMode === 'EDIT' ? currentMoldDetail?.location : undefined           // 编辑时使用详情中的 location
+        location: currentMold.location || ''                    // 存放位置
       };
 
       console.log('保存模具参数:', saveParams);
@@ -218,6 +241,22 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         setCurrentMoldDetail(response.data);
         // 将详情数据映射到表单
         const formData = mapApiMoldDetailToForm(response.data);
+        
+        // 获取内部组件数据
+        try {
+          const compResponse = await fetchInternalComponents(String(mold.moldId));
+          if (compResponse.code === 200 && compResponse.data) {
+            const allComponents: MoldComponent[] = [
+              ...(compResponse.data.upper || []).map(mapApiComponentToFrontend),
+              ...(compResponse.data.lower || []).map(mapApiComponentToFrontend),
+              ...(compResponse.data.transfer || []).map(mapApiComponentToFrontend)
+            ];
+            formData.components = allComponents;
+          }
+        } catch (compErr) {
+          console.error('获取内部组件失败:', compErr);
+        }
+
         setCurrentMold(formData);
       } else {
         console.error('获取模具详情失败:', response.message);
@@ -238,36 +277,57 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
       'Transfer件': components.filter(c => c.category === 'Transfer件'),
     };
 
+    // 如果没有任何数据，返回 null 让父组件显示“暂无数据”
+    if (components.length === 0) return null;
+
     return (
-      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
         {Object.entries(groups).map(([groupName, items]) => (
-          <div key={groupName} className="border border-slate-100 rounded-xl overflow-hidden">
-            <div className="bg-slate-50 px-3 py-2 border-b border-slate-100">
-              <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{groupName}</h4>
-            </div>
-            <table className="w-full text-left text-[11px]">
-              <thead className="text-slate-400 bg-white border-b border-slate-50">
-                <tr>
-                  <th className="px-3 py-2 font-bold">组件名称</th>
-                  <th className="px-3 py-2 font-bold">S/N</th>
-                  <th className="px-3 py-2 font-bold text-center">备件</th>
-                  <th className="px-3 py-2 font-bold">寿命上限</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {items.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-3 py-2 font-medium text-slate-700">{item.name}</td>
-                    <td className="px-3 py-2 font-mono text-slate-500">{item.sn}</td>
-                    <td className="px-3 py-2 text-center text-slate-400">
-                      {item.isSpare ? <i className="fas fa-check text-green-500"></i> : '-'}
-                    </td>
-                    <td className="px-3 py-2 font-bold text-indigo-600">{item.lifeLimit}</td>
+          items.length > 0 && (
+            <div key={groupName} className="border border-slate-100 rounded-xl overflow-hidden shadow-sm bg-white">
+              <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-100 flex items-center justify-between">
+                <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                  {groupName}
+                </h4>
+                <span className="text-[10px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100">
+                  {items.length} 项
+                </span>
+              </div>
+              <table className="w-full text-left text-[11px]">
+                <thead className="text-slate-400 bg-white border-b border-slate-50">
+                  <tr>
+                    <th className="px-4 py-3 font-bold uppercase tracking-wider">组件名称</th>
+                    <th className="px-4 py-3 font-bold uppercase tracking-wider">S/N</th>
+                    <th className="px-4 py-3 font-bold uppercase tracking-wider text-center">备件</th>
+                    <th className="px-4 py-3 font-bold uppercase tracking-wider text-right">寿命上限</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {items.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-indigo-50/30 transition-colors">
+                      <td className="px-4 py-3 font-bold text-slate-700">{item.name}</td>
+                      <td className="px-4 py-3 font-mono text-slate-500">{item.sn}</td>
+                      <td className="px-4 py-3 text-center">
+                        {item.isSpare ? (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-black text-green-600 bg-green-50 px-1.5 py-0.5 rounded-md border border-green-100">
+                            <i className="fas fa-check"></i> YES
+                          </span>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 font-black text-right">
+                        <span className={`${item.lifeLimit === 'N/A' ? 'text-slate-400 font-medium' : 'text-indigo-600'}`}>
+                          {item.lifeLimit}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         ))}
       </div>
     );
@@ -493,6 +553,18 @@ console.log("molds:",molds)
                     <div>
                       <label className="text-[9px] font-bold text-slate-500 uppercase">模具编号 (MOLD ID)</label>
                       <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold" value={currentMold.id || ''} onChange={e => setCurrentMold({...currentMold, id: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-bold text-slate-500 uppercase">模具名称 (NAME)</label>
+                      <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold" value={currentMold.name || ''} onChange={e => setCurrentMold({...currentMold, name: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-bold text-slate-500 uppercase">模具完整名称 (FULL NAME)</label>
+                      <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold" value={currentMold.fullName || ''} onChange={e => setCurrentMold({...currentMold, fullName: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-bold text-slate-500 uppercase">存放位置 (LOCATION)</label>
+                      <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold" value={currentMold.location || ''} onChange={e => setCurrentMold({...currentMold, location: e.target.value})} />
                     </div>
                     <div>
                       <label className="text-[9px] font-bold text-slate-500 uppercase">模具简名 (SHORT NAME)</label>
