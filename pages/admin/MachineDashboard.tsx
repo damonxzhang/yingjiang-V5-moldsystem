@@ -254,7 +254,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         // 前端需要的额外字段
         colorClass,
         currentProduct: part_no || '',
-        batchNo: `LOT-${Math.floor(Math.random() * 900000 + 100000)}`,
         molds
       };
     });
@@ -1005,8 +1004,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
               <div>
                 <h2 className="text-xl font-black text-blue-100 uppercase tracking-widest">设备指挥中心: {machineDetail?.machine_code || selectedMachine.machine_code}</h2>
                 <div className="flex gap-4 mt-1">
-                  <p className="text-blue-400 text-xs font-bold">当前产品: {machineDetail?.product_type || selectedMachine.currentProduct}</p>
-                  <p className="text-slate-500 text-xs font-mono">批次号: {machineDetail?.batch_no || selectedMachine.batchNo}</p>
+                  <p className="text-slate-500 text-xs font-mono">批号: {(machineDetail as any)?.part_no || selectedMachine.part_no || '---'}</p>
                 </div>
               </div>
               <button onClick={() => setSelectedMachine(null)} className="text-blue-400 hover:text-white transition-colors">
@@ -1131,8 +1129,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                             {(currentMold?.current_shots || mold.current_shots).toLocaleString()}
                           </span>
 
-                          <span className="text-slate-400">预警阈值:</span>
-                          <span className="text-slate-400">{(currentMold?.warning_threshold || mold.shotThreshold).toLocaleString()}</span>
+                          <span className="text-slate-400">最大寿命:</span>
+                          <span className="text-slate-400">{(currentMold?.max_shots || mold.max_shots || 0).toLocaleString()}</span>
 
                           <span className="text-slate-400">寿命使用:</span>
                           <span className={(currentMold?.life_percent || mold.life_percent) >= 90 ? 'text-red-500 font-bold' : (currentMold?.life_percent || mold.life_percent) >= 75 ? 'text-yellow-500' : 'text-green-500'}>
@@ -1150,15 +1148,15 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                         <h3 className="text-[10px] font-black text-blue-500 uppercase mb-4">保养指标</h3>
                         <div className="space-y-2">
                           <div className="flex justify-between text-[10px] font-bold">
-                            <span className="text-slate-400">剩余寿命 (Shots)</span>
+                            <span className="text-slate-400">使用寿命</span>
                             <span className={(currentMold?.maintenance_status || mold.status) === 'CRITICAL' || (currentMold?.maintenance_status || mold.status) === 'OVERDUE' ? 'text-red-500' : 'text-blue-400'}>
-                              {(currentMold?.remaining_life || mold.remaining_shots).toLocaleString()} / {(currentMold?.total_life || mold.max_shots).toLocaleString()}
+                              {(currentMold?.current_shots || mold.current_shots || 0).toLocaleString()} / {(currentMold?.max_shots || mold.max_shots || 0).toLocaleString()}
                             </span>
                           </div>
                           <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                             <div
                               className={`h-full ${(currentMold?.maintenance_status || mold.status) === 'CRITICAL' || (currentMold?.maintenance_status || mold.status) === 'OVERDUE' ? 'bg-red-500' : (currentMold?.maintenance_status || mold.status) === 'WARNING' || (currentMold?.maintenance_status || mold.status) === 'UPCOMING' ? 'bg-yellow-500' : 'bg-blue-500'}`}
-                              style={{ width: `${Math.max(0, Math.min(100, ((currentMold?.remaining_life || mold.remaining_shots) / (currentMold?.total_life || mold.max_shots)) * 100))}%` }}
+                              style={{ width: `${Math.max(0, Math.min(100, (((currentMold?.current_shots || mold.current_shots || 0) / (currentMold?.max_shots || mold.max_shots || 1)) * 100)))}%` }}
                             ></div>
                           </div>
                           <div className="flex justify-between text-[10px] font-bold mt-2">
