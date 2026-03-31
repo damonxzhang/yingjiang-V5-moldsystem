@@ -81,33 +81,6 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
               </div>
             </div>
 
-            {/* 内部关键组件预览 */}
-            <div className="space-y-3">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between border-b border-slate-100 pb-2">
-                <span>关键核心组件 (BOM Health)</span>
-                <i className="fas fa-microchip text-indigo-400"></i>
-              </h4>
-              <div className="grid grid-cols-1 gap-2">
-                {mold.components?.filter(c => c.isSpare).slice(0, 4).map((comp, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-slate-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm border border-slate-100">
-                        <i className={`fas ${comp.category === 'Transfer件' ? 'fa-bolt text-amber-500' : 'fa-layer-group text-blue-500'} text-xs`}></i>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-800 leading-none">{comp.name}</p>
-                        <p className="text-[9px] text-slate-400 font-mono mt-1">{comp.sn}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[11px] font-black text-indigo-600 leading-none">{comp.lifeLimit}</p>
-                      <p className="text-[8px] text-slate-400 uppercase font-bold mt-1 tracking-tighter">Limit</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <div className="flex gap-2">
                <button 
                 onClick={() => setActiveHistoryId(mold.id)}
@@ -119,7 +92,7 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
                 onClick={() => setActiveBOMId(mold.id)}
                 className="flex-1 bg-white border border-slate-200 text-slate-700 font-black py-4 rounded-2xl text-[11px] uppercase tracking-widest active:scale-95 transition-all shadow-sm"
               >
-                全量 BOM 
+                模具详情
               </button>
             </div>
           </div>
@@ -205,21 +178,83 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
               <i className="fas fa-chevron-down"></i>
             </button>
             <div className="text-center">
-              <h3 className="text-slate-900 font-black text-lg tracking-tight uppercase">全量 BOM 结构树</h3>
+              <h3 className="text-slate-900 font-black text-lg tracking-tight uppercase">模具详情信息</h3>
               <p className="text-indigo-600 text-[10px] font-bold uppercase tracking-widest">{selectedBOMMold.id} · {selectedBOMMold.name}</p>
             </div>
             <div className="w-10"></div>
           </div>
           
           <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-slate-50/50 pb-32">
-            {['上模件', '下模件', 'Transfer件'].map(category => {
+            {/* 模具详细信息卡片 */}
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-l-4 border-blue-500 pl-3">
+                基本生产参数
+              </h4>
+              <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mb-1">模具名称 (NAME)</p>
+                    <p className="text-sm font-black text-slate-800">{selectedBOMMold.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mb-1">模具完整名称 (FULL NAME)</p>
+                    <p className="text-sm font-black text-slate-800">{selectedBOMMold.fullName || selectedBOMMold.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mb-1">具体存放位置 (LOCATION)</p>
+                    <p className="text-sm font-black text-slate-800">{selectedBOMMold.location}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mb-1">供应商 (VENDOR)</p>
+                    <p className="text-sm font-black text-slate-800">{selectedBOMMold.vendor}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mb-1">Package Type</p>
+                    <p className="text-sm font-black text-slate-800">{selectedBOMMold.packageType}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mb-1">Pin Code</p>
+                    <p className="text-sm font-black text-slate-800">{selectedBOMMold.pinCode}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mb-1">序列号 (S/N)</p>
+                    <p className="text-sm font-black text-slate-800 font-mono">{selectedBOMMold.serialNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mb-1">当前状态 (STATUS)</p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border font-black uppercase tracking-widest ${STATUS_COLORS[selectedBOMMold.status]}`}>
+                      {STATUS_LABELS[selectedBOMMold.status]}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t border-slate-50 grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mb-1">当前 SHOT 总数</p>
+                    <p className="text-lg font-black text-red-600">{(selectedBOMMold.shotTotal / 1000).toFixed(1)}K</p>
+                  </div>
+                  <div className="bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mb-1">模具寿命上限</p>
+                    <p className="text-lg font-black text-slate-800">{(selectedBOMMold.lifeLimit / 1000).toFixed(0)}K</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-l-4 border-indigo-500 pl-3">
+                内部配件清单 (BOM)
+              </h4>
+              <div className="space-y-8">
+                {['上模件', '下模件', 'Transfer件'].map(category => {
               const comps = selectedBOMMold.components.filter(c => c.category === category);
               if (comps.length === 0) return null;
               return (
                 <div key={category} className="space-y-4">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-l-4 border-indigo-500 pl-3">
+                  <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-3 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
                     {category} ({comps.length})
-                  </h4>
+                  </h5>
                   <div className="space-y-3">
                     {comps.map((comp, idx) => (
                       <div key={idx} className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all">
@@ -249,6 +284,8 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
               );
             })}
           </div>
+        </div>
+      </div>
           
           <div className="absolute bottom-0 left-0 right-0 p-6 bg-slate-900 text-white shadow-2xl rounded-t-[2.5rem] border-t border-slate-800">
              <div className="flex justify-between items-center mb-3">
