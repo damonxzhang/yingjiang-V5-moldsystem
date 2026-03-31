@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, MoldActionRequest, MachineDetailResponse } from '../../services/dashboardService';
+import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold } from '../../services/dashboardService';
 
 interface MachineDashboardProps {
   onSwitchView?: (view: 'tooling' | 'machine') => void;
@@ -58,6 +58,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [machineDetail, setMachineDetail] = useState<MachineDetailResponse | null>(null);
   // 加载机台详情状态
   const [isLoadingMachineDetail, setIsLoadingMachineDetail] = useState(false);
+
+  // 库存模具数据
+  const [inventoryData, setInventoryData] = useState<InventoryResponse | null>(null);
+  // 加载库存模具状态
+  const [isFetchingInventory, setIsFetchingInventory] = useState(false);
+  // 库存模具筛选关键字
+  const [inventoryFilter, setInventoryFilter] = useState('');
 
   // 筛选状态
   const [filterProduct, setFilterProduct] = useState('');
@@ -498,6 +505,44 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       } else {
         setIsUninstallingMold(false);
       }
+    }
+  };
+
+  // 处理打开安装模具弹窗
+  const handleOpenInventoryModal = async () => {
+    if (!selectedMachine) return;
+    
+    setIsFetchingInventory(true);
+    setShowInventory(true);
+    setInventoryFilter('');
+    try {
+      const data = await fetchInventoryMolds(selectedMachine.machine_id);
+      setInventoryData(data);
+    } catch (error: any) {
+      console.error('获取库存模具清单失败:', error);
+      alert('获取库存模具清单失败: ' + (error.message || '未知错误'));
+    } finally {
+      setIsFetchingInventory(false);
+    }
+  };
+
+  // 处理模具安装（从弹窗选择后）
+  const handleInstallMold = async (mold: InventoryMold) => {
+    if (!selectedMachine || !selectedMoldPos) return;
+    
+    setIsInstallingMold(true);
+    try {
+      await installMold(selectedMachine.machine_id, mold.mold_id, selectedMoldPos);
+      setTaskType('INSTALL_SUCCESS');
+      setShowTaskModal(true);
+      setShowInventory(false);
+      // 刷新数据
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error: any) {
+      console.error('模具安装失败:', error);
+      alert('模具安装失败: ' + (error.message || '未知错误'));
+    } finally {
+      setIsInstallingMold(false);
     }
   };
   // console.log('allMachines:', allMachines);
@@ -1163,7 +1208,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           )}
                         </button>
                         <button
-                          onClick={() => !isGuestMode && handleMoldAction('INSTALL')}
+                          onClick={() => !isGuestMode && handleOpenInventoryModal()}
                           disabled={isInstallingMold || isUninstallingMold || isGuestMode}
                           className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
                             isGuestMode ? 'bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed' :
@@ -1204,103 +1249,147 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       {/* Inventory Modal */}
       {showInventory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
-          <div className="bg-slate-900 border border-blue-500/50 rounded-3xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
+          <div className="bg-slate-900 border border-blue-500/50 rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            {/* Modal Header */}
             <div className="p-6 border-b border-blue-500/30 flex justify-between items-center bg-blue-900/20">
               <div className="flex flex-col gap-1">
                 <h2 className="text-xl font-black text-blue-100 uppercase tracking-widest flex items-center gap-3">
                   <i className="fas fa-warehouse text-blue-400"></i>
                   库存模具清单
                 </h2>
-                {selectedMachine && (
-                  <div className="flex items-center gap-2 text-[10px] font-bold">
-                    <span className="text-slate-500 uppercase">当前设备:</span>
-                    <span className="text-blue-400">{selectedMachine.machine_code}</span>
+                {inventoryData?.header && (
+                  <div className="flex items-center gap-4 text-[11px] font-bold mt-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-500 uppercase">当前设备:</span>
+                      <span className="text-blue-400">{inventoryData.header.machine_code}</span>
+                    </div>
                     <span className="text-slate-700">|</span>
-                    <span className="text-slate-500 uppercase">正在生产:</span>
-                    <span className="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30">{selectedMachine.currentProduct}</span>
-                    <span className="text-slate-500 font-mono">({selectedMachine.batchNo})</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-500 uppercase">当前产品:</span>
+                      <span className="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30">{inventoryData.header.current_product}</span>
+                    </div>
+                    <span className="text-slate-700">|</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-500 uppercase">当前批次:</span>
+                      <span className="text-slate-300 font-mono">{inventoryData.header.lot_number}</span>
+                    </div>
                   </div>
                 )}
               </div>
-              <div className="flex gap-3">
-                <button onClick={() => setShowInventory(false)} className="text-blue-400 hover:text-white transition-colors">
-                  <i className="fas fa-times text-2xl"></i>
+              <div className="flex items-center gap-4">
+                {/* Search Box */}
+                <div className="relative">
+                  <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                  <input 
+                    type="text" 
+                    placeholder="搜索模具编号/封装类型..."
+                    value={inventoryFilter}
+                    onChange={(e) => setInventoryFilter(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500 w-64 transition-all"
+                  />
+                </div>
+                <button 
+                  onClick={() => setShowInventory(false)} 
+                  className="w-10 h-10 rounded-full hover:bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all"
+                >
+                  <i className="fas fa-times text-xl"></i>
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="grid grid-cols-4 gap-4">
-                {/* 从当前所有机台中收集模具数据展示 */}
-                {allMachines.flatMap(machine => 
-                  Object.entries(machine.molds || {}).map(([pos, mold]: [string, any]) => ({
-                    ...mold,
-                    machine_code: machine.machine_code,
-                    pos
-                  }))
-                ).filter(mold => mold.mold_id).map(mold => (
-                  <div key={`${mold.machine_code}-${mold.pos}`} className={`bg-blue-950/50 border ${mold.isOffline ? 'border-slate-800 opacity-70' : 'border-blue-900 hover:border-blue-500/50'} rounded-2xl p-4 space-y-3 transition-all group`}>
-                    <div className="flex justify-between items-start">
-                      <span className="bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">{mold.mold_code}</span>
-                      <div className="text-right">
-                        <span className={`text-[10px] font-bold block ${
-                          mold.status === 'EMPTY' ? 'text-slate-500' :
-                          mold.isOffline ? 'text-red-400' :
-                          mold.status === 'NORMAL' ? 'text-green-400' :
-                          mold.status === 'UPCOMING' ? 'text-yellow-400' : 'text-red-400'
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-950/30">
+              {isFetchingInventory ? (
+                <div className="h-full flex flex-col items-center justify-center gap-4 py-20">
+                  <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">正在获取库存数据...</p>
+                </div>
+              ) : inventoryData?.molds.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center gap-4 py-20 text-slate-500">
+                  <i className="fas fa-box-open text-5xl opacity-20"></i>
+                  <p className="font-bold uppercase tracking-widest text-xs">未找到可安装模具</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-4">
+                  {(inventoryData?.molds || [])
+                    .filter(mold => 
+                      mold.mold_code.toLowerCase().includes(inventoryFilter.toLowerCase()) || 
+                      mold.package_type.toLowerCase().includes(inventoryFilter.toLowerCase()) ||
+                      mold.short_name.toLowerCase().includes(inventoryFilter.toLowerCase())
+                    )
+                    .map((mold) => (
+                    <div 
+                      key={mold.mold_id} 
+                      className={`relative group bg-slate-900/50 border ${mold.can_install ? 'border-slate-800 hover:border-blue-500/50 hover:bg-slate-800/50' : 'border-slate-800/50 opacity-60'} rounded-2xl p-5 transition-all flex flex-col gap-4 overflow-hidden`}
+                    >
+                      {/* Background Decoration */}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-[60px] -mr-16 -mt-16 pointer-events-none group-hover:bg-blue-500/10 transition-all"></div>
+                      
+                      <div className="flex justify-between items-start relative z-10">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-black text-blue-500/60 uppercase tracking-widest">{mold.short_name}</span>
+                          <span className="text-lg font-black text-white tracking-tight">{mold.mold_code}</span>
+                        </div>
+                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter border ${
+                          mold.status === 'IN_USE' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                          mold.status === 'MAINTENANCE' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                          mold.status === 'IDLE' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                          'bg-slate-500/10 text-slate-400 border-slate-500/20'
                         }`}>
-                          {mold.isOffline ? '已下线' :
-                           mold.status === 'NORMAL' ? '运行中' :
-                           mold.status === 'UPCOMING' ? '即将保养' : '超期'}
-                        </span>
-                        <span className="text-[9px] font-bold text-slate-500 block uppercase tracking-tighter mt-0.5">
-                          设备号: {mold.machine_code}
+                          {mold.status_label}
                         </span>
                       </div>
-                    </div>
-                    <p className="text-xs font-bold text-blue-100 line-clamp-1">{mold.name}</p>
-                    <div className="text-[10px] text-slate-400 space-y-1">
-                      <p>位置: {mold.pos}</p>
-                      <p>槽位: {mold.pos}</p>
-                    </div>
-                    
-                    <div className="pt-2 border-t border-white/5">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">实时 SHOT COUNT</span>
-                        <span className="text-[10px] font-black text-indigo-400">{(mold.current_shots || 0).toLocaleString()}</span>
+
+                      <div className="grid grid-cols-2 gap-y-3 relative z-10">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] font-bold text-slate-500 uppercase">封装类型</span>
+                          <span className="text-xs font-bold text-slate-200">{mold.package_type}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] font-bold text-slate-500 uppercase">库位/柜号</span>
+                          <span className="text-xs font-bold text-slate-200">{mold.location} / {mold.cabinet_code}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] font-bold text-slate-500 uppercase">当前寿命</span>
+                          <span className="text-xs font-bold text-slate-200">{mold.current_shots} / {mold.life_limit}</span>
+                        </div>
+                        <div className="flex flex-col gap-1 mt-1">
+                          <div className="flex justify-between items-center text-[9px] font-bold">
+                            <span className="text-slate-500">消耗进度</span>
+                            <span className={mold.progress > 90 ? 'text-red-400' : mold.progress > 75 ? 'text-amber-400' : 'text-blue-400'}>{mold.progress}%</span>
+                          </div>
+                          <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full transition-all duration-1000 ${
+                                mold.progress > 90 ? 'bg-red-500' : mold.progress > 75 ? 'bg-amber-500' : 'bg-blue-500'
+                              }`}
+                              style={{ width: `${mold.progress}%` }}
+                            ></div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full transition-all ${
-                            (mold.life_percent || 0) > 90 ? 'bg-red-500' : 
-                            (mold.life_percent || 0) > 75 ? 'bg-amber-500' : 'bg-blue-500'
+
+                      <div className="mt-2 pt-4 border-t border-white/5 flex gap-2 relative z-10">
+                        <button 
+                          onClick={() => mold.can_install && handleInstallMold(mold)}
+                          disabled={!mold.can_install || isInstallingMold}
+                          className={`flex-1 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                            mold.can_install 
+                              ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/20' 
+                              : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'
                           }`}
-                          style={{ width: `${Math.min(100, mold.life_percent || 0)}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between items-center mt-1">
-                        <span className="text-[8px] font-bold text-slate-600 uppercase tracking-tighter">上限: {(mold.max_shots || 0).toLocaleString()}</span>
-                        <span className="text-[8px] font-bold text-slate-600">{(mold.life_percent || 0).toFixed(1)}%</span>
+                        >
+                          {isInstallingMold ? (
+                            <><i className="fas fa-spinner fa-spin"></i> 处理中</>
+                          ) : (
+                            <><i className="fas fa-arrow-down-to-bracket"></i> 安装到机台</>
+                          )}
+                        </button>
                       </div>
                     </div>
-                    {!mold.isOffline ? (
-                      <button 
-                        onClick={() => {
-                          setTaskType('INSTALL_SUCCESS');
-                          setShowTaskModal(true);
-                          setShowInventory(false);
-                        }}
-                        className="w-full bg-blue-900/50 group-hover:bg-blue-600 text-[10px] font-black py-2 rounded-lg transition-all uppercase tracking-widest"
-                      >
-                        安装到机台
-                      </button>
-                    ) : (
-                      <div className="w-full bg-slate-800/50 text-slate-500 text-[10px] font-black py-2 rounded-lg text-center uppercase tracking-widest cursor-not-allowed">
-                        不可用 (已下线)
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

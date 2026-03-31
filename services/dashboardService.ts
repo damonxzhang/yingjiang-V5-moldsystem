@@ -201,6 +201,102 @@ export async function createRepairTask(
   return data as CreateRepairTaskResponse;
 }
 
+/**
+ * 库存模具列表数据类型
+ */
+export interface InventoryMold {
+  mold_id: number;
+  mold_code: string;
+  short_name: string;
+  status: 'IN_USE' | 'IDLE' | 'MAINTENANCE' | 'OFFLINE';
+  status_label: string;
+  location: string;
+  cabinet_code: string;
+  package_type: string;
+  current_shots: string;
+  life_limit: string;
+  progress: number;
+  can_install: boolean;
+}
+
+export interface InventoryResponse {
+  header: {
+    machine_code: string;
+    current_product: string;
+    lot_number: string;
+  };
+  molds: InventoryMold[];
+}
+
+/**
+ * 获取库存模具清单
+ */
+export async function fetchInventoryMolds(machineId: string): Promise<InventoryResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  console.log('fetchInventoryMolds request:', { machine_id: String(machineId), user_id: String(authData.user_id) });
+  const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/mold/inventory`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify({ 
+      machine_id: String(machineId),
+      user_id: String(authData.user_id)
+    })
+  });
+
+  const data = await response.json();
+  console.log('fetchInventoryMolds response:', data);
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '获取库存模具清单失败');
+  }
+
+  return data.data as InventoryResponse;
+}
+
+/**
+ * 执行模具安装
+ */
+export async function installMold(machineId: string, moldId: number, slot: string): Promise<any> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody = {
+    action: 'INSTALL',
+    machine_id: String(machineId),
+    slot: slot,
+    mold_id: String(moldId),
+    user_id: String(authData.user_id)
+  };
+
+  console.log('installMold request:', requestBody);
+  const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/mold/inventory`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+  console.log('installMold response:', data);
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '模具安装失败');
+  }
+
+  return data;
+}
+
 // 模具停用请求参数
 export interface DisableMoldRequest {
   mold_id: string;
