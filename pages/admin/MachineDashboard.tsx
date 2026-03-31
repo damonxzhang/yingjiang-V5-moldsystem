@@ -253,7 +253,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         mold_count,
         // 前端需要的额外字段
         colorClass,
-        currentProduct: part_no || ['QFN-16', 'BGA-64', 'SOP-8', 'LQFP-100'][Math.floor(Math.random() * 4)],
+        currentProduct: part_no || '',
         batchNo: `LOT-${Math.floor(Math.random() * 900000 + 100000)}`,
         molds
       };
@@ -526,6 +526,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     }
   };
 
+  const [selectedMoldInfo, setSelectedMoldInfo] = useState<any>(null);
+
   // 处理模具安装（从弹窗选择后）
   const handleInstallMold = async (mold: InventoryMold) => {
     if (!selectedMachine || !selectedMoldPos) return;
@@ -533,6 +535,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     setIsInstallingMold(true);
     try {
       await installMold(selectedMachine.machine_id, mold.mold_id, selectedMoldPos);
+      setSelectedMoldInfo(mold);
       setTaskType('INSTALL_SUCCESS');
       setShowTaskModal(true);
       setShowInventory(false);
@@ -937,7 +940,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       <span className="text-[10px] text-slate-500 font-bold">{pos}</span>
                       {mold.isOffline && <span className="w-2.5 h-2.5 bg-red-600 rounded-full"></span>}
                     </div>
-                    <div className={`h-6 rounded border-2 flex items-center justify-between px-1.5 text-[11px] font-black relative overflow-hidden ${
+                    <div className={`h-6 rounded border-2 flex items-center justify-between px-1.5 text-[9px] font-black relative overflow-hidden ${
                       mold.status === 'EMPTY' ? 'bg-slate-500/5 border-slate-500/30 text-slate-500/0' :
                       mold.color === 'green' ? 'bg-green-500/10 border-green-500/50 text-green-500' :
                       mold.color === 'blue' ? 'bg-blue-500/10 border-blue-500/50 text-blue-500' :
@@ -946,9 +949,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                     }`}>
                       {mold.status !== 'EMPTY' && (
                         <>
-                          <span>{mold.mold_code || mold.mold_id}</span>
+                          <span>{mold.short_name || mold.mold_code || mold.mold_id}</span>
                           {mold.isShotWarning && (
-                            <i className="fas fa-bolt text-[11px] text-amber-500 animate-pulse"></i>
+                            <i className="fas fa-bolt text-[9px] text-amber-500 animate-pulse"></i>
                           )}
                         </>
                       )}
@@ -1261,7 +1264,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   <div className="flex items-center gap-4 text-[11px] font-bold mt-1">
                     <div className="flex items-center gap-1.5">
                       <span className="text-slate-500 uppercase">当前设备:</span>
-                      <span className="text-blue-400">{inventoryData.header.machine_code}</span>
+                      <span className="text-blue-400 font-bold">{inventoryData.header.machine_code || selectedMachine?.machine_code}</span>
                     </div>
                     <span className="text-slate-700">|</span>
                     <div className="flex items-center gap-1.5">
@@ -1681,7 +1684,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                     安装位置: <span className="text-blue-400 font-bold">{selectedMoldPos}</span>
                   </p>
                   <p className="text-xs text-slate-300">
-                    模具编号: <span className="text-blue-400 font-bold">{(selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id}</span>
+                    模具编号: <span className="text-blue-400 font-bold">{selectedMoldInfo?.short_name || selectedMoldInfo?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.short_name || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id}</span>
                   </p>
                   <p className="text-xs text-slate-300">
                     状态更新: <span className="text-green-400 font-bold">已同步至生产看板</span>
@@ -1691,6 +1694,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   onClick={() => {
                     setShowTaskModal(false);
                     setSelectedMachine(null);
+                    setSelectedMoldInfo(null);
                     setRefreshTrigger(prev => prev + 1);
                   }}
                   className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"

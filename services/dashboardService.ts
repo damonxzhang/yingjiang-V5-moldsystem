@@ -231,13 +231,13 @@ export interface InventoryResponse {
 /**
  * 获取库存模具清单
  */
-export async function fetchInventoryMolds(machineId: string): Promise<InventoryResponse> {
+export async function fetchInventoryMolds(machineId: string, userId: string = '1'): Promise<InventoryResponse> {
   const authData = AuthService.getStoredAuth();
   if (!authData) {
     throw new Error('未登录或登录已过期');
   }
 
-  console.log('fetchInventoryMolds request:', { machine_id: String(machineId), user_id: String(authData.user_id) });
+  console.log('fetchInventoryMolds request:', { machine_id: String(machineId), user_id: String(userId) });
   const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/mold/inventory`, {
     method: 'POST',
     headers: {
@@ -246,7 +246,7 @@ export async function fetchInventoryMolds(machineId: string): Promise<InventoryR
     },
     body: JSON.stringify({ 
       machine_id: String(machineId),
-      user_id: String(authData.user_id)
+      user_id: String(userId)
     })
   });
 
@@ -263,7 +263,7 @@ export async function fetchInventoryMolds(machineId: string): Promise<InventoryR
 /**
  * 执行模具安装
  */
-export async function installMold(machineId: string, moldId: number, slot: string): Promise<any> {
+export async function installMold(machineId: string, moldId: number, slot: string, userId: string = '1'): Promise<any> {
   const authData = AuthService.getStoredAuth();
   if (!authData) {
     throw new Error('未登录或登录已过期');
@@ -274,11 +274,11 @@ export async function installMold(machineId: string, moldId: number, slot: strin
     machine_id: String(machineId),
     slot: slot,
     mold_id: String(moldId),
-    user_id: String(authData.user_id)
+    user_id: String(userId)
   };
 
   console.log('installMold request:', requestBody);
-  const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/mold/inventory`, {
+  const response = await fetch(`${API_BASE_URL}/api/admin/machine/install`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
