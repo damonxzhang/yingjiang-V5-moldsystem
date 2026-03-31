@@ -9,14 +9,22 @@ interface MachineDashboardProps {
 
 const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBackToAdmin, department }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  // 检查是否为访客模式
+  const isGuestMode = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('guest') === 'true';
+  }, []);
   const [selectedMachine, setSelectedMachine] = useState<any>(null);
   const [selectedMoldPos, setSelectedMoldPos] = useState<'P1' | 'P2' | 'P3'>('P1');
   // 确定当前材料类型（优先从 prop 获取，其次从 URL 获取，最后默认大材料）
   const currentMaterialType = useMemo(() => {
-    if (department) return department === '小材料' ? '小材料' : '大材料';
+    if (department) return department === '小材料' ? '小材料' : (department === '大材料' ? '大材料' : 'ALL');
     const params = new URLSearchParams(window.location.search);
     const dept = params.get('dept');
-    return dept === 'small' ? '小材料' : '大材料';
+    if (dept === 'small') return '小材料';
+    if (dept === 'big') return '大材料';
+    if (dept === '') return 'ALL';
+    return '大材料';
   }, [department]);
   const [showInventory, setShowInventory] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -97,7 +105,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     debounceTimerRef.current = setTimeout(async () => {
       try {
         const data = await DashboardService.fetchDashboardMachinesStatus({
-          department: currentMaterialType === '小材料' ? '小材料' : '大材料',
+          department: currentMaterialType,
           product_type: filterProduct,
           machine_code: filterMachine,
           mold_code: filterMold,
@@ -149,9 +157,25 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       };
 
       const createMoldData = (pos: string, moldItemInfo: any) => {
-        // 如果 moldItemInfo 为空，返回 null
+        // 如果 moldItemInfo 为空，返回一个状态为 EMPTY 的对象
         if (!moldItemInfo) {
-          return null;
+          return {
+            pos,
+            mold_id: `EMPTY-${pos}`,
+            mold_code: '',
+            name: '',
+            short_name: '',
+            status: 'EMPTY',
+            statusText: '无模具',
+            color: 'slate',
+            life_percent: 0,
+            current_shots: 0,
+            max_shots: 0,
+            remaining_shots: 0,
+            shotThreshold: 0,
+            isShotWarning: false,
+            isOffline: false
+          };
         }
 
         const life_percent = moldItemInfo.life_percent || 0;
@@ -172,9 +196,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
           name: moldItemInfo.name,
           short_name: moldItemInfo.short_name,
           // 前端状态字段
-          status: statusInfo.status,
-          statusText: statusInfo.statusText,
-          color: statusInfo.color,
+          status: moldItemInfo.status === 'EMPTY' ? 'EMPTY' : statusInfo.status,
+          statusText: moldItemInfo.status === 'EMPTY' ? '无模具' : statusInfo.statusText,
+          color: moldItemInfo.status === 'EMPTY' ? 'slate' : statusInfo.color,
           // 其他字段保持 API 原始命名
           life_percent,
           current_shots,
@@ -869,34 +893,41 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       {mold.isOffline && <span className="w-2.5 h-2.5 bg-red-600 rounded-full"></span>}
                     </div>
                     <div className={`h-6 rounded border-2 flex items-center justify-between px-1.5 text-[11px] font-black relative overflow-hidden ${
+                      mold.status === 'EMPTY' ? 'bg-slate-500/5 border-slate-500/30 text-slate-500/0' :
                       mold.color === 'green' ? 'bg-green-500/10 border-green-500/50 text-green-500' :
                       mold.color === 'blue' ? 'bg-blue-500/10 border-blue-500/50 text-blue-500' :
                       mold.color === 'yellow' ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500' :
                       'bg-red-500/10 border-red-500/50 text-red-500'
                     }`}>
-                      <span>{mold.mold_code || mold.mold_id}</span>
-                      {mold.isShotWarning && (
-                        <i className="fas fa-bolt text-[11px] text-amber-500 animate-pulse"></i>
+                      {mold.status !== 'EMPTY' && (
+                        <>
+                          <span>{mold.mold_code || mold.mold_id}</span>
+                          {mold.isShotWarning && (
+                            <i className="fas fa-bolt text-[11px] text-amber-500 animate-pulse"></i>
+                          )}
+                        </>
                       )}
                     </div>
                     {/* Tiny Progress Bar - 使用 life_percent */}
-                    <div className="space-y-1">
-                      <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div className={`h-full ${
-                          mold.life_percent > 90 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' :
-                          mold.life_percent > 60 ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]' : 'bg-green-500'
-                        }`} style={{ width: `${Math.min(100, mold.life_percent)}%` }}></div>
+                    {mold.status !== 'EMPTY' && (
+                      <div className="space-y-1">
+                        <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                          <div className={`h-full ${
+                            mold.life_percent > 90 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' :
+                            mold.life_percent > 60 ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]' : 'bg-green-500'
+                          }`} style={{ width: `${Math.min(100, mold.life_percent)}%` }}></div>
+                        </div>
+                        <div className="flex justify-between items-center px-0.5">
+                          <span className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">Life</span>
+                          <span className={`text-[9px] font-black ${
+                            mold.life_percent > 90 ? 'text-red-400' :
+                            mold.life_percent > 60 ? 'text-yellow-400' : 'text-green-400'
+                          }`}>
+                            {Math.round(mold.life_percent)}%
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center px-0.5">
-                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">Life</span>
-                        <span className={`text-[9px] font-black ${
-                          mold.life_percent > 90 ? 'text-red-400' :
-                          mold.life_percent > 60 ? 'text-yellow-400' : 'text-green-400'
-                        }`}>
-                          {Math.round(mold.life_percent)}%
-                        </span>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
@@ -942,13 +973,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   machineDetail.slots.map((slot) => {
                     const isActive = selectedMoldPos === slot.slot;
                     const getStatusColor = (status: string) => {
-                      switch (status) {
-                        case 'CRITICAL': return 'text-red-500';
-                        case 'WARNING': return 'text-yellow-500';
-                        case 'IN_USE': return 'text-green-500';
-                        case 'IDLE': return 'text-slate-500';
-                        default: return 'text-green-500';
-                      }
+                      return status === 'EMPTY' ? 'text-slate-500' : 'text-green-500';
                     };
                     return (
                       <button
@@ -982,9 +1007,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       >
                         <span className={`text-xs font-black ${isActive ? 'text-white' : 'text-slate-500'}`}>{pos}</span>
                         <span className={`text-[9px] font-bold ${
-                          mold.color === 'red' ? 'text-red-500' :
-                          mold.color === 'yellow' ? 'text-yellow-500' :
-                          isActive ? 'text-blue-100' : 'text-green-500'
+                          mold.status === 'EMPTY' ? 'text-slate-500' : 'text-green-500'
                         }`}>{mold.mold_code || mold.mold_id}</span>
                       </button>
                     );
@@ -1032,6 +1055,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                             </span>
                           ) : (
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded ${
+                              mold.status === 'EMPTY' ? 'bg-slate-500/20 text-slate-500' :
                               mold.color === 'green' ? 'bg-green-500/20 text-green-500' :
                               mold.color === 'blue' ? 'bg-blue-500/20 text-blue-500' :
                               mold.color === 'yellow' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-red-500/20 text-red-500'
@@ -1068,8 +1092,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           </span>
 
                           <span className="text-slate-400">维修状态:</span>
-                          <span className={mold.isOffline ? 'text-red-500 font-bold' : 'text-green-500'}>
-                            {mold.isOffline ? '已下线' : '正常'}
+                          <span className={mold.status === 'EMPTY' ? 'text-slate-500' : mold.isOffline ? 'text-red-500 font-bold' : 'text-green-500'}>
+                            {mold.status === 'EMPTY' ? '无' : mold.isOffline ? '已下线' : '正常'}
                           </span>
                         </div>
                       </div>
@@ -1101,21 +1125,34 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
                     <div className="space-y-3">
                       <h3 className="text-[10px] font-black text-blue-500 uppercase mb-4">执行操作</h3>
-                      <button onClick={() => handleAction('MAINTENANCE')} className="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
-                        <i className="fas fa-tools"></i> 创建保养任务
+                      <button 
+                        onClick={() => !isGuestMode && handleAction('MAINTENANCE')} 
+                        disabled={isGuestMode}
+                        className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
+                          isGuestMode ? 'bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-600' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20'
+                        }`}
+                      >
+                        <i className="fas fa-tools"></i> {isGuestMode ? '仅限登录用户操作' : '创建保养任务'}
                       </button>
-                      <button onClick={() => handleAction('REPAIR')} className="w-full bg-red-600 hover:bg-red-500 py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
-                        <i className="fas fa-exclamation-triangle"></i> 创建报修任务
+                      <button 
+                        onClick={() => !isGuestMode && handleAction('REPAIR')} 
+                        disabled={isGuestMode}
+                        className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
+                          isGuestMode ? 'bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-600' : 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/20'
+                        }`}
+                      >
+                        <i className="fas fa-exclamation-triangle"></i> {isGuestMode ? '仅限登录用户操作' : '创建报修任务'}
                       </button>
                       <div className="grid grid-cols-2 gap-3 mt-4">
                         <button
-                          onClick={() => handleMoldAction('UNINSTALL')}
-                          disabled={isUninstallingMold || isInstallingMold}
+                          onClick={() => !isGuestMode && handleMoldAction('UNINSTALL')}
+                          disabled={isUninstallingMold || isInstallingMold || isGuestMode}
                           className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                            isGuestMode ? 'bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed' :
                             isUninstallingMold
                               ? 'bg-amber-600/40 text-amber-400 border border-amber-600/50 opacity-75'
                               : 'bg-amber-600/20 text-amber-500 border border-amber-600/30 hover:bg-amber-600/30'
-                          } ${isInstallingMold ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          } ${isInstallingMold && !isGuestMode ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           {isUninstallingMold ? (
                             <>
@@ -1126,13 +1163,14 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           )}
                         </button>
                         <button
-                          onClick={() => handleMoldAction('INSTALL')}
-                          disabled={isInstallingMold || isUninstallingMold}
+                          onClick={() => !isGuestMode && handleMoldAction('INSTALL')}
+                          disabled={isInstallingMold || isUninstallingMold || isGuestMode}
                           className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                            isGuestMode ? 'bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed' :
                             isInstallingMold
                               ? 'bg-blue-600/40 text-blue-300 border border-blue-500/50 opacity-75'
                               : 'bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30'
-                          } ${isUninstallingMold ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          } ${isUninstallingMold && !isGuestMode ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           {isInstallingMold ? (
                             <>
@@ -1145,7 +1183,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           )}
                         </button>
                       </div>
-                      <button onClick={() => handleAction('DEACTIVATE')} className="w-full bg-slate-800/50 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 mt-1">
+                      <button 
+                        onClick={() => !isGuestMode && handleAction('DEACTIVATE')} 
+                        disabled={isGuestMode}
+                        className={`w-full py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 mt-1 ${
+                          isGuestMode ? 'bg-slate-800/30 text-slate-600 border border-slate-700/50 cursor-not-allowed' : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-white'
+                        }`}
+                      >
                         <i className="fas fa-ban"></i> 模具停用
                       </button>
                     </div>
@@ -1199,6 +1243,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       <span className="bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">{mold.mold_code}</span>
                       <div className="text-right">
                         <span className={`text-[10px] font-bold block ${
+                          mold.status === 'EMPTY' ? 'text-slate-500' :
                           mold.isOffline ? 'text-red-400' :
                           mold.status === 'NORMAL' ? 'text-green-400' :
                           mold.status === 'UPCOMING' ? 'text-yellow-400' : 'text-red-400'

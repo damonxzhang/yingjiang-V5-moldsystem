@@ -78,17 +78,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
     { id: 'user_manage', name: '用户账号管理', icon: 'fa-users-gear', permission: Permission.USER_MANAGE },
   ];
 
-  // 过滤出有权限的菜单（已注释，显示所有页面）
-  // let visibleMenuItems = menuItems.filter(item => hasPermission(item.permission));
-  let visibleMenuItems = menuItems; // 显示所有页面
+  // 过滤菜单项
+  let visibleMenuItems = menuItems;
 
   // 访客模式限制：只能访问看板
-  // const isGuest = new URLSearchParams(window.location.search).get('guest') === 'true';
-  // if (isGuest) {
-  //   visibleMenuItems = visibleMenuItems.filter(item => 
-  //     item.id === 'machine_screen' || item.id === 'dashboard' || item.id === 'tooling_screen'
-  //   );
-  // }
+  const isGuest = new URLSearchParams(window.location.search).get('guest') === 'true';
+  if (isGuest) {
+    visibleMenuItems = menuItems.filter(item => 
+      item.id === 'machine_screen' || item.id === 'dashboard' || item.id === 'tooling_screen'
+    );
+  }
 
   const getRoleLabel = (role: string) => {
     switch(role) {
@@ -111,7 +110,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
     
     // 从 URL 获取访客模式下的部门 (App.tsx 已经将访客部门存入了权限/角色中，但这里可以直接解析参数更保险)
     const params = new URLSearchParams(window.location.search);
-    const deptParam = params.get('dept') === 'big' ? '大材料' : params.get('dept') === 'small' ? '小材料' : undefined;
+    const deptParam = params.get('dept') === 'big' ? '大材料' : (params.get('dept') === 'small' ? '小材料' : undefined);
     const currentDept = deptParam || userDept;
 
     switch(activePage) {

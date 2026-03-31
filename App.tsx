@@ -19,16 +19,20 @@ const App: React.FC = () => {
     const dept = params.get('dept');
     const guest = params.get('guest');
 
-    if (guest === 'true' && (dept === 'big' || dept === 'small')) {
+    if (guest === 'true' && (dept === 'big' || dept === 'small' || dept === '')) {
       setIsGuestMode(true);
       // 访客模式下，模拟一个受限的访客用户
-      setUserData({
+      const deptName = dept === 'big' ? '大材料' : dept === 'small' ? '小材料' : '全部部门';
+      const guestAuth: AuthData = {
         user_id: 'GUEST',
-        user_name: `访客 (${dept === 'big' ? '大材料' : '小材料'})`,
-        role: dept === 'big' ? 'MOLD_ENGINEER_BIG' : 'MOLD_ENGINEER_SMALL',
+        user_name: `访客 (${deptName})`,
+        role: dept === 'big' ? 'MOLD_ENGINEER_BIG' : (dept === 'small' ? 'MOLD_ENGINEER_SMALL' : 'SUPER_ADMIN'),
         token: 'guest_token',
-        loginTime: new Date().toISOString()
-      });
+        loginTime: new Date().toISOString(),
+        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 // 30 days
+      };
+      setUserData(guestAuth);
+      AuthService.saveAuth(guestAuth);
       setIsLoggedIn(true);
       setView('ADMIN');
     } else {
