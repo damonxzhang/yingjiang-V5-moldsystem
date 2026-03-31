@@ -66,11 +66,6 @@ const App: React.FC = () => {
     );
   }
 
-  // 未登录，显示登录页面
-  if (!isLoggedIn || !userData) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
-  }
-
   return (
     <div className="min-h-screen">
       {/* 开发模式切换器 - 生产环境中应移除 - 调整至右下角避免遮挡 Header 按钮 */}
@@ -92,10 +87,21 @@ const App: React.FC = () => {
             </button>
           </div>
         )}
-        <div className={`px-3 py-1 rounded-full text-[10px] font-black shadow-sm border ${isGuestMode ? 'bg-amber-500 text-white border-amber-600' : 'bg-green-500 text-white border-green-600'}`}>
-          <i className={`fas ${isGuestMode ? 'fa-user-secret' : 'fa-user-shield'} mr-1.5`}></i>
-          {userData.user_name}
-        </div>
+        
+        {isLoggedIn && userData && (
+          <div className={`px-3 py-1 rounded-full text-[10px] font-black shadow-sm border ${isGuestMode ? 'bg-amber-500 text-white border-amber-600' : 'bg-green-500 text-white border-green-600'}`}>
+            <i className={`fas ${isGuestMode ? 'fa-user-secret' : 'fa-user-shield'} mr-1.5`}></i>
+            {userData.user_name}
+          </div>
+        )}
+
+        {!isLoggedIn && (
+          <div className="px-3 py-1 rounded-full text-[10px] font-black shadow-sm border bg-slate-400 text-white border-slate-500">
+            <i className="fas fa-user-lock mr-1.5"></i>
+            未登录
+          </div>
+        )}
+
         {isGuestMode && (
           <button 
             onClick={() => window.location.href = window.location.pathname}
@@ -107,7 +113,12 @@ const App: React.FC = () => {
       </div>
 
       {view === 'APP' ? (
-        <AppLayout userRole={userData.role} onLogout={handleLogout} />
+        <AppLayout 
+          userRole={userData?.role || 'MOLD_ENGINEER_BIG'} 
+          onLogout={handleLogout} 
+        />
+      ) : (!isLoggedIn || !userData) ? (
+        <LoginPage onLoginSuccess={handleLoginSuccess} />
       ) : (
         <AdminLayout userRole={userData.role} onLogout={handleLogout} />
       )}
