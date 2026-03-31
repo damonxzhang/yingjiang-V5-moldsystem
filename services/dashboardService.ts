@@ -10,6 +10,7 @@ export interface DashboardMold {
   name: string;
   current_shots: number;
   max_shots: number;
+  mold_category?: string;
   status: 'RUNNING' | 'IDLE' | 'MAINTENANCE' | 'OFFLINE';
   slot?: string;
 }
@@ -213,6 +214,7 @@ export interface InventoryMold {
   location: string;
   cabinet_code: string;
   package_type: string;
+  mold_category: string;
   current_shots: string;
   life_limit: string;
   progress: number;
@@ -409,6 +411,7 @@ export interface CurrentMoldDetail {
   short_name: string;
   full_name: string;
   type: string;
+  mold_category: string;
   pending_tasks: number;
   current_shots: number;
   warning_threshold: number;

@@ -213,6 +213,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
           remaining_shots,
           shotThreshold,
           isShotWarning,
+          mold_category: moldItemInfo.mold_category,
+          type: moldItemInfo.mold_category || moldItemInfo.type,
           isOffline: moldItemInfo.status === 'OFFLINE'
         };
       };
@@ -1004,7 +1006,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
               <div>
                 <h2 className="text-xl font-black text-blue-100 uppercase tracking-widest">设备指挥中心: {machineDetail?.machine_code || selectedMachine.machine_code}</h2>
                 <div className="flex gap-4 mt-1">
-                  <p className="text-slate-500 text-xs font-mono">批号: {(machineDetail as any)?.part_no || selectedMachine.part_no || '---'}</p>
+                  <p className="text-slate-500 text-xs font-mono">批次号: {(machineDetail as any)?.part_no || selectedMachine.part_no || '---'}</p>
                 </div>
               </div>
               <button onClick={() => setSelectedMachine(null)} className="text-blue-400 hover:text-white transition-colors">
@@ -1122,7 +1124,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           <span className="text-indigo-400 font-black">{currentMold?.pending_tasks ?? mold.taskCount} 项</span>
 
                           <span className="text-slate-400">模具型号:</span>
-                          <span className="text-blue-200">{currentMold?.type || '-'}</span>
+                          <span className="text-blue-200">{currentMold?.mold_category || mold.mold_category || mold.type || '-'}</span>
 
                           <span className="text-slate-400">累计冲次:</span>
                           <span className={`font-bold ${(currentMold?.current_shots || mold.current_shots) > (currentMold?.warning_threshold || mold.shotThreshold) ? 'text-amber-500' : 'text-blue-200'}`}>
