@@ -12,35 +12,14 @@ const App: React.FC = () => {
   const [userData, setUserData] = useState<AuthData | null>(null);
   const [isGuestMode, setIsGuestMode] = useState(false);
 
-  // 组件挂载时检查会话存储和 URL 参数
+  // 组件挂载时检查会话存储
   useEffect(() => {
-    // 检查 URL 参数
-    const params = new URLSearchParams(window.location.search);
-    const dept = params.get('dept');
-    const guest = params.get('guest');
-
-    if (guest === 'true' && (dept === 'big' || dept === 'small' || dept === '')) {
-      setIsGuestMode(true);
-      // 访客模式下，模拟一个受限的访客用户
-      const deptName = dept === 'big' ? '大材料' : dept === 'small' ? '小材料' : '全部部门';
-      const guestAuth: AuthData = {
-        user_id: 'GUEST',
-        user_name: `访客 (${deptName})`,
-        role: dept === 'big' ? 'MOLD_ENGINEER_BIG' : (dept === 'small' ? 'MOLD_ENGINEER_SMALL' : 'SUPER_ADMIN'),
-        token: 'guest_token',
-        loginTime: new Date().toISOString(),
-        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 // 30 days
-      };
-      setUserData(guestAuth);
-      AuthService.saveAuth(guestAuth);
+    const storedAuth = AuthService.getStoredAuth();
+    if (storedAuth) {
+      setUserData(storedAuth);
       setIsLoggedIn(true);
-      setView('ADMIN');
-    } else {
-      const storedAuth = AuthService.getStoredAuth();
-      if (storedAuth) {
-        setUserData(storedAuth);
-        setIsLoggedIn(true);
-      }
+      // 根据 user_id 判断是否为访客模式
+      setIsGuestMode(storedAuth.user_id === 'GUEST');
     }
     setIsCheckingAuth(false);
   }, []);
@@ -49,6 +28,10 @@ const App: React.FC = () => {
   const handleLoginSuccess = (data: AuthData) => {
     setUserData(data);
     setIsLoggedIn(true);
+    // 根据 user_id 判断是否为访客模式
+    setIsGuestMode(data.user_id === 'GUEST');
+    // 保存认证数据到 sessionStorage
+    AuthService.saveAuth(data);
   };
 
   // 处理登出
@@ -108,7 +91,7 @@ const App: React.FC = () => {
 
         {isGuestMode && (
           <button 
-            onClick={() => window.location.href = window.location.pathname}
+            onClick={handleLogout}
             className="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-white hover:bg-slate-900 transition-colors ml-2"
           >
             返回登录

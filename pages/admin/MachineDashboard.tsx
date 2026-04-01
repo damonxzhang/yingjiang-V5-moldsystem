@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold } from '../../services/dashboardService';
+import { AuthService } from '../../services/authService';
 
 interface MachineDashboardProps {
   onSwitchView?: (view: 'tooling' | 'machine') => void;
@@ -9,22 +10,31 @@ interface MachineDashboardProps {
 
 const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBackToAdmin, department }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  // 检查是否为访客模式
+  // 检查是否为访客模式 - 通过 user_id 判断
   const isGuestMode = useMemo(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('guest') === 'true';
+    const authData = AuthService.getStoredAuth();
+    if (authData) {
+      return authData.user_id === 'GUEST';
+    }
+    return false;
   }, []);
   const [selectedMachine, setSelectedMachine] = useState<any>(null);
   const [selectedMoldPos, setSelectedMoldPos] = useState<'P1' | 'P2' | 'P3'>('P1');
-  // 确定当前材料类型（优先从 prop 获取，其次从 URL 获取，最后默认大材料）
-  const currentMaterialType = useMemo(() => {
-    if (department) return department === '小材料' ? '小材料' : (department === '大材料' ? '大材料' : 'ALL');
-    const params = new URLSearchParams(window.location.search);
-    const dept = params.get('dept');
-    if (dept === 'small') return '小材料';
-    if (dept === 'big') return '大材料';
-    if (dept === '') return 'ALL';
-    return '大材料';
+  // 当前材料类型状态
+  const [currentMaterialType, setCurrentMaterialType] = useState<'大材料' | '小材料' | 'ALL'>('大材料');
+  
+  // 初始化材料类型（优先从 prop 获取，其次从 URL 获取，最后默认大材料）
+  useEffect(() => {
+    if (department) {
+      setCurrentMaterialType(department === '小材料' ? '小材料' : (department === '大材料' ? '大材料' : 'ALL'));
+    } else {
+      const params = new URLSearchParams(window.location.search);
+      const dept = params.get('dept');
+      if (dept === 'small') setCurrentMaterialType('小材料');
+      else if (dept === 'big') setCurrentMaterialType('大材料');
+      else if (dept === '') setCurrentMaterialType('ALL');
+      else setCurrentMaterialType('大材料');
+    }
   }, [department]);
   const [showInventory, setShowInventory] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -65,6 +75,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [isFetchingInventory, setIsFetchingInventory] = useState(false);
   // 库存模具筛选关键字
   const [inventoryFilter, setInventoryFilter] = useState('');
+  // 登录提示弹窗状态
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [loginPromptAction, setLoginPromptAction] = useState('');
 
   // 筛选状态
   const [filterProduct, setFilterProduct] = useState('');
@@ -309,6 +322,21 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         setIsLoadingMachineDetail(false);
       }
     }
+  };
+
+  // 处理访客点击操作按钮 - 显示登录提示
+  const handleGuestActionClick = (actionName: string) => {
+    setLoginPromptAction(actionName);
+    setShowLoginPrompt(true);
+  };
+
+  // 跳转到登录页面
+  const handleGoToLogin = () => {
+    setShowLoginPrompt(false);
+    // 清除访客认证数据
+    AuthService.logout();
+    // 刷新页面回到登录页
+    window.location.href = '/';
   };
 
   const handleAction = (type: string) => {
@@ -798,9 +826,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
           <div className="flex bg-slate-900/80 p-1 rounded-lg border border-slate-700 ml-2">
             <button 
               onClick={() => {
-                const params = new URLSearchParams(window.location.search);
-                if (params.get('dept') !== 'big' || params.get('guest') !== 'true') {
-                  window.location.search = '?guest=true&dept=big';
+                if (currentMaterialType !== '大材料') {
+                  setCurrentMaterialType('大材料');
+                  // 触发数据刷新
+                  setRefreshTrigger(prev => prev + 1);
                 }
               }}
               className={`px-4 py-0.5 rounded text-[10px] font-black transition-all ${currentMaterialType === '大材料' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-500 hover:text-slate-300'}`}
@@ -809,9 +838,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             </button>
             <button 
               onClick={() => {
-                const params = new URLSearchParams(window.location.search);
-                if (params.get('dept') !== 'small' || params.get('guest') !== 'true') {
-                  window.location.search = '?guest=true&dept=small';
+                if (currentMaterialType !== '小材料') {
+                  setCurrentMaterialType('小材料');
+                  // 触发数据刷新
+                  setRefreshTrigger(prev => prev + 1);
                 }
               }}
               className={`px-4 py-0.5 rounded text-[10px] font-black transition-all ${currentMaterialType === '小材料' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-500 hover:text-slate-300'}`}
@@ -1173,28 +1203,28 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
                     <div className="space-y-3">
                       <h3 className="text-[10px] font-black text-blue-500 uppercase mb-4">执行操作</h3>
-                      <button 
-                        onClick={() => !isGuestMode && handleAction('MAINTENANCE')} 
-                        disabled={isGuestMode}
+                      <button
+                        onClick={() => isGuestMode ? handleGuestActionClick('创建保养任务') : handleAction('MAINTENANCE')}
+                        disabled={!isGuestMode && false}
                         className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
                           isGuestMode ? 'bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-600' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20'
                         }`}
                       >
-                        <i className="fas fa-tools"></i> {isGuestMode ? '仅限登录用户操作' : '创建保养任务'}
+                        <i className="fas fa-tools"></i> 创建保养任务
                       </button>
-                      <button 
-                        onClick={() => !isGuestMode && handleAction('REPAIR')} 
-                        disabled={isGuestMode}
+                      <button
+                        onClick={() => isGuestMode ? handleGuestActionClick('创建报修任务') : handleAction('REPAIR')}
+                        disabled={!isGuestMode && false}
                         className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
                           isGuestMode ? 'bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-600' : 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/20'
                         }`}
                       >
-                        <i className="fas fa-exclamation-triangle"></i> {isGuestMode ? '仅限登录用户操作' : '创建报修任务'}
+                        <i className="fas fa-exclamation-triangle"></i> 创建报修任务
                       </button>
                       <div className="grid grid-cols-2 gap-3 mt-4">
                         <button
-                          onClick={() => !isGuestMode && handleMoldAction('UNINSTALL')}
-                          disabled={isUninstallingMold || isInstallingMold || isGuestMode}
+                          onClick={() => isGuestMode ? handleGuestActionClick('卸载模具') : handleMoldAction('UNINSTALL')}
+                          disabled={!isGuestMode && (isUninstallingMold || isInstallingMold)}
                           className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
                             isGuestMode ? 'bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed' :
                             isUninstallingMold
@@ -1202,7 +1232,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                               : 'bg-amber-600/20 text-amber-500 border border-amber-600/30 hover:bg-amber-600/30'
                           } ${isInstallingMold && !isGuestMode ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          {isUninstallingMold ? (
+                          {isGuestMode ? (
+                            '卸载模具'
+                          ) : isUninstallingMold ? (
                             <>
                               <i className="fas fa-spinner fa-spin"></i> 处理中...
                             </>
@@ -1211,8 +1243,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           )}
                         </button>
                         <button
-                          onClick={() => !isGuestMode && handleOpenInventoryModal()}
-                          disabled={isInstallingMold || isUninstallingMold || isGuestMode}
+                          onClick={() => isGuestMode ? handleGuestActionClick('安装模具') : handleOpenInventoryModal()}
+                          disabled={!isGuestMode && (isInstallingMold || isUninstallingMold)}
                           className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
                             isGuestMode ? 'bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed' :
                             isInstallingMold
@@ -1220,7 +1252,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                               : 'bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30'
                           } ${isUninstallingMold && !isGuestMode ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          {isInstallingMold ? (
+                          {isGuestMode ? (
+                            <><i className="fas fa-plus-circle"></i> 安装模具</>
+                          ) : isInstallingMold ? (
                             <>
                               <i className="fas fa-spinner fa-spin"></i> 处理中...
                             </>
@@ -1231,9 +1265,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           )}
                         </button>
                       </div>
-                      <button 
-                        onClick={() => !isGuestMode && handleAction('DEACTIVATE')} 
-                        disabled={isGuestMode}
+                      <button
+                        onClick={() => isGuestMode ? handleGuestActionClick('模具停用') : handleAction('DEACTIVATE')}
+                        disabled={!isGuestMode && false}
                         className={`w-full py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 mt-1 ${
                           isGuestMode ? 'bg-slate-800/30 text-slate-600 border border-slate-700/50 cursor-not-allowed' : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-white'
                         }`}
@@ -1244,6 +1278,42 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   </div>
                 );
               })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 登录提示弹窗 */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-blue-500/50 rounded-2xl w-full max-w-md shadow-2xl">
+            {/* 弹窗头部 */}
+            <div className="p-5 border-b border-blue-500/30 bg-blue-900/20">
+              <h3 className="text-lg font-black text-blue-100 uppercase tracking-widest flex items-center gap-2">
+                <i className="fas fa-lock text-blue-400"></i>
+                需要登录
+              </h3>
+            </div>
+            {/* 弹窗内容 */}
+            <div className="p-6">
+              <p className="text-slate-300 text-sm font-medium">
+                <span className="text-blue-400 font-bold">{loginPromptAction}</span> 功能需要登录后才能使用
+              </p>
+            </div>
+            {/* 弹窗按钮 */}
+            <div className="p-5 border-t border-blue-500/30 flex gap-3 justify-end">
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                className="px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-white transition-all"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleGoToLogin}
+                className="px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/20 transition-all"
+              >
+                前往登录
+              </button>
             </div>
           </div>
         </div>

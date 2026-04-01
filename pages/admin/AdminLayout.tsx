@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Permission } from '../../types';
 import { ROLE_PERMISSIONS } from '../../services/mockData';
+import { AuthService } from '../../services/authService';
 import Dashboard from './Dashboard';
 import MoldManagement from './MoldManagement';
 import MaintenanceCenter from './MaintenanceCenter';
@@ -28,15 +29,13 @@ interface AdminLayoutProps {
 const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
   const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'maintenance_confirm' | 'repair_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen' | 'role_manage' | 'user_manage' | 'maintenance_option_manage' | 'repair_option_manage'>('machine_screen');
 
-  // 处理访客模式下的初始页面
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const guest = params.get('guest');
-
-    if (guest === 'true') {
-      // 访客模式下，默认留在主看板页面，不要跳转到台账
-      setActivePage('machine_screen');
+  // 检查是否为访客模式 - 通过 user_id 判断
+  const isGuestMode = React.useMemo(() => {
+    const authData = AuthService.getStoredAuth();
+    if (authData) {
+      return authData.user_id === 'GUEST';
     }
+    return false;
   }, []);
 
   // 处理登出
@@ -82,9 +81,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
   let visibleMenuItems = menuItems;
 
   // 访客模式限制：只能访问看板
-  const isGuest = new URLSearchParams(window.location.search).get('guest') === 'true';
-  if (isGuest) {
-    visibleMenuItems = menuItems.filter(item => 
+  if (isGuestMode) {
+    visibleMenuItems = menuItems.filter(item =>
       item.id === 'machine_screen' || item.id === 'dashboard' || item.id === 'tooling_screen'
     );
   }

@@ -215,8 +215,10 @@ export interface AuthData {
   token: string;
   user_id: string;
   user_name: string;
+  email?: string;
   role: string;
+  department?: string;
   permissions?: string[];
-  loginTime: string;
-  expiresAt: number;
+  loginTime?: string;
+  expiresAt?: number;
 }

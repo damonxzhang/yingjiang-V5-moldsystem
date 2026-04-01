@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AuthService } from '../../services/authService';
+import { AuthData } from '../../types';
 
 interface LoginPageProps {
-  onLoginSuccess: (userData: any) => void;
+  onLoginSuccess: (userData: AuthData) => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
@@ -87,6 +88,28 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     if (e.key === 'Enter' && !isLoading) {
       handleSubmit(e as any);
     }
+  };
+
+  /**
+   * 处理访客登录 - 快速进入看板
+   */
+  const handleGuestLogin = (dept: 'big' | 'small') => {
+    debugger;
+    const deptName = dept === 'big' ? '大材料' : '小材料';
+    const role = dept === 'big' ? 'MOLD_ENGINEER_BIG' : 'MOLD_ENGINEER_SMALL';
+
+    const guestAuth: AuthData = {
+      token: 'guest_token',
+      user_id: 'GUEST',
+      user_name: `访客 ${deptName}`,
+      email: '',
+      role: role,
+      department: deptName,
+      permissions: []
+    };
+
+    // 调用登录成功回调，进入看板
+    onLoginSuccess(guestAuth);
   };
 
   return (
@@ -175,20 +198,22 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           <div className="pt-4 border-t border-slate-100">
             <p className="text-[10px] text-slate-400 text-center mb-3 uppercase tracking-widest font-bold">快速看板访问 (无需登录)</p>
             <div className="grid grid-cols-2 gap-3">
-              <a 
-                href="?guest=true&dept=big" 
+              <button
+                type="button"
+                onClick={() => handleGuestLogin('big')}
                 className="flex items-center justify-center gap-2 py-2 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 rounded-xl transition-all border border-slate-100 hover:border-indigo-100 group"
               >
                 <i className="fas fa-cube text-xs opacity-50 group-hover:opacity-100"></i>
                 <span className="text-[11px] font-bold">大材料看板</span>
-              </a>
-              <a 
-                href="?guest=true&dept=small" 
+              </button>
+              <button
+                type="button"
+                onClick={() => handleGuestLogin('small')}
                 className="flex items-center justify-center gap-2 py-2 bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-xl transition-all border border-slate-100 hover:border-blue-100 group"
               >
                 <i className="fas fa-cube text-xs opacity-50 group-hover:opacity-100"></i>
                 <span className="text-[11px] font-bold">小材料看板</span>
-              </a>
+              </button>
             </div>
           </div>
         </form>
