@@ -101,6 +101,43 @@ export async function fetchDashboardMachinesStatus(
   return data as DashboardStatusResponse;
 }
 
+/**
+ * 获取机台基础列表 (用于下拉选择)
+ */
+export async function fetchMachineList(department: string = 'ALL'): Promise<{ machine_id: string; machine_code: string }[]> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) return [];
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/machines/codes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authData.token}`
+      },
+      body: JSON.stringify({
+        user_id: authData.user_id,
+        department: department
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.code === 200 && Array.isArray(data.data)) {
+      // 接口返回字符串数组，映射为统一对象格式
+      return data.data.map((code: string) => ({
+        machine_id: code,
+        machine_code: code
+      }));
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Failed to fetch machine list:', error);
+    return [];
+  }
+}
+
 // 创建保养任务请求参数
 export interface CreateMaintenanceTaskRequest {
   machine_id: string;
