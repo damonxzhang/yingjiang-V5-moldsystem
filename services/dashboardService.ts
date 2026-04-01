@@ -138,6 +138,42 @@ export async function fetchMachineList(department: string = 'ALL'): Promise<{ ma
   }
 }
 
+/**
+ * 获取模台基础列表 (用于下拉选择)
+ */
+export async function fetchMoldTableList(department: string = 'ALL'): Promise<{ table_id: string; table_code: string }[]> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) return [];
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/mold-tables/codes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authData.token}`
+      },
+      body: JSON.stringify({
+        user_id: authData.user_id,
+        department: department
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.code === 200 && Array.isArray(data.data)) {
+      return data.data.map((code: string) => ({
+        table_id: code,
+        table_code: code
+      }));
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Failed to fetch mold table list:', error);
+    return [];
+  }
+}
+
 // 创建保养任务请求参数
 export interface CreateMaintenanceTaskRequest {
   machine_id: string;
