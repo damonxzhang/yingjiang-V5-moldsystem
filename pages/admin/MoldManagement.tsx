@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MOCK_MOLDS } from '../../services/mockData';
 import { STATUS_COLORS, STATUS_LABELS } from '../../constants';
 import { Mold, MoldStatus, BuyoffStatus, MoldComponent } from '../../types';
-import { fetchMoldList, MoldListItem, fetchMoldDetail, MoldDetailItem, saveMold, fetchInternalComponents, InternalComponentItem } from '../../services/moldmanageService';
+import { fetchMoldList, MoldListItem, fetchMoldDetail, MoldDetailItem, saveMold, fetchInternalComponents, InternalComponentItem, toggleStatus } from '../../services/moldmanageService';
 import { fetchMachineList, fetchMoldTableList } from '../../services/dashboardService';
 
 /**
@@ -258,15 +258,33 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     setIsMoldTableDropdownOpen(false);
   };
 
-  const handleDeactivate = (id: string) => {
-    if (confirm('确定要停用该模具吗？停用后将无法在生产看板中查看。')) {
-      setMolds(molds.map(m => m.id === id ? { ...m, status: MoldStatus.Deactivated } : m));
-    }
-  };
+  const handleToggleStatus = async (id: string, action: 'activate' | 'deactivate') => {
+    const isActivate = action === 'activate';
+    const confirmMsg = isActivate ? '确定要启用该模具吗？' : '确定要停用该模具吗？';
 
-  const handleActivate = (id: string) => {
-    if (confirm('确定要启用该模具吗？')) {
-      setMolds(molds.map(m => m.id === id ? { ...m, status: MoldStatus.Idle } : m));
+    if (!confirm(confirmMsg)) return;
+
+    const mold = molds.find(m => m.id === id);
+    if (!mold || !mold.moldId) {
+      alert('模具信息不完整，无法操作');
+      return;
+    }
+
+    try {
+      const response = await toggleStatus({
+        mold_id: String(mold.moldId),
+        status: isActivate ? 'IDLE' : 'DEACTIVATED'
+      });
+      if (response.code === 200) {
+        alert(response.data.message || (isActivate ? '启用成功' : '停用成功'));
+        // 只更新该条数据状态
+        setMolds(molds.map(m => m.id === id ? { ...m, status: isActivate ? MoldStatus.Idle : MoldStatus.Deactivated } : m));
+      } else {
+        alert(response.message || (isActivate ? '启用失败' : '停用失败'));
+      }
+    } catch (err) {
+      console.error(isActivate ? '启用模具失败:' : '停用模具失败:', err);
+      alert(err instanceof Error ? err.message : (isActivate ? '启用失败' : '停用失败'));
     }
   };
 
@@ -578,17 +596,17 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
                       <i className="fas fa-sitemap mr-1"></i> BOM
                     </button>
                     {mold.status !== MoldStatus.Deactivated ? (
-                      <button 
-                        onClick={() => handleDeactivate(mold.id)} 
-                        className="text-red-500 p-2 hover:bg-red-50 rounded-lg transition-colors" 
+                      <button
+                        onClick={() => handleToggleStatus(mold.id, 'deactivate')}
+                        className="text-red-500 p-2 hover:bg-red-50 rounded-lg transition-colors"
                         title="停用模具"
                       >
                         <i className="fas fa-ban mr-1"></i> 停用
                       </button>
                     ) : (
-                      <button 
-                        onClick={() => handleActivate(mold.id)} 
-                        className="text-green-600 p-2 hover:bg-green-50 rounded-lg transition-colors" 
+                      <button
+                        onClick={() => handleToggleStatus(mold.id, 'activate')}
+                        className="text-green-600 p-2 hover:bg-green-50 rounded-lg transition-colors"
                         title="启用模具"
                       >
                         <i className="fas fa-check-circle mr-1"></i> 启用

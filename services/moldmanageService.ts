@@ -293,6 +293,60 @@ export async function fetchInternalComponents(
   return data as InternalComponentsResponse;
 }
 
+// ==================== 模具状态切换 API ====================
+
+// 模具状态切换请求参数
+export interface ToggleStatusParams {
+  user_id: string; // 用户ID
+  mold_id: string; // 待操作的模具 ID
+  status: 'IDLE' | 'DEACTIVATED'; // 目标状态: IDLE (启用/开启), DEACTIVATED (停用/禁用)
+}
+
+// 模具状态切换响应
+export interface ToggleStatusResponse {
+  code: number;
+  message: string;
+  data: {
+    success: boolean; // 执行结果
+    message: string; // 提示消息
+  };
+}
+
+/**
+ * 切换模具状态（启用/停用）
+ */
+export async function toggleStatus(
+  params: Omit<ToggleStatusParams, 'user_id'>
+): Promise<ToggleStatusResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody: ToggleStatusParams = {
+    user_id: authData.user_id,
+    mold_id: params.mold_id,
+    status: params.status
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/mold/toggle-status`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || '切换模具状态失败');
+  }
+
+  return data as ToggleStatusResponse;
+}
+
 /**
  * 模具管理服务
  */
@@ -300,5 +354,6 @@ export const MoldManageService = {
   fetchMoldList,
   fetchMoldDetail,
   saveMold,
-  fetchInternalComponents
+  fetchInternalComponents,
+  toggleStatus
 };
