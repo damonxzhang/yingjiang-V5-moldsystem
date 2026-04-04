@@ -147,15 +147,21 @@ const MachineSlotConfig: React.FC = () => {
             <p className="text-slate-500 mt-1">管理所有机台的模台槽位可用性</p>
           </div>
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
-              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-              <input
-                type="text"
-                placeholder="搜索机台编号..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-              />
+            <div className="flex items-center gap-2 flex-1 md:w-80">
+              <div className="relative flex-1">
+                <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input
+                  type="text"
+                  placeholder="搜索机台编号..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+                />
+              </div>
+              <button className="px-4 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition-all flex items-center gap-2 border border-slate-200 whitespace-nowrap">
+                <i className="fas fa-filter text-xs"></i>
+                查询
+              </button>
             </div>
             <button
               onClick={handleAdd}
