@@ -38,6 +38,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
     return false;
   }, []);
 
+  // 获取当前用户的 department
+  const userDepartment = React.useMemo(() => {
+    const authData = AuthService.getStoredAuth();
+    return authData?.department;
+  }, []);
+
   // 处理登出
   const handleLogout = () => {
     if (window.confirm('确定要退出系统吗？')) {
@@ -85,6 +91,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
     visibleMenuItems = menuItems.filter(item =>
       item.id === 'machine_screen' || item.id === 'dashboard' || item.id === 'tooling_screen'
     );
+  } else if (userDepartment) {
+    // 根据用户 department 过滤菜单：只显示对应部门的模具台账和备件管理
+    visibleMenuItems = menuItems.filter(item => {
+      // 如果不是部门相关的菜单项，直接显示
+      if (!item.department) return true;
+      // 只显示与用户 department 匹配的菜单项
+      return item.department === userDepartment;
+    });
   }
 
   const getRoleLabel = (role: string) => {
