@@ -1024,13 +1024,16 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             })()}
 
             {/* Todo Badge in bottom-right corner */}
-            {(Object.values(machine.molds) as any[]).reduce((acc: number, m: any) => acc + (m.taskCount || 0), 0) > 0 && (
+            {machine.pending_tasks > 0 && (
               <div
                 onClick={(e) => handleShowTodo(e, machine)}
-                className="absolute bottom-1 right-1 bg-indigo-600 hover:bg-indigo-500 text-white min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-black shadow-lg shadow-indigo-900/50 transition-all hover:scale-110 border border-indigo-400/50 z-10"
+                className="absolute bottom-1.5 right-1.5 bg-indigo-600 hover:bg-indigo-500 text-white min-w-[20px] h-[20px] px-1.5 rounded-full flex items-center justify-center text-[10px] font-black shadow-lg shadow-indigo-900/50 transition-all hover:scale-110 border border-indigo-400/50 z-10"
                 title="点击查看待办清单"
               >
-                {(Object.values(machine.molds) as any[]).reduce((acc: number, m: any) => acc + (m.taskCount || 0), 0)}
+                <div className="flex items-center gap-1">
+                  <i className="fas fa-list-check text-[8px]"></i>
+                  <span>{machine.pending_tasks}</span>
+                </div>
               </div>
             )}
           </div>
