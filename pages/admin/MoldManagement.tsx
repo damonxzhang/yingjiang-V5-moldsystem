@@ -238,6 +238,12 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     }
   };
 
+  const handleActivate = (id: string) => {
+    if (confirm('确定要启用该模具吗？')) {
+      setMolds(molds.map(m => m.id === id ? { ...m, status: MoldStatus.Idle } : m));
+    }
+  };
+
   // 查看 BOM 详情
   const handleViewBOM = async (mold: Mold) => {
     if (!mold.moldId) {
@@ -506,13 +512,21 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
                     <button onClick={() => handleViewBOM(mold)} className="text-indigo-600 p-2 hover:bg-indigo-50 rounded-lg transition-colors" title="查看 BOM 详情">
                       <i className="fas fa-sitemap mr-1"></i> BOM
                     </button>
-                    {mold.status !== MoldStatus.Deactivated && (
+                    {mold.status !== MoldStatus.Deactivated ? (
                       <button 
                         onClick={() => handleDeactivate(mold.id)} 
                         className="text-red-500 p-2 hover:bg-red-50 rounded-lg transition-colors" 
                         title="停用模具"
                       >
                         <i className="fas fa-ban mr-1"></i> 停用
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handleActivate(mold.id)} 
+                        className="text-green-600 p-2 hover:bg-green-50 rounded-lg transition-colors" 
+                        title="启用模具"
+                      >
+                        <i className="fas fa-check-circle mr-1"></i> 启用
                       </button>
                     )}
                   </div>
