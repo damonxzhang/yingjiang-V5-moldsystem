@@ -323,6 +323,12 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
           machine_id: selectedMachine.machine_id,
           slot: slot
         });
+        const authData = AuthService.getStoredAuth();
+        if(detail.department != authData?.department){
+          detail.operation = false; // 不可操作
+        }else{
+          detail.operation = true; // 可操作
+        }
         setMachineDetail(detail);
       } catch (error: any) {
         console.error('获取机台详情失败:', error);
