@@ -957,7 +957,20 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             {/* Machine Header */}
             <div className="flex flex-col mb-2">
               <div className="flex justify-between items-start">
-                <span className="text-[14px] font-black text-blue-300">{machine.machine_code}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[14px] font-black text-blue-300">{machine.machine_code}</span>
+                  {/* Todo Badge in Header */}
+                  {machine.pending_tasks > 0 && (
+                    <div
+                      onClick={(e) => { e.stopPropagation(); handleShowTodo(e, machine); }}
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-1 text-[9px] font-black shadow-lg shadow-indigo-900/20 transition-all hover:scale-110 border border-indigo-400/30"
+                      title="点击查看待办清单"
+                    >
+                      <i className="fas fa-list-check text-[7px]"></i>
+                      <span>{machine.pending_tasks}</span>
+                    </div>
+                  )}
+                </div>
                 <div className="flex flex-col items-end">
                   <span className="text-[12px] font-black text-blue-100 truncate max-w-[100px] leading-tight">{machine.currentProduct}</span>
                 </div>
@@ -1022,20 +1035,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             </div>
               );
             })()}
-
-            {/* Todo Badge in bottom-right corner */}
-            {machine.pending_tasks > 0 && (
-              <div
-                onClick={(e) => handleShowTodo(e, machine)}
-                className="absolute bottom-1.5 right-1.5 bg-indigo-600 hover:bg-indigo-500 text-white min-w-[20px] h-[20px] px-1.5 rounded-full flex items-center justify-center text-[10px] font-black shadow-lg shadow-indigo-900/50 transition-all hover:scale-110 border border-indigo-400/50 z-10"
-                title="点击查看待办清单"
-              >
-                <div className="flex items-center gap-1">
-                  <i className="fas fa-list-check text-[8px]"></i>
-                  <span>{machine.pending_tasks}</span>
-                </div>
-              </div>
-            )}
           </div>
         ))}
       </div>
