@@ -381,3 +381,13 @@ export const MOCK_REPAIR_OPTIONS = [
   { id: 'RO-004', name: '清理异物', category: '合模异常', description: '清除模具内部卡住的废料或异物' },
 ];
 
+// 机台模拟数据
+export const MOCK_MACHINES = [
+  { id: 'MACH-001', name: '注塑机 A-01', type: '注塑机', status: 'RUNNING', location: '车间A-01', department: '大材料' },
+  { id: 'MACH-002', name: '注塑机 A-02', type: '注塑机', status: 'RUNNING', location: '车间A-02', department: '大材料' },
+  { id: 'MACH-003', name: '注塑机 B-01', type: '注塑机', status: 'STOPPED', location: '车间B-01', department: '小材料' },
+  { id: 'MACH-004', name: '注塑机 B-02', type: '注塑机', status: 'MAINTENANCE', location: '车间B-02', department: '小材料' },
+  { id: 'MACH-005', name: '压铸机 C-01', type: '压铸机', status: 'RUNNING', location: '车间C-01', department: '大材料' },
+  { id: 'MACH-006', name: '压铸机 C-02', type: '压铸机', status: 'RUNNING', location: '车间C-02', department: '小材料' },
+];
+

@@ -20,6 +20,7 @@ import RoleManagement from './RoleManagement';
 import UserManagement from './UserManagement';
 import MaintenanceOptionManagement from './MaintenanceOptionManagement';
 import RepairOptionManagement from './RepairOptionManagement';
+import MoldMachineBinding from './MoldMachineBinding';
 
 interface AdminLayoutProps {
   userRole: string;
@@ -73,6 +74,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
     { id: 'spares_small', name: '备件管理 (小材料)', icon: 'fa-cog', department: '小材料', permission: Permission.SPARE_VIEW },
     { id: 'prediction', name: '备件购买预测（待定）', icon: 'fa-magnifying-glass-chart', permission: Permission.SPARE_PREDICTION },
     { id: 'binding', name: '模具配件绑定', icon: 'fa-link', permission: Permission.MOLD_EDIT },
+    { id: 'binding_machine', name: '模具机台绑定', icon: 'fa-link', permission: Permission.MACHINE_EDIT },
     { id: 'maintenance_confirm', name: '保养任务中心', icon: 'fa-calendar-check', permission: Permission.MAINTENANCE_MANAGE },
     { id: 'repair_confirm', name: '维修任务中心', icon: 'fa-screwdriver-wrench', permission: Permission.REPAIR_MANAGE },
     { id: 'maintenance_logs', name: '保养执行记录', icon: 'fa-clipboard-check', permission: Permission.MAINTENANCE_VIEW },
@@ -140,6 +142,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
       case 'spares_small': return <SparePartManagement department="小材料" />;
       case 'prediction': return <SparePartPrediction />;
       case 'binding': return <MoldSpareBinding />;
+      case 'binding_machine': return <MoldMachineBinding />;
       case 'maintenance_logs': return <MaintenanceRecords />;
       case 'repair_logs': return <RepairRecords />;
       case 'maintenance_option_manage': return <MaintenanceOptionManagement />;

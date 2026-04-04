@@ -38,7 +38,10 @@ export enum Permission {
   
   // 维保选项管理 (CRUD)
   MAINTENANCE_OPTION_MANAGE = 'maintenance_option:manage',
-  REPAIR_OPTION_MANAGE = 'repair_option:manage'
+  REPAIR_OPTION_MANAGE = 'repair_option:manage',
+  
+  // 机台管理
+  MACHINE_EDIT = 'machine:edit'
 }
 
 export interface RolePermission {
@@ -191,6 +194,15 @@ export interface SparePart {
   currentShots?: number; // 当前冲次
   maxShots?: number; // 冲次上限
   department?: '大材料' | '小材料'; // 所属部门
+}
+
+export interface Machine {
+  id: string;
+  name: string;
+  type: string;
+  status: 'RUNNING' | 'STOPPED' | 'MAINTENANCE';
+  location: string;
+  department?: '大材料' | '小材料';
 }
 
 // 认证相关类型定义
