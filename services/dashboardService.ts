@@ -573,25 +573,34 @@ export async function fetchMachineCodes(): Promise<string[]> {
     throw new Error('未登录或登录已过期');
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/machines/codes`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${authData.token}`
-    }
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/machines/codes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authData.token}`
+      },
+      body: JSON.stringify({
+        user_id: authData.user_id,
+        department: 'ALL'
+      })
+    });
 
-  const data = await response.json();
+    const data = await response.json();
 
-  // 处理返回数据，兼容不同的响应格式
-  if (data.code !== undefined && data.data !== undefined) {
-    if (data.code !== 200) {
-      throw new Error(data.message || '获取机台编号列表失败');
+    if (data.code === 200 && Array.isArray(data.data)) {
+      return data.data as string[];
     }
-    return data.data as string[];
+
+    if (Array.isArray(data)) {
+      return data as string[];
+    }
+
+    return [];
+  } catch (error) {
+    console.error('获取机台编号列表失败:', error);
+    return [];
   }
-
-  return data as string[];
 }
 
 /**

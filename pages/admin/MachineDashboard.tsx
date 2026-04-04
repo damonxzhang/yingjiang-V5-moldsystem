@@ -99,9 +99,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     const fetchProductOptions = async () => {
       try {
         const codes = await DashboardService.fetchMachineCodes();
-        setProductOptions(codes);
+        setProductOptions(Array.isArray(codes) ? codes : []);
       } catch (error) {
         console.error('获取机台编号列表失败:', error);
+        setProductOptions([]);
       }
     };
     fetchProductOptions();
@@ -869,7 +870,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[10px] text-blue-100 focus:outline-none focus:border-blue-500"
           >
             <option value="">All Products</option>
-            {productOptions.map(p => <option key={p} value={p}>{p}</option>)}
+            {Array.isArray(productOptions) && productOptions.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
 
