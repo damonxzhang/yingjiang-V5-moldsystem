@@ -42,6 +42,8 @@ export interface FetchMoldListParams {
   department: string;  // 必填, 过滤部门: 大材料, 小材料, ALL (查看全部)
   page?: number;
   page_size?: number;
+  mold_code?: string;  // 模具编号筛选
+  status?: string;     // 状态筛选
 }
 
 /**
@@ -59,7 +61,9 @@ export async function fetchMoldList(
     user_id: authData.user_id,
     department: params.department,
     page: params.page || 1,
-    page_size: params.page_size || 10
+    page_size: params.page_size || 10,
+    mold_code: params.mold_code,
+    status: params.status
   };
 
   const response = await fetch(`${API_BASE_URL}/api/admin/mold/list`, {

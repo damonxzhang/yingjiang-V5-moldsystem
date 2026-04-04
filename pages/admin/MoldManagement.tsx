@@ -39,7 +39,7 @@ function mapApiMoldToFrontend(apiMold: MoldListItem): Mold {
   return {
     id: apiMold.mold_code,           // mold.id -> mold_code
     moldId: apiMold.mold_id,         // API 原始 mold_id
-    name: apiMold.name || apiMold.full_name || apiMold.short_name,
+    name: apiMold.full_name || apiMold.short_name || apiMold.mold_code,
     fullName: apiMold.full_name,
     type: apiMold.mold_category || '注塑模',
     vendor: 'TOWA',                  // API 暂无此字段，使用默认值
@@ -115,6 +115,10 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
   const [moldTables, setMoldTables] = useState<{ table_id: string; table_code: string }[]>([]);
   const [selectedMoldTables, setSelectedMoldTables] = useState<string[]>([]);
   const [isMoldTableDropdownOpen, setIsMoldTableDropdownOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    moldCode: '',
+    status: ''
+  });
   const isFirstRender = useRef(true);
   const isLoadingRef = useRef(false);
 
@@ -137,7 +141,9 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
       const response = await fetchMoldList({
         department: departmentParam,
         page: page,
-        page_size: ITEMS_PER_PAGE
+        page_size: ITEMS_PER_PAGE,
+        mold_code: filters.moldCode,
+        status: filters.status
       });
       if (response.code === 200 && response.data) {
         const mappedMolds = response.data.list.map(mapApiMoldToFrontend);
@@ -149,9 +155,29 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     } catch (err) {
       setError(err instanceof Error ? err.message : '获取数据失败');
       // 如果 API 失败，使用 mock 数据作为 fallback
-      const fallbackMolds = department
+      let fallbackMolds = department
         ? MOCK_MOLDS.filter(m => m.department === department)
         : MOCK_MOLDS;
+      
+      // 应用本地筛选
+      if (filters.moldCode) {
+        fallbackMolds = fallbackMolds.filter(m => m.id.toLowerCase().includes(filters.moldCode.toLowerCase()));
+      }
+      if (filters.status) {
+        fallbackMolds = fallbackMolds.filter(m => {
+          const statusMap: Record<MoldStatus, string> = {
+            [MoldStatus.Idle]: 'IDLE',
+            [MoldStatus.InUse]: 'IN_USE',
+            [MoldStatus.Maintenance]: 'MAINTENANCE',
+            [MoldStatus.Repair]: 'REPAIR',
+            [MoldStatus.Deactivated]: 'DEACTIVATED',
+            [MoldStatus.PendingBuyoff]: 'PENDING_BUYOFF',
+            [MoldStatus.Scrapped]: 'SCRAPPED'
+          };
+          return statusMap[m.status] === filters.status;
+        });
+      }
+      
       setMolds(fallbackMolds);
       setTotalRecords(fallbackMolds.length);
     } finally {
@@ -177,12 +203,12 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     }
   }, []);
 
-  // 当页码或部门变化时重新加载
+  // 当页码、部门或筛选条件变化时重新加载
   useEffect(() => {
     if (!isFirstRender.current) {
       loadMolds(currentPage);
     }
-  }, [currentPage, department]);
+  }, [currentPage, department, filters]);
 
   const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
   const paginatedMolds = molds;
@@ -283,8 +309,8 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     }
 
     // 设置已选机台 (假设详情接口返回 bound_machines 或当前已关联机台)
-    if (response.data.current_machine && response.data.current_machine !== '离线/库房') {
-      const machine = machines.find(m => m.machine_code === response.data.current_machine);
+    if (response.data.machine_code && response.data.machine_code !== '离线/库房') {
+      const machine = machines.find(m => m.machine_code === response.data.machine_code);
       if (machine) {
         setSelectedMachines([machine.machine_id]);
       }
@@ -387,6 +413,42 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
             </button>
           </div>
         )}
+      </div>
+
+      {/* 筛选控件 */}
+      <div className="flex flex-wrap gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-bold text-slate-700">模具编号:</label>
+          <input 
+            type="text" 
+            value={filters.moldCode} 
+            onChange={(e) => setFilters({...filters, moldCode: e.target.value})} 
+            placeholder="输入模具编号"
+            className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-bold text-slate-700">状态:</label>
+          <select 
+            value={filters.status} 
+            onChange={(e) => setFilters({...filters, status: e.target.value})} 
+            className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="">全部状态</option>
+            <option value="IDLE">空闲</option>
+            <option value="IN_USE">使用中</option>
+            <option value="MAINTENANCE">维护中</option>
+            <option value="DEACTIVATED">已停用</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setFilters({moldCode: '', status: ''})} 
+            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors"
+          >
+            重置筛选
+          </button>
+        </div>
       </div>
 
       {/* 加载状态 */}
