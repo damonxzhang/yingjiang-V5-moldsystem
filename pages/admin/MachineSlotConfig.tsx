@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { DashboardService } from '../../services/dashboardService';
-import { AuthService } from '../../services/authService';
+import React, { useState } from 'react';
 
 interface SlotConfig {
   slot: string;
@@ -35,7 +33,6 @@ const MachineSlotConfig: React.FC = () => {
     }
   ]);
 
-  const [machines, setMachines] = useState<string[]>([]);
   const [selectedMachine, setSelectedMachine] = useState<string>('');
   const [slots, setSlots] = useState<SlotConfig[]>([
     { slot: 'P1', enabled: true },
@@ -43,49 +40,14 @@ const MachineSlotConfig: React.FC = () => {
     { slot: 'P3', enabled: true },
     { slot: 'P4', enabled: false },
   ]);
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    const fetchMachines = async () => {
-      setLoading(true);
-      try {
-        const codes = await DashboardService.fetchMachineCodes();
-        setMachines(codes);
-      } catch (error) {
-        console.error('获取机台列表失败:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchMachines();
-  }, []);
 
   const handleEdit = (config: MachineSlotConfigData) => {
     setSelectedMachine(config.machine_code);
     setSlots([...config.slots]);
     setView('edit');
-  };
-
-  const handleAdd = () => {
-    setSelectedMachine('');
-    setSlots([
-      { slot: 'P1', enabled: true },
-      { slot: 'P2', enabled: true },
-      { slot: 'P3', enabled: false },
-      { slot: 'P4', enabled: false },
-    ]);
-    setView('edit');
-  };
-
-  const handleDelete = (machineCode: string) => {
-    if (window.confirm(`确定要删除机台 ${machineCode} 的配置吗？`)) {
-      setConfigList(configList.filter(c => c.machine_code !== machineCode));
-      setMessage({ type: 'success', text: '删除成功' });
-      setTimeout(() => setMessage(null), 3000);
-    }
   };
 
   const handleToggleSlot = (index: number) => {
@@ -163,13 +125,6 @@ const MachineSlotConfig: React.FC = () => {
                 查询
               </button>
             </div>
-            <button
-              onClick={handleAdd}
-              className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-100 flex items-center gap-2 hover:bg-indigo-700 transition-all whitespace-nowrap"
-            >
-              <i className="fas fa-plus"></i>
-              新增配置
-            </button>
           </div>
         </div>
 
@@ -224,13 +179,6 @@ const MachineSlotConfig: React.FC = () => {
                         >
                           <i className="fas fa-edit text-xs"></i>
                         </button>
-                        <button 
-                          onClick={() => handleDelete(config.machine_code)}
-                          className="w-8 h-8 rounded-lg border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all"
-                          title="删除"
-                        >
-                          <i className="fas fa-trash text-xs"></i>
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -262,7 +210,7 @@ const MachineSlotConfig: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
             <i className="fas fa-microchip text-indigo-600"></i>
-            {selectedMachine ? `编辑机台配置: ${selectedMachine}` : '新增机台配置'}
+            编辑机台配置: {selectedMachine}
           </h2>
           <p className="text-slate-500 mt-1">配置机台可用的模具槽位 (P1, P2, P3, P4)</p>
         </div>
@@ -272,20 +220,10 @@ const MachineSlotConfig: React.FC = () => {
         <div className="p-6 border-b border-slate-100 bg-slate-50/50">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex-1">
-              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">选择机台</label>
-              <select
-                value={selectedMachine}
-                onChange={(e) => setSelectedMachine(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
-                disabled={loading || !!configList.find(c => c.machine_code === selectedMachine && view === 'edit')}
-              >
-                <option value="">请选择机台...</option>
-                {machines.map(code => (
-                  <option key={code} value={code} disabled={configList.some(c => c.machine_code === code && !selectedMachine)}>
-                    {code} {configList.some(c => c.machine_code === code) ? '(已配置)' : ''}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">机台编号</label>
+              <div className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-slate-600 font-bold">
+                {selectedMachine}
+              </div>
             </div>
             <div className="md:pt-6">
               <button
