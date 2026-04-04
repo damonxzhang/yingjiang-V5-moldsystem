@@ -1,44 +1,130 @@
-import React, { useState } from 'react';
-import { MOCK_MOLDS, MOCK_MACHINES } from '../../services/mockData';
-import { Mold, Machine } from '../../types';
-import MultiSelect, { Option } from '../../components/MultiSelect';
+import React, { useState, useEffect, useRef } from 'react';
+import { fetchAvailableMolds, AvailableMoldItem, fetchMachineCodes, fetchMachineSlots, bindMachineSlot, MachineSlot } from '../../services/moldBindingService';
 
 interface Binding {
   moldId: string;
   machineId: string;
-  priority: number;
+  priority: string;
 }
 
 const MoldMachineBinding: React.FC = () => {
-  const [selectedMoldId, setSelectedMoldId] = useState<string>(MOCK_MOLDS[0].id);
+  const [molds, setMolds] = useState<AvailableMoldItem[]>([]);
+  const [selectedMoldId, setSelectedMoldId] = useState<string>('');
   const [moldFilter, setMoldFilter] = useState<string>('');
-  const [bindings, setBindings] = useState<Binding[]>([
-    { moldId: 'MOLD-001', machineId: 'MACH-001', priority: 1 },
-    { moldId: 'MOLD-001', machineId: 'MACH-002', priority: 2 },
-    { moldId: 'MOLD-002', machineId: 'MACH-003', priority: 1 },
-    { moldId: 'MOLD-004', machineId: 'MACH-001', priority: 3 },
-  ]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const isLoadingRef = useRef(false);
+  const [bindings, setBindings] = useState<Binding[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newBinding, setNewBinding] = useState({ machineId: '', priorities: [] as number[] });
+  const [newBinding, setNewBinding] = useState({ machineId: '', slotNumber: '' });
+  const [machines, setMachines] = useState<{ machine_id: number; machine_code: string }[]>([]);
+  const [machineSlots, setMachineSlots] = useState<MachineSlot[]>([]);
+  const [fetchingSlots, setFetchingSlots] = useState<boolean>(false);
 
-  const selectedMold = MOCK_MOLDS.find(m => m.id === selectedMoldId);
+  // 加载机台编号
+  const machinesLoadedRef = useRef(false);
+  useEffect(() => {
+    if (machinesLoadedRef.current) return;
+    machinesLoadedRef.current = true;
+
+    const loadMachines = async () => {
+      try {
+        const data = await fetchMachineCodes();
+        setMachines(data);
+      } catch (error) {
+        console.error('加载机台编号失败:', error);
+      }
+    };
+
+    loadMachines();
+  }, []);
+
+  // 加载可用模具列表
+  useEffect(() => {
+    const loadMolds = async () => {
+      if (isLoadingRef.current) return;
+      isLoadingRef.current = true;
+
+      setLoading(true);
+      try {
+        const data = await fetchAvailableMolds();
+        setMolds(data);
+        // 默认选中第一个模具
+        if (data.length > 0 && !selectedMoldId) {
+          setSelectedMoldId(String(data[0].mold_id));
+        }
+      } catch (error) {
+        console.error('加载模具列表失败:', error);
+      } finally {
+        setLoading(false);
+        isLoadingRef.current = false;
+      }
+    };
+
+    loadMolds();
+  }, []);
+
+  const selectedMold = molds.find(m => String(m.mold_id) === selectedMoldId);
   const currentBindings = bindings.filter(b => b.moldId === selectedMoldId);
 
-  const filteredMolds = MOCK_MOLDS.filter(mold =>
-    mold.id.toLowerCase().includes(moldFilter.toLowerCase()) ||
-    mold.name.toLowerCase().includes(moldFilter.toLowerCase())
+  const filteredMolds = molds.filter(mold =>
+    mold.mold_code.toLowerCase().includes(moldFilter.toLowerCase()) ||
+    mold.short_name.toLowerCase().includes(moldFilter.toLowerCase())
   );
 
-  const handleAddBinding = () => {
-    if (!newBinding.machineId || newBinding.priorities.length === 0) return;
-    const newBindings = newBinding.priorities.map(priority => ({
-      moldId: selectedMoldId,
-      machineId: newBinding.machineId,
-      priority
-    }));
-    setBindings([...bindings, ...newBindings]);
-    setIsAddModalOpen(false);
-    setNewBinding({ machineId: '', priorities: [] });
+  // 机台选择变化时获取模台信息
+  useEffect(() => {
+    if (newBinding.machineId) {
+      const loadMachineSlots = async () => {
+        setFetchingSlots(true);
+        try {
+          // 根据machine_code找到对应的machine_id
+          const selectedMachine = machines.find(m => m.machine_code === newBinding.machineId);
+          if (selectedMachine) {
+            const data = await fetchMachineSlots(selectedMachine.machine_id);
+            setMachineSlots(data);
+            setNewBinding({ ...newBinding, slotNumber: '' });
+          } else {
+            setMachineSlots([]);
+          }
+        } catch (error) {
+          console.error('加载模台信息失败:', error);
+          setMachineSlots([]);
+        } finally {
+          setFetchingSlots(false);
+        }
+      };
+
+      loadMachineSlots();
+    } else {
+      setMachineSlots([]);
+      setNewBinding({ ...newBinding, slotNumber: '' });
+    }
+  }, [newBinding.machineId, machines]);
+
+  const handleAddBinding = async () => {
+    if (!newBinding.machineId || !newBinding.slotNumber) return;
+    
+    try {
+      // 根据machine_code找到对应的machine_id
+      const selectedMachine = machines.find(m => m.machine_code === newBinding.machineId);
+      if (selectedMachine) {
+        await bindMachineSlot(Number(selectedMoldId), selectedMachine.machine_id, newBinding.slotNumber);
+        
+        // 添加到本地绑定列表
+        setBindings([...bindings, {
+          moldId: selectedMoldId,
+          machineId: newBinding.machineId,
+          priority: newBinding.slotNumber
+        }]);
+        
+        setIsAddModalOpen(false);
+        setNewBinding({ machineId: '', slotNumber: '' });
+        setMachineSlots([]);
+      }
+    } catch (error) {
+      console.error('绑定失败:', error);
+      alert('绑定失败，请重试');
+    }
   };
 
   const removeBinding = (machineId: string) => {
@@ -60,18 +146,26 @@ const MoldMachineBinding: React.FC = () => {
           />
         </div>
         <div className="flex-1 overflow-y-auto">
-          {filteredMolds.map(mold => (
-            <button
-              key={mold.id}
-              onClick={() => setSelectedMoldId(mold.id)}
-              className={`w-full text-left p-4 transition-colors border-b border-slate-50 last:border-0 ${
-                selectedMoldId === mold.id ? 'bg-indigo-50 border-indigo-100' : 'hover:bg-slate-50'
-              }`}
-            >
-              <p className={`text-sm font-bold ${selectedMoldId === mold.id ? 'text-indigo-700' : 'text-slate-800'}`}>{mold.id}</p>
-              <p className="text-xs text-slate-500">{mold.name}</p>
-            </button>
-          ))}
+          {loading ? (
+            <div className="flex items-center justify-center h-full text-slate-400">
+              <i className="fas fa-spinner fa-spin mr-2"></i> 加载中...
+            </div>
+          ) : (
+            filteredMolds.map(mold => (
+              <button
+                key={mold.mold_id}
+                onClick={() => setSelectedMoldId(String(mold.mold_id))}
+                className={`w-full text-left p-4 transition-colors border-b border-slate-50 last:border-0 ${
+                  selectedMoldId === String(mold.mold_id) ? 'bg-indigo-50 border-indigo-100' : 'hover:bg-slate-50'
+                }`}
+              >
+                <p className={`text-sm font-bold ${selectedMoldId === String(mold.mold_id) ? 'text-indigo-700' : 'text-slate-800'}`}>
+                  {mold.mold_code}
+                </p>
+                <p className="text-xs text-slate-500">{mold.short_name}</p>
+              </button>
+            ))
+          )}
         </div>
       </div>
 
@@ -80,10 +174,16 @@ const MoldMachineBinding: React.FC = () => {
         <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
           <div>
             <h3 className="font-bold text-slate-800 text-sm">绑定的机台列表</h3>
-            <p className="text-[10px] text-slate-500 mt-0.5">模具: <span className="font-bold">{selectedMold?.id}</span> / {selectedMold?.name}</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">
+              模具: <span className="font-bold">{selectedMold?.mold_code}</span> / {selectedMold?.short_name}
+            </p>
           </div>
           <button 
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={() => {
+              setNewBinding({ machineId: '', slotNumber: '' });
+              setMachineSlots([]);
+              setIsAddModalOpen(true);
+            }}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-md hover:bg-indigo-700 transition-colors"
           >
             <i className="fas fa-plus"></i>
@@ -104,11 +204,10 @@ const MoldMachineBinding: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {currentBindings.map(b => {
-                  const machine = MOCK_MACHINES.find(m => m.id === b.machineId);
                   return (
                     <tr key={b.machineId} className="hover:bg-slate-50">
                       <td className="px-6 py-4 text-xs font-bold text-slate-700">{b.machineId}</td>
-                      <td className="px-6 py-4 text-xs text-slate-600">{machine?.name}</td>
+                      <td className="px-6 py-4 text-xs text-slate-600">{b.machineId}</td>
                       <td className="px-6 py-4 text-xs font-medium text-slate-800">{b.priority}</td>
                       <td className="px-6 py-4 text-right">
                         <button 
@@ -141,7 +240,11 @@ const MoldMachineBinding: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
             <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
               <h3 className="font-bold text-slate-800 text-sm">建立机台绑定关系</h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400">
+              <button onClick={() => {
+                setIsAddModalOpen(false);
+                setNewBinding({ machineId: '', slotNumber: '' });
+                setMachineSlots([]);
+              }} className="text-slate-400">
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -154,34 +257,39 @@ const MoldMachineBinding: React.FC = () => {
                   onChange={(e) => setNewBinding({...newBinding, machineId: e.target.value})}
                 >
                   <option value="">请选择机台...</option>
-                  {MOCK_MACHINES.filter(m => !currentBindings.some(cb => cb.machineId === m.id)).map(machine => (
-                    <option key={machine.id} value={machine.id}>{machine.id} - {machine.name}</option>
+                  {machines.filter(m => !currentBindings.some(cb => cb.machineId === m.machine_code)).map(machine => (
+                    <option key={machine.machine_id} value={machine.machine_code}>{machine.machine_code}</option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-1">选择模台</label>
-                <MultiSelect
-                  options={[
-                    { value: 1, label: '模台 1' },
-                    { value: 2, label: '模台 2' },
-                    { value: 3, label: '模台 3' },
-                    { value: 4, label: '模台 4' },
-                    { value: 5, label: '模台 5' },
-                    { value: 6, label: '模台 6' },
-                  ]}
-                  value={newBinding.priorities}
-                  onChange={(priorities) => setNewBinding({...newBinding, priorities: priorities as number[]})}
-                  placeholder="请选择模台..."
-                  allowClear={true}
-                />
+                <select 
+                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={newBinding.slotNumber}
+                  onChange={(e) => setNewBinding({...newBinding, slotNumber: e.target.value})}
+                  disabled={fetchingSlots}
+                >
+                  <option value="">请选择模台...</option>
+                  {fetchingSlots ? (
+                    <option value="">加载中...</option>
+                  ) : (
+                    machineSlots.map(slot => (
+                      <option key={slot.slot} value={slot.slot}>{slot.slot} {slot.is_bound === '已绑定' ? '(已绑定)' : ''}</option>
+                    ))
+                  )}
+                </select>
               </div>
             </div>
             <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
-              <button onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 text-xs font-bold text-slate-500">取消</button>
+              <button onClick={() => {
+                setIsAddModalOpen(false);
+                setNewBinding({ machineId: '', slotNumber: '' });
+                setMachineSlots([]);
+              }} className="px-4 py-2 text-xs font-bold text-slate-500">取消</button>
               <button 
                 onClick={handleAddBinding} 
-                disabled={!newBinding.machineId}
+                disabled={!newBinding.machineId || !newBinding.slotNumber}
                 className="px-6 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg shadow-md hover:bg-indigo-700 disabled:opacity-50"
               >
                 确认绑定
