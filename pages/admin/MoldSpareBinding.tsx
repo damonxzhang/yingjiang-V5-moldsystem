@@ -11,6 +11,7 @@ interface Binding {
 
 const MoldSpareBinding: React.FC = () => {
   const [selectedMoldId, setSelectedMoldId] = useState<string>(MOCK_MOLDS[0].id);
+  const [moldFilter, setMoldFilter] = useState<string>('');
   const [bindings, setBindings] = useState<Binding[]>([
     { moldId: 'MOLD-001', spareId: 'SP-001', quantity: 2 },
     { moldId: 'MOLD-001', spareId: 'SP-002', quantity: 10 },
@@ -22,6 +23,11 @@ const MoldSpareBinding: React.FC = () => {
 
   const selectedMold = MOCK_MOLDS.find(m => m.id === selectedMoldId);
   const currentBindings = bindings.filter(b => b.moldId === selectedMoldId);
+
+  const filteredMolds = MOCK_MOLDS.filter(mold =>
+    mold.id.toLowerCase().includes(moldFilter.toLowerCase()) ||
+    mold.name.toLowerCase().includes(moldFilter.toLowerCase())
+  );
 
   const handleAddBinding = () => {
     if (!newBinding.spareId) return;
@@ -38,11 +44,18 @@ const MoldSpareBinding: React.FC = () => {
     <div className="flex gap-6 h-[calc(100vh-160px)]">
       {/* 左侧模具列表 */}
       <div className="w-1/3 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-100 bg-slate-50">
+        <div className="p-4 border-b border-slate-100 bg-slate-50 space-y-3">
           <h3 className="font-bold text-slate-800 text-sm">选择模具</h3>
+          <input
+            type="text"
+            placeholder="搜索模具编号或名称..."
+            value={moldFilter}
+            onChange={(e) => setMoldFilter(e.target.value)}
+            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
         </div>
         <div className="flex-1 overflow-y-auto">
-          {MOCK_MOLDS.map(mold => (
+          {filteredMolds.map(mold => (
             <button
               key={mold.id}
               onClick={() => setSelectedMoldId(mold.id)}
