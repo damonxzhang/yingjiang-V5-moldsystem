@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold } from '../../services/dashboardService';
+import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineCodeOption } from '../../services/dashboardService';
 import { AuthService } from '../../services/authService';
 
 interface MachineDashboardProps {
@@ -90,7 +90,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   // 数据刷新触发器
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   // Product 下拉列表选项
-  const [productOptions, setProductOptions] = useState<string[]>([]);
+  const [productOptions, setProductOptions] = useState<MachineCodeOption[]>([]);
 
   // 页面加载时获取 Product 下拉列表
   const hasFetchedProductOptions = useRef(false);
@@ -878,7 +878,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[10px] text-blue-100 focus:outline-none focus:border-blue-500"
           >
             <option value="">All Products</option>
-            {Array.isArray(productOptions) && productOptions.map(p => <option key={p} value={p}>{p}</option>)}
+            {Array.isArray(productOptions) && productOptions.map(p => <option key={p.machine_id} value={p.machine_code}>{p.machine_code}</option>)}
           </select>
         </div>
 

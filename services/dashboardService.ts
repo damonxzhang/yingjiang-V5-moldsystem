@@ -563,13 +563,22 @@ export async function fetchMachineDetail(
 export interface MachineCodesResponse {
   code: number;
   message: string;
-  data: string[];
+  data: {
+    machine_id: number;
+    machine_code: string;
+  }[];
+}
+
+// 机台编号选项类型
+export interface MachineCodeOption {
+  machine_id: number;
+  machine_code: string;
 }
 
 /**
  * 获取所有机台编号列表
  */
-export async function fetchMachineCodes(): Promise<string[]> {
+export async function fetchMachineCodes(): Promise<MachineCodeOption[]> {
   const authData = AuthService.getStoredAuth();
   if (!authData) {
     throw new Error('未登录或登录已过期');
@@ -591,11 +600,11 @@ export async function fetchMachineCodes(): Promise<string[]> {
     const data = await response.json();
 
     if (data.code === 200 && Array.isArray(data.data)) {
-      return data.data as string[];
+      return data.data as MachineCodeOption[];
     }
 
     if (Array.isArray(data)) {
-      return data as string[];
+      return data as MachineCodeOption[];
     }
 
     return [];
