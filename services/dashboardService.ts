@@ -503,6 +503,8 @@ export interface MachineDetailResponse {
   pending_tasks: number;
   slots: MachineSlot[];
   current_mold: CurrentMoldDetail;
+  department: string;
+  operation?: boolean;
 }
 
 // 机台详情请求参数

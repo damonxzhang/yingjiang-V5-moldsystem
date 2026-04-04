@@ -146,7 +146,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [filterProduct, filterMachine, filterMold, onlyProducible, onlyAbnormal, refreshTrigger]);
+  }, [filterProduct, filterMachine, filterMold, onlyProducible, onlyAbnormal, refreshTrigger, currentMaterialType]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleString('zh-CN', {
@@ -297,6 +297,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         machine_id: machine.machine_id,
         slot: defaultSlot
       });
+       const authData = AuthService.getStoredAuth();
+      if(detail.department != authData?.department){
+        detail.operation = false; // 不可操作
+      }else{
+        detail.operation = true; // 可操作
+      }
+      console.log("detail:",detail)
       setMachineDetail(detail);
     } catch (error: any) {
       console.error('获取机台详情失败:', error);
@@ -1207,28 +1214,28 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       <h3 className="text-[10px] font-black text-blue-500 uppercase mb-4">执行操作</h3>
                       <button
                         onClick={() => isGuestMode ? handleGuestActionClick('创建保养任务') : handleAction('MAINTENANCE')}
-                        disabled={!isGuestMode && false}
+                        disabled={(!isGuestMode && false) || !machineDetail?.operation}
                         className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
-                          isGuestMode ? 'bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-600' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20'
+                          (isGuestMode || !machineDetail?.operation) ? 'bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-600' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20'
                         }`}
                       >
                         <i className="fas fa-tools"></i> 创建保养任务
                       </button>
                       <button
                         onClick={() => isGuestMode ? handleGuestActionClick('创建报修任务') : handleAction('REPAIR')}
-                        disabled={!isGuestMode && false}
+                        disabled={(!isGuestMode && false) || !machineDetail?.operation}
                         className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
-                          isGuestMode ? 'bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-600' : 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/20'
+                          (isGuestMode || !machineDetail?.operation) ? 'bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-600' : 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/20'
                         }`}
                       >
                         <i className="fas fa-exclamation-triangle"></i> 创建报修任务
                       </button>
                       <div className="grid grid-cols-2 gap-3 mt-4">
                         <button
-                          onClick={() => isGuestMode ? handleGuestActionClick('卸载模具') : handleMoldAction('UNINSTALL')}
-                          disabled={!isGuestMode && (isUninstallingMold || isInstallingMold)}
+                          onClick={() => isGuestMode ? handleGuestActionClick('卸载模具') :(!machineDetail?.operation?"":handleMoldAction('UNINSTALL'))}
+                          disabled={(!isGuestMode || !machineDetail?.operation)&& (isUninstallingMold || isInstallingMold)}
                           className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                            isGuestMode ? 'bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed' :
+                            (isGuestMode || !machineDetail?.operation) ? 'bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed' :
                             isUninstallingMold
                               ? 'bg-amber-600/40 text-amber-400 border border-amber-600/50 opacity-75'
                               : 'bg-amber-600/20 text-amber-500 border border-amber-600/30 hover:bg-amber-600/30'
@@ -1245,10 +1252,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           )}
                         </button>
                         <button
-                          onClick={() => isGuestMode ? handleGuestActionClick('安装模具') : handleOpenInventoryModal()}
-                          disabled={!isGuestMode && (isInstallingMold || isUninstallingMold)}
+                          onClick={() =>  isGuestMode ? handleGuestActionClick('安装模具') :( !machineDetail?.operation?"":handleOpenInventoryModal()) }
+                          disabled={(!isGuestMode || !machineDetail?.operation)&& (isInstallingMold || isUninstallingMold)}
                           className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                            isGuestMode ? 'bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed' :
+                            (isGuestMode || !machineDetail?.operation) ? 'bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed' :
                             isInstallingMold
                               ? 'bg-blue-600/40 text-blue-300 border border-blue-500/50 opacity-75'
                               : 'bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30'
@@ -1268,10 +1275,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                         </button>
                       </div>
                       <button
-                        onClick={() => isGuestMode ? handleGuestActionClick('模具停用') : handleAction('DEACTIVATE')}
-                        disabled={!isGuestMode && false}
+                        onClick={() => isGuestMode ? handleGuestActionClick('模具停用') :(!machineDetail?.operation?"": handleAction('DEACTIVATE'))}
+                        disabled={(!isGuestMode && false) || !machineDetail?.operation}
                         className={`w-full py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 mt-1 ${
-                          isGuestMode ? 'bg-slate-800/30 text-slate-600 border border-slate-700/50 cursor-not-allowed' : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-white'
+                           (isGuestMode || !machineDetail?.operation)  ? 'bg-slate-800/30 text-slate-600 border border-slate-700/50 cursor-not-allowed' : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-white'
                         }`}
                       >
                         <i className="fas fa-ban"></i> 模具停用
