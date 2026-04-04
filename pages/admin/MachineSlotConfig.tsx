@@ -5,7 +5,6 @@ import { AuthService } from '../../services/authService';
 interface SlotConfig {
   slot: string;
   enabled: boolean;
-  label: string;
 }
 
 interface MachineSlotConfigData {
@@ -14,13 +13,35 @@ interface MachineSlotConfigData {
 }
 
 const MachineSlotConfig: React.FC = () => {
+  const [view, setView] = useState<'list' | 'edit'>('list');
+  const [configList, setConfigList] = useState<MachineSlotConfigData[]>([
+    {
+      machine_code: 'MAC-001',
+      slots: [
+        { slot: 'P1', enabled: true },
+        { slot: 'P2', enabled: true },
+        { slot: 'P3', enabled: false },
+        { slot: 'P4', enabled: false },
+      ]
+    },
+    {
+      machine_code: 'MAC-002',
+      slots: [
+        { slot: 'P1', enabled: true },
+        { slot: 'P2', enabled: true },
+        { slot: 'P3', enabled: true },
+        { slot: 'P4', enabled: true },
+      ]
+    }
+  ]);
+
   const [machines, setMachines] = useState<string[]>([]);
   const [selectedMachine, setSelectedMachine] = useState<string>('');
   const [slots, setSlots] = useState<SlotConfig[]>([
-    { slot: 'P1', enabled: true, label: 'P1' },
-    { slot: 'P2', enabled: true, label: 'P2' },
-    { slot: 'P3', enabled: true, label: 'P3' },
-    { slot: 'P4', enabled: false, label: 'P4' },
+    { slot: 'P1', enabled: true },
+    { slot: 'P2', enabled: true },
+    { slot: 'P3', enabled: true },
+    { slot: 'P4', enabled: false },
   ]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -32,9 +53,6 @@ const MachineSlotConfig: React.FC = () => {
       try {
         const codes = await DashboardService.fetchMachineCodes();
         setMachines(codes);
-        if (codes.length > 0) {
-          setSelectedMachine(codes[0]);
-        }
       } catch (error) {
         console.error('获取机台列表失败:', error);
       } finally {
@@ -44,30 +62,30 @@ const MachineSlotConfig: React.FC = () => {
     fetchMachines();
   }, []);
 
-  useEffect(() => {
-    if (selectedMachine) {
-      // 模拟获取机台槽位配置
-      // 在实际项目中，这里应该调用 API: fetchMachineSlotConfig(selectedMachine)
-      console.log(`获取机台 ${selectedMachine} 的槽位配置`);
-      
-      // 模拟数据逻辑：如果是特定机台，显示不同配置
-      if (selectedMachine.includes('01')) {
-        setSlots([
-          { slot: 'P1', enabled: true, label: 'P1' },
-          { slot: 'P2', enabled: true, label: 'P2' },
-          { slot: 'P3', enabled: false, label: 'P3' },
-          { slot: 'P4', enabled: false, label: 'P4' },
-        ]);
-      } else {
-        setSlots([
-          { slot: 'P1', enabled: true, label: 'P1' },
-          { slot: 'P2', enabled: true, label: 'P2' },
-          { slot: 'P3', enabled: true, label: 'P3' },
-          { slot: 'P4', enabled: true, label: 'P4' },
-        ]);
-      }
+  const handleEdit = (config: MachineSlotConfigData) => {
+    setSelectedMachine(config.machine_code);
+    setSlots([...config.slots]);
+    setView('edit');
+  };
+
+  const handleAdd = () => {
+    setSelectedMachine('');
+    setSlots([
+      { slot: 'P1', enabled: true },
+      { slot: 'P2', enabled: true },
+      { slot: 'P3', enabled: false },
+      { slot: 'P4', enabled: false },
+    ]);
+    setView('edit');
+  };
+
+  const handleDelete = (machineCode: string) => {
+    if (window.confirm(`确定要删除机台 ${machineCode} 的配置吗？`)) {
+      setConfigList(configList.filter(c => c.machine_code !== machineCode));
+      setMessage({ type: 'success', text: '删除成功' });
+      setTimeout(() => setMessage(null), 3000);
     }
-  }, [selectedMachine]);
+  };
 
   const handleToggleSlot = (index: number) => {
     const newSlots = [...slots];
@@ -75,22 +93,36 @@ const MachineSlotConfig: React.FC = () => {
     setSlots(newSlots);
   };
 
-  const handleLabelChange = (index: number, label: string) => {
-    const newSlots = [...slots];
-    newSlots[index].label = label;
-    setSlots(newSlots);
-  };
-
   const handleSave = async () => {
+    if (!selectedMachine) {
+      setMessage({ type: 'error', text: '请选择机台' });
+      return;
+    }
     setSaving(true);
     setMessage(null);
     try {
       // 模拟保存 API 调用
-      console.log('保存配置:', { machine_code: selectedMachine, slots });
-      await new Promise(resolve => setTimeout(resolve, 800)); // 模拟延迟
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const newConfig: MachineSlotConfigData = {
+        machine_code: selectedMachine,
+        slots: [...slots]
+      };
+
+      const index = configList.findIndex(c => c.machine_code === selectedMachine);
+      if (index > -1) {
+        const newList = [...configList];
+        newList[index] = newConfig;
+        setConfigList(newList);
+      } else {
+        setConfigList([...configList, newConfig]);
+      }
       
       setMessage({ type: 'success', text: '机台模台配置保存成功！' });
-      setTimeout(() => setMessage(null), 3000);
+      setTimeout(() => {
+        setMessage(null);
+        setView('list');
+      }, 1500);
     } catch (error) {
       setMessage({ type: 'error', text: '保存失败，请稍后重试。' });
     } finally {
@@ -98,14 +130,119 @@ const MachineSlotConfig: React.FC = () => {
     }
   };
 
+  if (view === 'list') {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+              <i className="fas fa-microchip text-indigo-600"></i>
+              机台模台配置
+            </h2>
+            <p className="text-slate-500 mt-1">管理所有机台的模台槽位可用性</p>
+          </div>
+          <button
+            onClick={handleAdd}
+            className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-100 flex items-center gap-2 hover:bg-indigo-700 transition-all"
+          >
+            <i className="fas fa-plus"></i>
+            新增配置
+          </button>
+        </div>
+
+        {message && (
+          <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 ${
+            message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'
+          }`}>
+            <i className={`fas ${message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>
+            <span className="text-sm font-medium">{message.text}</span>
+          </div>
+        )}
+
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b border-slate-100">
+              <tr>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">机台编号</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">P1 槽位</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">P2 槽位</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">P3 槽位</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">P4 槽位</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {configList.length > 0 ? (
+                configList.map((config) => (
+                  <tr key={config.machine_code} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
+                          <i className="fas fa-desktop text-xs"></i>
+                        </div>
+                        <span className="font-bold text-slate-700">{config.machine_code}</span>
+                      </div>
+                    </td>
+                    {config.slots.map(slot => (
+                      <td key={slot.slot} className="px-6 py-4">
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-lg inline-block ${
+                          slot.enabled ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-400 border border-slate-200'
+                        }`}>
+                          {slot.enabled ? '已启用' : '未启用'}
+                        </span>
+                      </td>
+                    ))}
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button 
+                          onClick={() => handleEdit(config)}
+                          className="w-8 h-8 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all"
+                          title="编辑"
+                        >
+                          <i className="fas fa-edit text-xs"></i>
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(config.machine_code)}
+                          className="w-8 h-8 rounded-lg border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all"
+                          title="删除"
+                        >
+                          <i className="fas fa-trash text-xs"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                    <i className="fas fa-inbox text-4xl mb-3 block opacity-20"></i>
+                    暂无机台配置数据
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-          <i className="fas fa-microchip text-indigo-600"></i>
-          机台模台配置
-        </h2>
-        <p className="text-slate-500 mt-1">配置机台可用的模具槽位 (P1, P2, P3, P4)</p>
+      <div className="flex items-center gap-4 mb-8">
+        <button 
+          onClick={() => setView('list')}
+          className="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-all"
+        >
+          <i className="fas fa-arrow-left"></i>
+        </button>
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <i className="fas fa-microchip text-indigo-600"></i>
+            {selectedMachine ? `编辑机台配置: ${selectedMachine}` : '新增机台配置'}
+          </h2>
+          <p className="text-slate-500 mt-1">配置机台可用的模具槽位 (P1, P2, P3, P4)</p>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -117,10 +254,13 @@ const MachineSlotConfig: React.FC = () => {
                 value={selectedMachine}
                 onChange={(e) => setSelectedMachine(e.target.value)}
                 className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
-                disabled={loading}
+                disabled={loading || !!configList.find(c => c.machine_code === selectedMachine && view === 'edit')}
               >
+                <option value="">请选择机台...</option>
                 {machines.map(code => (
-                  <option key={code} value={code}>{code}</option>
+                  <option key={code} value={code} disabled={configList.some(c => c.machine_code === code && !selectedMachine)}>
+                    {code} {configList.some(c => c.machine_code === code) ? '(已配置)' : ''}
+                  </option>
                 ))}
               </select>
             </div>
@@ -184,18 +324,6 @@ const MachineSlotConfig: React.FC = () => {
                     />
                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                   </label>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase ml-1">槽位别名 / 显示名称</label>
-                  <input
-                    type="text"
-                    value={slot.label}
-                    onChange={(e) => handleLabelChange(index, e.target.value)}
-                    placeholder={`例如: ${slot.slot} 模台`}
-                    disabled={!slot.enabled}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 disabled:bg-slate-100 disabled:cursor-not-allowed transition-all"
-                  />
                 </div>
               </div>
             ))}
