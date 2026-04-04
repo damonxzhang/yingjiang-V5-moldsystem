@@ -46,6 +46,7 @@ const MachineSlotConfig: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchMachines = async () => {
@@ -130,10 +131,14 @@ const MachineSlotConfig: React.FC = () => {
     }
   };
 
+  const filteredConfigList = configList.filter(config => 
+    config.machine_code.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (view === 'list') {
     return (
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
               <i className="fas fa-microchip text-indigo-600"></i>
@@ -141,13 +146,25 @@ const MachineSlotConfig: React.FC = () => {
             </h2>
             <p className="text-slate-500 mt-1">管理所有机台的模台槽位可用性</p>
           </div>
-          <button
-            onClick={handleAdd}
-            className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-100 flex items-center gap-2 hover:bg-indigo-700 transition-all"
-          >
-            <i className="fas fa-plus"></i>
-            新增配置
-          </button>
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64">
+              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input
+                type="text"
+                placeholder="搜索机台编号..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+              />
+            </div>
+            <button
+              onClick={handleAdd}
+              className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-100 flex items-center gap-2 hover:bg-indigo-700 transition-all whitespace-nowrap"
+            >
+              <i className="fas fa-plus"></i>
+              新增配置
+            </button>
+          </div>
         </div>
 
         {message && (
@@ -172,8 +189,8 @@ const MachineSlotConfig: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {configList.length > 0 ? (
-                configList.map((config) => (
+              {filteredConfigList.length > 0 ? (
+                filteredConfigList.map((config) => (
                   <tr key={config.machine_code} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
