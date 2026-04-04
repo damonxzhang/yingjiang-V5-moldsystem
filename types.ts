@@ -35,6 +35,7 @@ export enum Permission {
   USER_MANAGE = 'user:manage',
   ROLE_MANAGE = 'role:manage',
   PERMISSION_MANAGE = 'permission:manage',
+  MACHINE_CONFIG = 'machine:config',
   
   // 维保选项管理 (CRUD)
   MAINTENANCE_OPTION_MANAGE = 'maintenance_option:manage',
