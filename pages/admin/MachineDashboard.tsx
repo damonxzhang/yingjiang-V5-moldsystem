@@ -22,18 +22,19 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [selectedMoldPos, setSelectedMoldPos] = useState<'P1' | 'P2' | 'P3'>('P1');
   // 当前材料类型状态
   const [currentMaterialType, setCurrentMaterialType] = useState<'大材料' | '小材料' | 'ALL'>('大材料');
-  
-  // 初始化材料类型（优先从 prop 获取，其次从 URL 获取，最后默认大材料）
+
+  // 初始化材料类型（优先从 prop 获取，其次从登录用户信息获取，最后默认大材料）
   useEffect(() => {
     if (department) {
       setCurrentMaterialType(department === '小材料' ? '小材料' : (department === '大材料' ? '大材料' : 'ALL'));
     } else {
-      const params = new URLSearchParams(window.location.search);
-      const dept = params.get('dept');
-      if (dept === 'small') setCurrentMaterialType('小材料');
-      else if (dept === 'big') setCurrentMaterialType('大材料');
-      else if (dept === '') setCurrentMaterialType('ALL');
-      else setCurrentMaterialType('大材料');
+      // 从登录用户信息获取 department
+      const authData = AuthService.getStoredAuth();
+      if (authData?.department) {
+        setCurrentMaterialType(authData.department === '小材料' ? '小材料' : (authData.department === '大材料' ? '大材料' : 'ALL'));
+      } else {
+        setCurrentMaterialType('大材料');
+      }
     }
   }, [department]);
   const [showInventory, setShowInventory] = useState(false);
