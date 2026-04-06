@@ -39,7 +39,7 @@ export interface MoldListResponse {
 // 模具列表请求参数
 export interface FetchMoldListParams {
   user_id: string;
-  department: string;  // 必填, 过滤部门: 大材料, 小材料, ALL (查看全部)
+  department: string;  // 必填, 从用户信息中获取: 大材料, 小材料, ALL (查看全部)
   page?: number;
   page_size?: number;
   mold_code?: string;  // 模具编号筛选
@@ -50,7 +50,7 @@ export interface FetchMoldListParams {
  * 获取模具台账列表
  */
 export async function fetchMoldList(
-  params: Omit<FetchMoldListParams, 'user_id'>
+  params: Omit<FetchMoldListParams, 'user_id' | 'department'>
 ): Promise<MoldListResponse> {
   const authData = AuthService.getStoredAuth();
   if (!authData) {
@@ -59,7 +59,7 @@ export async function fetchMoldList(
 
   const requestBody: FetchMoldListParams = {
     user_id: authData.user_id,
-    department: params.department,
+    department: authData.department || 'ALL',
     page: params.page || 1,
     page_size: params.page_size || 10,
     mold_code: params.mold_code,
