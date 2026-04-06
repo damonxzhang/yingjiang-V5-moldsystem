@@ -84,6 +84,25 @@ export interface BindMachineSlotResponse {
   message: string;
 }
 
+// 模具绑定信息
+export interface MoldBindingInfo {
+  mold_id: number;
+  mold_code: string;
+  mold_name: string;
+  machine_id: number;
+  machine_code: string;
+  slot: string;
+  status: string;
+  bound_at: string;
+}
+
+// 模具绑定信息响应
+export interface MoldBindingResponse {
+  code: number;
+  message: string;
+  data: MoldBindingInfo | null;
+}
+
 /**
  * 获取可绑定模具列表
  * department 参数从 authData 中获取
@@ -214,11 +233,88 @@ export async function bindMachineSlot(moldId: number, machineId: number, slot: s
 }
 
 /**
+ * 查询模具绑定信息
+ */
+export async function fetchMoldBinding(moldId: number): Promise<MoldBindingInfo | null> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody = {
+    mold_id: moldId
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/machine-slots/mold-binding`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data: MoldBindingResponse = await response.json();
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '查询模具绑定信息失败');
+  }
+
+  return data.data;
+}
+
+// 解绑请求参数
+export interface UnbindMachineSlotParams {
+  mold_id: number;
+  machine_id: number;
+  slot: string;
+}
+
+// 解绑响应
+export interface UnbindMachineSlotResponse {
+  code: number;
+  message: string;
+}
+
+/**
+ * 解绑模具和机台/槽位
+ */
+export async function unbindMachineSlot(moldId: number, machineId: number, slot: string): Promise<void> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody: UnbindMachineSlotParams = {
+    mold_id: moldId,
+    machine_id: machineId,
+    slot: slot
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/machine-slots/unbind`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data: UnbindMachineSlotResponse = await response.json();
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '解绑失败');
+  }
+}
+
+/**
  * 模具绑定服务
  */
 export const MoldBindingService = {
   fetchAvailableMolds,
   fetchMachineCodes,
   fetchMachineSlots,
-  bindMachineSlot
+  bindMachineSlot,
+  fetchMoldBinding,
+  unbindMachineSlot
 };
