@@ -4,7 +4,6 @@ import { MOCK_MOLDS } from '../../services/mockData';
 import { STATUS_COLORS, STATUS_LABELS } from '../../constants';
 import { Mold, MoldStatus, BuyoffStatus, MoldComponent } from '../../types';
 import { fetchMoldList, MoldListItem, fetchMoldDetail, MoldDetailItem, saveMold, fetchInternalComponents, InternalComponentItem, toggleStatus } from '../../services/moldmanageService';
-import { fetchMachineList, fetchMoldTableList } from '../../services/dashboardService';
 
 /**
  * 将 API 内部组件映射为前端 MoldComponent 类型
@@ -109,12 +108,6 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
   const [currentMoldDetail, setCurrentMoldDetail] = useState<MoldDetailItem | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [machines, setMachines] = useState<{ machine_id: string; machine_code: string }[]>([]);
-  const [selectedMachines, setSelectedMachines] = useState<string[]>([]);
-  const [isMachineDropdownOpen, setIsMachineDropdownOpen] = useState(false);
-  const [moldTables, setMoldTables] = useState<{ table_id: string; table_code: string }[]>([]);
-  const [selectedMoldTables, setSelectedMoldTables] = useState<string[]>([]);
-  const [isMoldTableDropdownOpen, setIsMoldTableDropdownOpen] = useState(false);
   const [filters, setFilters] = useState({
     moldCode: '',
     status: ''
@@ -131,10 +124,6 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     setLoading(true);
     setError(null);
     try {
-      // 预加载机台列表
-      const machineList = await fetchMachineList(department || 'ALL');
-      setMachines(machineList);
-
       const response = await fetchMoldList({
         page: page,
         page_size: ITEMS_PER_PAGE,
@@ -188,14 +177,6 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     if (isFirstRender.current) {
       isFirstRender.current = false;
       loadMolds(currentPage);
-      // 页面加载时请求机台列表
-       fetchMachineList('ALL').then(list => {
-         setMachines(list);
-       });
-       // 页面加载时请求模台列表
-       fetchMoldTableList('ALL').then(list => {
-         setMoldTables(list);
-       });
     }
   }, []);
 
@@ -228,9 +209,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         life_limit: modalMode === 'EDIT' ? currentMoldDetail?.life_limit : undefined,      // 编辑时使用详情中的 life_limit
         maintenance_cycle: currentMold.maintenanceCycle || '',  // 保养周期
         start_time: currentMold.maintenanceStartTime || '',     // 开始保养时间
-        location: currentMold.location || '',                    // 存放位置
-        bound_machines: selectedMachines,                       // 绑定的机台 ID 列表
-        bound_mold_tables: selectedMoldTables                   // 绑定的模台 ID 列表
+        location: currentMold.location || ''                    // 存放位置
       };
       const response = await saveMold(saveParams);
       if (response.code === 200 && response.data?.success) {
@@ -248,10 +227,6 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     setIsModalOpen(false);
     setCurrentMold({});
     setCurrentMoldDetail(null);
-    setSelectedMachines([]);
-    setIsMachineDropdownOpen(false);
-    setSelectedMoldTables([]);
-    setIsMoldTableDropdownOpen(false);
   };
 
   const handleToggleStatus = async (id: string, action: 'activate' | 'deactivate') => {
@@ -294,10 +269,6 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     setModalMode('EDIT');
     setIsModalOpen(true);
     setCurrentMoldDetail(null);
-    setSelectedMachines([]);
-    setIsMachineDropdownOpen(false);
-    setSelectedMoldTables([]);
-    setIsMoldTableDropdownOpen(false);
 
     try {
       const response = await fetchMoldDetail(mold.moldId);
@@ -320,14 +291,6 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
       }
     } catch (compErr) {
       console.error('获取内部组件失败:', compErr);
-    }
-
-    // 设置已选机台 (假设详情接口返回 bound_machines 或当前已关联机台)
-    if (response.data.machine_code && response.data.machine_code !== '离线/库房') {
-      const machine = machines.find(m => m.machine_code === response.data.machine_code);
-      if (machine) {
-        setSelectedMachines([machine.machine_id]);
-      }
     }
 
     setCurrentMold(formData);
@@ -413,14 +376,12 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         </h2>
         {!isAuditMode && (
           <div className="flex gap-2">
-            <button 
-              onClick={() => { 
-                setModalMode('ADD'); 
-                setIsModalOpen(true); 
+            <button
+              onClick={() => {
+                setModalMode('ADD');
+                setIsModalOpen(true);
                 setCurrentMold({});
-                setSelectedMachines([]);
-                setIsMachineDropdownOpen(false);
-              }} 
+              }}
               className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg"
             >
               + 新增模具档案
@@ -735,117 +696,6 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
 
               {/* 右侧 BOM 结构查看 */}
               <div className="flex-1 space-y-4">
-                 {/* 绑定设备选择器 */}
-                 <div className="grid grid-cols-2 gap-4">
-      <div className="bg-slate-50/50 p-4 rounded-3xl border border-slate-100 space-y-3">
-        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <i className="fas fa-link text-indigo-500"></i>
-          绑定机台 (BOUND MACHINES)
-        </h4>
-        <div className="relative">
-          <button
-            onClick={() => {
-              setIsMachineDropdownOpen(!isMachineDropdownOpen);
-              setIsMoldTableDropdownOpen(false);
-            }}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:border-indigo-300 transition-all"
-          >
-            <span className="truncate">
-              {selectedMachines.length > 0 
-                ? `已选择 ${selectedMachines.length} 个机台: ${selectedMachines.map(id => machines.find(m => m.machine_id === id)?.machine_code).join(', ')}`
-                : '请选择绑定机台'}
-            </span>
-            <i className={`fas fa-chevron-down text-slate-400 transition-transform ${isMachineDropdownOpen ? 'rotate-180' : ''}`}></i>
-          </button>
-          
-          {isMachineDropdownOpen && (
-            <div className="absolute z-20 w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2 max-h-60 overflow-y-auto custom-scrollbar">
-              <div className="grid grid-cols-2 gap-1">
-                {machines.map(machine => (
-                  <label 
-                    key={machine.machine_id}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-colors ${
-                      selectedMachines.includes(machine.machine_id) 
-                        ? 'bg-indigo-50 text-indigo-600' 
-                        : 'hover:bg-slate-50 text-slate-600'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                      checked={selectedMachines.includes(machine.machine_id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedMachines([...selectedMachines, machine.machine_id]);
-                        } else {
-                          setSelectedMachines(selectedMachines.filter(id => id !== machine.machine_id));
-                        }
-                      }}
-                    />
-                    <span className="text-xs font-black">{machine.machine_code}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="bg-slate-50/50 p-4 rounded-3xl border border-slate-100 space-y-3">
-        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <i className="fas fa-layer-group text-emerald-500"></i>
-          绑定模台 (BOUND MOLD TABLES)
-        </h4>
-        <div className="relative">
-          <button
-            onClick={() => {
-              setIsMoldTableDropdownOpen(!isMoldTableDropdownOpen);
-              setIsMachineDropdownOpen(false);
-            }}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:border-emerald-300 transition-all"
-          >
-            <span className="truncate">
-              {selectedMoldTables.length > 0 
-                ? `已选择 ${selectedMoldTables.length} 个模台: ${selectedMoldTables.map(id => moldTables.find(t => t.table_id === id)?.table_code).join(', ')}`
-                : '请选择绑定模台'}
-            </span>
-            <i className={`fas fa-chevron-down text-slate-400 transition-transform ${isMoldTableDropdownOpen ? 'rotate-180' : ''}`}></i>
-          </button>
-          
-          {isMoldTableDropdownOpen && (
-            <div className="absolute z-20 w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2 max-h-60 overflow-y-auto custom-scrollbar">
-              <div className="grid grid-cols-2 gap-1">
-                {moldTables.map(table => (
-                  <label 
-                    key={table.table_id}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-colors ${
-                      selectedMoldTables.includes(table.table_id) 
-                        ? 'bg-emerald-50 text-emerald-600' 
-                        : 'hover:bg-slate-50 text-slate-600'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                      checked={selectedMoldTables.includes(table.table_id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedMoldTables([...selectedMoldTables, table.table_id]);
-                        } else {
-                          setSelectedMoldTables(selectedMoldTables.filter(id => id !== table.table_id));
-                        }
-                      }}
-                    />
-                    <span className="text-xs font-black">{table.table_code}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-
                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                    <i className="fas fa-layer-group text-indigo-500"></i>
                    内部配件清单及寿命监控
