@@ -86,11 +86,11 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   const getSizeClasses = () => {
     switch (size) {
       case 'small':
-        return 'min-h-[28px] p-1 text-xs';
+        return 'min-h-[36px] p-2 text-sm';
       case 'large':
         return 'min-h-[44px] p-2 text-base';
       default:
-        return 'min-h-[38px] p-1.5 text-sm';
+        return 'min-h-[38px] p-2 text-sm';
     }
   };
 
@@ -165,16 +165,23 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
         `}
       >
         {renderTags()}
-        <span className="ml-auto text-slate-400 text-xs flex items-center gap-1">
+        <span className="ml-auto text-slate-400 flex items-center gap-1">
           {allowClear && currentValue.length > 0 && !disabled && (
             <span
               onClick={clearAll}
-              className="hover:text-slate-600 cursor-pointer mr-1"
+              className="hover:text-slate-600 cursor-pointer mr-1 text-xs"
             >
               ×
             </span>
           )}
-          {isOpen ? '▲' : '▼'}
+          <svg
+            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
         </span>
       </div>
 
