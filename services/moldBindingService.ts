@@ -173,14 +173,15 @@ export async function fetchMachineCodes(): Promise<MachineCodeItem[]> {
 /**
  * 获取指定机台的模台信息
  */
-export async function fetchMachineSlots(machineId: number): Promise<MachineSlot[]> {
+export async function fetchMachineSlots(machineId: number, moldId: number): Promise<MachineSlot[]> {
   const authData = AuthService.getStoredAuth();
   if (!authData) {
     throw new Error('未登录或登录已过期');
   }
 
   const requestBody = {
-    machine_id: machineId
+    machine_id: machineId,
+    mold_id: moldId
   };
 
   const response = await fetch(`${API_BASE_URL}/api/admin/machine-slots/machine-slots`, {

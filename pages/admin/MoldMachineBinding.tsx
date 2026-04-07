@@ -118,7 +118,7 @@ const MoldMachineBinding: React.FC = () => {
           // 根据machine_code找到对应的machine_id
           const selectedMachine = machines.find(m => m.machine_code === newBinding.machineId);
           if (selectedMachine) {
-            const data = await fetchMachineSlots(selectedMachine.machine_id);
+            const data = await fetchMachineSlots(selectedMachine.machine_id, Number(selectedMoldId));
             setMachineSlots(data);
             setNewBinding({ ...newBinding, slotNumbers: [] });
           } else {
