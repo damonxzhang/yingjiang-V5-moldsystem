@@ -75,7 +75,7 @@ export interface MachineSlotsResponse {
 export interface BindMachineSlotParams {
   mold_id: number;
   machine_id: number;
-  slot: string;
+  slots: { slot: string }[];
 }
 
 // 绑定响应
@@ -100,7 +100,7 @@ export interface MoldBindingInfo {
 export interface MoldBindingResponse {
   code: number;
   message: string;
-  data: MoldBindingInfo | null;
+  data: MoldBindingInfo[] | null;
 }
 
 /**
@@ -204,7 +204,7 @@ export async function fetchMachineSlots(machineId: number): Promise<MachineSlot[
 /**
  * 绑定模具和模台
  */
-export async function bindMachineSlot(moldId: number, machineId: number, slot: string): Promise<void> {
+export async function bindMachineSlot(moldId: number, machineId: number, slots: string[]): Promise<void> {
   const authData = AuthService.getStoredAuth();
   if (!authData) {
     throw new Error('未登录或登录已过期');
@@ -213,7 +213,7 @@ export async function bindMachineSlot(moldId: number, machineId: number, slot: s
   const requestBody: BindMachineSlotParams = {
     mold_id: moldId,
     machine_id: machineId,
-    slot: slot
+    slots: slots.map(slot => ({ slot }))
   };
 
   const response = await fetch(`${API_BASE_URL}/api/admin/machine-slots/bind`, {
@@ -235,7 +235,7 @@ export async function bindMachineSlot(moldId: number, machineId: number, slot: s
 /**
  * 查询模具绑定信息
  */
-export async function fetchMoldBinding(moldId: number): Promise<MoldBindingInfo | null> {
+export async function fetchMoldBinding(moldId: number): Promise<MoldBindingInfo[]> {
   const authData = AuthService.getStoredAuth();
   if (!authData) {
     throw new Error('未登录或登录已过期');
@@ -260,7 +260,7 @@ export async function fetchMoldBinding(moldId: number): Promise<MoldBindingInfo 
     throw new Error(data.message || '查询模具绑定信息失败');
   }
 
-  return data.data;
+  return data.data || [];
 }
 
 // 解绑请求参数
