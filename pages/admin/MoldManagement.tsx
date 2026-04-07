@@ -135,11 +135,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
       const machineList = await fetchMachineList(department || 'ALL');
       setMachines(machineList);
 
-      // 根据 department 确定接口参数值
-      const departmentParam = department || 'ALL';
-
       const response = await fetchMoldList({
-        department: departmentParam,
         page: page,
         page_size: ITEMS_PER_PAGE,
         mold_code: filters.moldCode,

@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchAvailableMolds, AvailableMoldItem, fetchMachineCodes, fetchMachineSlots, bindMachineSlot, MachineSlot } from '../../services/moldBindingService';
+import { fetchAvailableMolds, AvailableMoldItem, fetchMachineCodes, fetchMachineSlots, bindMachineSlot, MachineSlot, fetchMoldBinding, MoldBindingInfo, unbindMachineSlot } from '../../services/moldBindingService';
 
 interface Binding {
   moldId: string;
   machineId: string;
-  priority: string;
+  machineCode: string;
+  slot: string;
+  status: string;
+  boundAt: string;
 }
 
 const MoldMachineBinding: React.FC = () => {
@@ -19,6 +22,7 @@ const MoldMachineBinding: React.FC = () => {
   const [machines, setMachines] = useState<{ machine_id: number; machine_code: string }[]>([]);
   const [machineSlots, setMachineSlots] = useState<MachineSlot[]>([]);
   const [fetchingSlots, setFetchingSlots] = useState<boolean>(false);
+  const [fetchingBinding, setFetchingBinding] = useState<boolean>(false);
 
   // 加载机台编号
   const machinesLoadedRef = useRef(false);
@@ -71,6 +75,39 @@ const MoldMachineBinding: React.FC = () => {
     mold.short_name.toLowerCase().includes(moldFilter.toLowerCase())
   );
 
+  // 选中模具时获取绑定信息
+  useEffect(() => {
+    if (selectedMoldId) {
+      const loadMoldBinding = async () => {
+        setFetchingBinding(true);
+        try {
+          const bindingInfo = await fetchMoldBinding(Number(selectedMoldId));
+          if (bindingInfo) {
+            // 将 API 返回的绑定信息转换为本地 Binding 格式
+            setBindings([{
+              moldId: selectedMoldId,
+              machineId: String(bindingInfo.machine_id),
+              machineCode: bindingInfo.machine_code,
+              slot: bindingInfo.slot,
+              status: bindingInfo.status,
+              boundAt: bindingInfo.bound_at
+            }]);
+          } else {
+            // 模具未绑定任何机台
+            setBindings([]);
+          }
+        } catch (error) {
+          console.error('加载模具绑定信息失败:', error);
+          setBindings([]);
+        } finally {
+          setFetchingBinding(false);
+        }
+      };
+
+      loadMoldBinding();
+    }
+  }, [selectedMoldId]);
+
   // 机台选择变化时获取模台信息
   useEffect(() => {
     if (newBinding.machineId) {
@@ -103,20 +140,26 @@ const MoldMachineBinding: React.FC = () => {
 
   const handleAddBinding = async () => {
     if (!newBinding.machineId || !newBinding.slotNumber) return;
-    
+
     try {
       // 根据machine_code找到对应的machine_id
       const selectedMachine = machines.find(m => m.machine_code === newBinding.machineId);
       if (selectedMachine) {
         await bindMachineSlot(Number(selectedMoldId), selectedMachine.machine_id, newBinding.slotNumber);
-        
-        // 添加到本地绑定列表
-        setBindings([...bindings, {
-          moldId: selectedMoldId,
-          machineId: newBinding.machineId,
-          priority: newBinding.slotNumber
-        }]);
-        
+
+        // 重新获取绑定信息以更新列表
+        const bindingInfo = await fetchMoldBinding(Number(selectedMoldId));
+        if (bindingInfo) {
+          setBindings([{
+            moldId: selectedMoldId,
+            machineId: String(bindingInfo.machine_id),
+            machineCode: bindingInfo.machine_code,
+            slot: bindingInfo.slot,
+            status: bindingInfo.status,
+            boundAt: bindingInfo.bound_at
+          }]);
+        }
+
         setIsAddModalOpen(false);
         setNewBinding({ machineId: '', slotNumber: '' });
         setMachineSlots([]);
@@ -127,8 +170,32 @@ const MoldMachineBinding: React.FC = () => {
     }
   };
 
-  const removeBinding = (machineId: string) => {
-    setBindings(bindings.filter(b => !(b.moldId === selectedMoldId && b.machineId === machineId)));
+  const removeBinding = async (binding: Binding) => {
+    if (!confirm(`确定要解绑模具与机台 ${binding.machineCode} 槽位 ${binding.slot} 的绑定关系吗？`)) {
+      return;
+    }
+
+    try {
+      await unbindMachineSlot(Number(binding.moldId), Number(binding.machineId), binding.slot);
+      // 解绑成功后，重新获取绑定信息
+      const bindingInfo = await fetchMoldBinding(Number(selectedMoldId));
+      if (bindingInfo) {
+        setBindings([{
+          moldId: selectedMoldId,
+          machineId: String(bindingInfo.machine_id),
+          machineCode: bindingInfo.machine_code,
+          slot: bindingInfo.slot,
+          status: bindingInfo.status,
+          boundAt: bindingInfo.bound_at
+        }]);
+      } else {
+        setBindings([]);
+      }
+      alert('解绑成功');
+    } catch (error) {
+      console.error('解绑失败:', error);
+      alert('解绑失败，请重试');
+    }
   };
 
   return (
@@ -192,13 +259,18 @@ const MoldMachineBinding: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {currentBindings.length > 0 ? (
+          {fetchingBinding ? (
+            <div className="flex items-center justify-center h-full text-slate-400">
+              <i className="fas fa-spinner fa-spin mr-2"></i> 加载中...
+            </div>
+          ) : currentBindings.length > 0 ? (
             <table className="w-full text-left">
               <thead className="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-widest sticky top-0">
                 <tr>
                   <th className="px-6 py-4 font-bold">机台编号</th>
-                  <th className="px-6 py-4 font-bold">名称</th>
-                  <th className="px-6 py-4 font-bold">选择模台</th>
+                  <th className="px-6 py-4 font-bold">模台槽位</th>
+                  <th className="px-6 py-4 font-bold">绑定状态</th>
+                  <th className="px-6 py-4 font-bold">绑定时间</th>
                   <th className="px-6 py-4 font-bold text-right">操作</th>
                 </tr>
               </thead>
@@ -206,12 +278,22 @@ const MoldMachineBinding: React.FC = () => {
                 {currentBindings.map(b => {
                   return (
                     <tr key={b.machineId} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 text-xs font-bold text-slate-700">{b.machineId}</td>
-                      <td className="px-6 py-4 text-xs text-slate-600">{b.machineId}</td>
-                      <td className="px-6 py-4 text-xs font-medium text-slate-800">{b.priority}</td>
+                      <td className="px-6 py-4 text-xs font-bold text-slate-700">{b.machineCode}</td>
+                      <td className="px-6 py-4 text-xs font-medium text-slate-800">{b.slot}</td>
+                      <td className="px-6 py-4 text-xs text-slate-600">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                          b.status === 'NORMAL' ? 'bg-green-100 text-green-700' :
+                          b.status === 'WARNING' ? 'bg-yellow-100 text-yellow-700' :
+                          b.status === 'CRITICAL' ? 'bg-red-100 text-red-700' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>
+                          {b.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500">{b.boundAt}</td>
                       <td className="px-6 py-4 text-right">
-                        <button 
-                          onClick={() => removeBinding(b.machineId)}
+                        <button
+                          onClick={() => removeBinding(b)}
                           className="text-slate-400 hover:text-red-600 transition-colors"
                           title="解绑机台"
                         >
