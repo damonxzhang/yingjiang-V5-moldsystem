@@ -587,13 +587,17 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
   // 处理打开安装模具弹窗
   const handleOpenInventoryModal = async () => {
-    if (!selectedMachine) return;
+    if (!selectedMachine || !selectedMoldPos) return;
     
     setIsFetchingInventory(true);
     setShowInventory(true);
     setInventoryFilter('');
     try {
-      const data = await fetchInventoryMolds(selectedMachine.machine_id);
+      const data = await fetchInventoryMolds({
+        machine_id: selectedMachine.machine_id,
+        slot: selectedMoldPos,
+        department: currentMaterialType
+      });
       setInventoryData(data);
     } catch (error: any) {
       console.error('获取库存模具清单失败:', error);
