@@ -162,6 +162,23 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     }).replace(/\//g, '-');
   };
 
+  // 刷新看板数据
+  const refreshDashboardData = async () => {
+    try {
+      const data = await DashboardService.fetchDashboardMachinesStatus({
+        department: currentMaterialType,
+        product_type: filterProduct,
+        machine_code: filterMachine,
+        mold_code: filterMold,
+        only_producible: onlyProducible,
+        only_abnormal: onlyAbnormal
+      });
+      setDashboardData(data);
+    } catch (error) {
+      console.error('刷新看板数据失败:', error);
+    }
+  };
+
   // 处理 API 返回的设备数据
   const allMachines = useMemo(() => {
     return (dashboardData?.machines || []).map((item) => {
@@ -1732,6 +1749,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   onClick={() => {
                     setShowTaskModal(false);
                     setSelectedMachine(null);
+                    refreshDashboardData();
                   }}
                   className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"
                 >
@@ -1760,6 +1778,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   onClick={() => {
                     setShowTaskModal(false);
                     setSelectedMachine(null);
+                    refreshDashboardData();
                   }}
                   className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"
                 >
@@ -1903,6 +1922,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   onClick={() => {
                     setShowTaskModal(false);
                     setSelectedMachine(null);
+                    refreshDashboardData();
                   }}
                   className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"
                 >
