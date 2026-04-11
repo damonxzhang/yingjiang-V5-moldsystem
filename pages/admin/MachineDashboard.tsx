@@ -113,18 +113,12 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-  // 用于防抖的定时器ref
+  // 用于防抖的定时器ref（仅用于机器码和模具编号的文本搜索）
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 调用API获取看板数据
+  // 立即调用API（材料类型切换、下拉选择、勾选框等需要快速响应的操作）
   useEffect(() => {
-    // 清除之前的定时器
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    // 设置防抖延迟（机器码和模具编号输入完成后500ms再请求）
-    debounceTimerRef.current = setTimeout(async () => {
+    const fetchData = async () => {
       try {
         const data = await DashboardService.fetchDashboardMachinesStatus({
           department: currentMaterialType,
@@ -138,15 +132,41 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       } catch (error) {
         console.error('获取看板数据失败:', error);
       }
+    };
+    fetchData();
+  }, [currentMaterialType, filterProduct, onlyProducible, onlyAbnormal, refreshTrigger]);
+
+  // 防抖调用API（仅用于机器码和模具编号的文本输入搜索，500ms后触发）
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      const fetchData = async () => {
+        try {
+          const data = await DashboardService.fetchDashboardMachinesStatus({
+            department: currentMaterialType,
+            product_type: filterProduct,
+            machine_code: filterMachine,
+            mold_code: filterMold,
+            only_producible: onlyProducible,
+            only_abnormal: onlyAbnormal
+          });
+          setDashboardData(data);
+        } catch (error) {
+          console.error('获取看板数据失败:', error);
+        }
+      };
+      fetchData();
     }, 500);
 
-    // 清理函数
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [filterProduct, filterMachine, filterMold, onlyProducible, onlyAbnormal, refreshTrigger, currentMaterialType]);
+  }, [filterMachine, filterMold]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleString('zh-CN', {
@@ -843,8 +863,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
               onClick={() => {
                 if (currentMaterialType !== '大材料') {
                   setCurrentMaterialType('大材料');
-                  // 触发数据刷新
-                  setRefreshTrigger(prev => prev + 1);
                 }
               }}
               className={`px-4 py-0.5 rounded text-[10px] font-black transition-all ${currentMaterialType === '大材料' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-500 hover:text-slate-300'}`}
@@ -855,8 +873,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
               onClick={() => {
                 if (currentMaterialType !== '小材料') {
                   setCurrentMaterialType('小材料');
-                  // 触发数据刷新
-                  setRefreshTrigger(prev => prev + 1);
                 }
               }}
               className={`px-4 py-0.5 rounded text-[10px] font-black transition-all ${currentMaterialType === '小材料' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-500 hover:text-slate-300'}`}
