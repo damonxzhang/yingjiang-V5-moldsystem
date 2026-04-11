@@ -303,26 +303,38 @@ export interface InventoryResponse {
   molds: InventoryMold[];
 }
 
+// 库存模具清单请求参数
+export interface InventoryRequest {
+  machine_id: string;
+  slot: string;
+  department: string;
+}
+
 /**
  * 获取库存模具清单
  */
-export async function fetchInventoryMolds(machineId: string, userId: string = '1'): Promise<InventoryResponse> {
+export async function fetchInventoryMolds(
+  params: InventoryRequest
+): Promise<InventoryResponse> {
   const authData = AuthService.getStoredAuth();
   if (!authData) {
     throw new Error('未登录或登录已过期');
   }
 
-  console.log('fetchInventoryMolds request:', { machine_id: String(machineId), user_id: String(userId) });
+  const requestBody = {
+    machine_id: String(params.machine_id),
+    slot: params.slot,
+    department: params.department || 'ALL'
+  };
+
+  console.log('fetchInventoryMolds request:', requestBody);
   const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/mold/inventory`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${authData.token}`
     },
-    body: JSON.stringify({ 
-      machine_id: String(machineId),
-      user_id: String(userId)
-    })
+    body: JSON.stringify(requestBody)
   });
 
   const data = await response.json();
