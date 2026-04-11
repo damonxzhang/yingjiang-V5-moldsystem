@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineCodeOption } from '../../services/dashboardService';
+import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineCodeOption, MachineTodo } from '../../services/dashboardService';
 import { AuthService } from '../../services/authService';
 
 interface MachineDashboardProps {
@@ -41,6 +41,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showTodoList, setShowTodoList] = useState(false);
   const [todoMachine, setTodoMachine] = useState<any>(null);
+  const [todoList, setTodoList] = useState<MachineTodo[]>([]);
+  const [isLoadingTodoList, setIsLoadingTodoList] = useState(false);
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
   const [taskType, setTaskType] = useState<string>('');
   const [maintenanceTimeRange, setMaintenanceTimeRange] = useState({ start: '', end: '' });
@@ -167,7 +169,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       const machine_code = item.machine_code;
       const machine_id = item.machine_id;
       const status = item.status; // 机台状态: NORMAL, MAINTENANCE_DUE, OVERDUE, BUYOFF, DISABLED, OFFLINE
-      const pending_tasks = item.pending_tasks || 0;
+      const pending_todos_count = item.pending_todos_count || 0;
       const part_no = item.part_no;
       const mold_count = item.mold_count;
 
@@ -265,7 +267,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         machine_code,
         machine_id,
         status,
-        pending_tasks,
+        pending_todos_count,
         part_no,
         mold_count,
         // 前端需要的额外字段
@@ -370,10 +372,24 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     setShowTaskModal(true);
   };
 
-  const handleShowTodo = (e: React.MouseEvent, machine: any) => {
+  const handleShowTodo = async (e: React.MouseEvent, machine: any) => {
     e.stopPropagation();
     setTodoMachine(machine);
     setShowTodoList(true);
+    
+    // 调用API获取待办列表数据
+    setIsLoadingTodoList(true);
+    try {
+      const todos = await DashboardService.fetchMachineTodoList({
+        machine_id: machine.machine_id || machine.machine_code
+      });
+      setTodoList(todos);
+    } catch (error) {
+      console.error('获取待办清单失败:', error);
+      setTodoList([]);
+    } finally {
+      setIsLoadingTodoList(false);
+    }
   };
 
   const toggleTaskComplete = (machineId: string, moldId: string, taskType: string) => {
@@ -966,16 +982,16 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 <div className="flex items-center gap-2">
                   <span className="text-[14px] font-black text-blue-300">{machine.machine_code}</span>
                   {/* Todo Badge in Header */}
-                  {machine.pending_tasks > 0 && (
+                  {/* {machine.pending_todos_count > 0 && ( */}
                     <div
                       onClick={(e) => { e.stopPropagation(); handleShowTodo(e, machine); }}
                       className="bg-indigo-600 hover:bg-indigo-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-1 text-[9px] font-black shadow-lg shadow-indigo-900/20 transition-all hover:scale-110 border border-indigo-400/30"
                       title="点击查看待办清单"
                     >
                       <i className="fas fa-list-check text-[7px]"></i>
-                      <span>{machine.pending_tasks}</span>
+                      <span>{machine.pending_todos_count}</span>
                     </div>
-                  )}
+                  {/* )} */}
                 </div>
                 <div className="flex flex-col items-end">
                   <span className="text-[12px] font-black text-blue-100 truncate max-w-[100px] leading-tight">{machine.currentProduct}</span>
@@ -1168,7 +1184,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           <span className="text-blue-200 font-bold">{currentMold?.short_name || mold.short_name || '-'}</span>
 
                           <span className="text-slate-400">待办任务:</span>
-                          <span className="text-indigo-400 font-black">{currentMold?.pending_tasks ?? mold.taskCount} 项</span>
+                          <span className="text-indigo-400 font-black">{currentMold?.pending_todos_count ?? mold.taskCount} 项</span>
 
                           <span className="text-slate-400">模具型号:</span>
                           <span className="text-blue-200">{currentMold?.mold_category || mold.mold_category || mold.type || '-'}</span>
@@ -1506,67 +1522,61 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             </div>
             
             <div className="p-6 overflow-y-auto max-h-[60vh] space-y-4 custom-scrollbar">
-              {Object.entries(todoMachine.molds).map(([pos, mold]: [string, any]) => {
-                if (!mold) return null;
-                const tasks = [];
-                if (mold.status === 'OVERDUE') tasks.push({ type: 'MAINTENANCE', title: '例行保养', status: '超期', color: 'red' });
-                if (mold.status === 'UPCOMING') tasks.push({ type: 'MAINTENANCE', title: '例行保养', status: '即将到期', color: 'yellow' });
-                if (mold.isOffline) tasks.push({ type: 'REPAIR', title: '模具维修', status: '待处理', color: 'red' });
-                if (mold.status === 'BUYOFF') tasks.push({ type: 'CHECK', title: 'BUYOFF 验证', status: '进行中', color: 'blue' });
-                
-                // Add some dummy tasks if count > 0 but no clear state
-                if (tasks.length === 0 && mold.taskCount > 0) {
-                  tasks.push({ type: 'PART', title: '备件更换', status: '待执行', color: 'indigo' });
-                }
+              {isLoadingTodoList ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                  <span className="ml-3 text-slate-400 text-sm">加载中...</span>
+                </div>
+              ) : todoList.length === 0 ? (
+                <div className="text-center py-12">
+                  <i className="fas fa-check-circle text-4xl text-green-500/50 mb-3"></i>
+                  <p className="text-slate-400 text-sm">暂无待办事项</p>
+                </div>
+              ) : (
+                todoList.map((todo) => {
+                  const taskId = `${todo.machine_id}-${todo.mold_id}-${todo.type}`;
+                  const isCompleted = completedTasks.has(taskId);
 
-                if (tasks.length === 0) return null;
-
-                return (
-                  <div key={pos} className="space-y-3">
-                    <div className="flex items-center gap-2 border-b border-white/5 pb-1">
-                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{pos}</span>
-                      <span className="text-[10px] font-bold text-slate-500">{mold.mold_code || mold.mold_id}</span>
-                    </div>
-                    {tasks.map((task) => {
-                      const taskId = `${todoMachine.machine_code}-${mold.mold_id}-${task.type}`;
-                      const isCompleted = completedTasks.has(taskId);
-
-                      return (
-                        <div key={taskId} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
-                          isCompleted
-                            ? 'bg-green-500/10 border-green-500/30'
-                            : 'bg-white/5 border-white/5 hover:border-indigo-500/30'
-                        }`}>
-                          <div className="flex items-center gap-3">
-                            <div className={`w-1.5 h-8 rounded-full ${isCompleted ? 'bg-green-500' : `bg-${task?.color || 'slate'}-500`}`}></div>
-                            <div>
-                              <p className={`text-xs font-black ${isCompleted ? 'text-green-400 line-through' : 'text-slate-200'}`}>{task.title}</p>
-                              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
-                                Status: {isCompleted ? '已处理' : task.status}
-                              </p>
-                            </div>
+                  return (
+                    <div key={todo.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                      isCompleted
+                        ? 'bg-green-500/10 border-green-500/30'
+                        : 'bg-white/5 border-white/5 hover:border-indigo-500/30'
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-1.5 h-8 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-indigo-500'}`}></div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{todo.slot}</span>
+                            <span className="text-[10px] font-bold text-slate-400">{todo.mold_code}</span>
                           </div>
-                          <button
-                            onClick={() => toggleTaskComplete(todoMachine.machine_code, mold.mold_id, task.type)}
-                            className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
-                              isCompleted
-                                ? 'bg-green-600 text-white border-green-500'
-                                : 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white'
-                            }`}
-                          >
-                            {isCompleted ? (
-                              <span className="flex items-center gap-1">
-                                <i className="fas fa-check-circle"></i>
-                                已完成
-                              </span>
-                            ) : '确认完成'}
-                          </button>
+                          <p className={`text-xs font-black ${isCompleted ? 'text-green-400 line-through' : 'text-slate-200'}`}>
+                            {todo.type}
+                          </p>
+                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
+                            {todo.created_at}
+                          </p>
                         </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
+                      </div>
+                      <button
+                        onClick={() => toggleTaskComplete(todo.machine_id, todo.mold_id, todo.type)}
+                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
+                          isCompleted
+                            ? 'bg-green-600 text-white border-green-500'
+                            : 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white'
+                        }`}
+                      >
+                        {isCompleted ? (
+                          <span className="flex items-center gap-1">
+                            <i className="fas fa-check-circle"></i>
+                            已完成
+                          </span>
+                        ) : '确认完成'}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
             </div>
 
             <div className="p-4 bg-white/5 border-t border-white/5 flex gap-3">

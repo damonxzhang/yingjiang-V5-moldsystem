@@ -614,6 +614,73 @@ export async function fetchMachineCodes(): Promise<MachineCodeOption[]> {
   }
 }
 
+// 机台待办事项类型
+export type TodoType = 'MAINTENANCE' | 'REPAIR' | 'INSTALL' | 'UNINSTALL' | 'DISABLE';
+
+// 机台待办事项
+export interface MachineTodo {
+  id: number;
+  machine_id: number;
+  mold_id: number;
+  mold_code: string;
+  slot: string;
+  user_id: number;
+  user_name: string;
+  created_at: string;
+  is_read: number;
+  type: TodoType;
+  payload: Record<string, any>;
+}
+
+// 机台待办列表响应
+export interface MachineTodoListResponse {
+  code: number;
+  message: string;
+  data: MachineTodo[];
+}
+
+// 机台待办列表请求参数
+export interface MachineTodoListRequest {
+  machine_id: string;
+}
+
+/**
+ * 获取机台待办清单列表
+ */
+export async function fetchMachineTodoList(
+  params: MachineTodoListRequest
+): Promise<MachineTodo[]> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/machine/todo-list`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify({
+      machine_id: params.machine_id
+    })
+  });
+
+  const data = await response.json();
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '获取待办清单失败');
+  }
+
+  // 确保返回的是数组
+  if (Array.isArray(data.data)) {
+    return data.data as MachineTodo[];
+  }
+  
+  // 如果 data.data 不是数组，返回空数组
+  return [];
+}
+
 /**
  * Dashboard 服务
  */
@@ -624,5 +691,6 @@ export const DashboardService = {
   createMaintenanceTask,
   createRepairTask,
   disableMold,
-  moldAction
+  moldAction,
+  fetchMachineTodoList
 };
