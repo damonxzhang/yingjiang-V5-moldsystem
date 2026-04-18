@@ -22,7 +22,7 @@ interface MachineBase {
   location: string;
   partNo: string;
   totalSlots: number;
-  status: 'NORMAL' | 'DISABLED' | 'FAULT';
+  status: 'NORMAL' | 'DISABLED' | 'FAULT' | 'WARNING' | 'CRITICAL' | 'MAINTENANCE';
   createdAt: string;
 }
 
@@ -31,8 +31,11 @@ interface MachineBase {
  */
 const STATUS_LABELS: Record<string, string> = {
   'NORMAL': '启用',
-  'DISABLED': '禁用',
-  'FAULT': '异常'
+  'DISABLED': '停用',
+  'FAULT': '故障',
+  'WARNING': '预警',
+  'CRITICAL': '临界',
+  'MAINTENANCE': '维保中'
 };
 
 /**
@@ -40,8 +43,11 @@ const STATUS_LABELS: Record<string, string> = {
  */
 const STATUS_COLORS: Record<string, string> = {
   'NORMAL': 'bg-green-100 text-green-700 border-green-200',
-  'DISABLED': 'bg-red-100 text-red-700 border-red-200',
-  'FAULT': 'bg-orange-100 text-orange-700 border-orange-200'
+  'DISABLED': 'bg-gray-100 text-gray-700 border-gray-200',
+  'FAULT': 'bg-red-100 text-red-700 border-red-200',
+  'WARNING': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  'CRITICAL': 'bg-purple-100 text-purple-700 border-purple-200',
+  'MAINTENANCE': 'bg-blue-100 text-blue-700 border-blue-200'
 };
 
 const ITEMS_PER_PAGE = 20;
@@ -345,7 +351,11 @@ const MachineBaseList: React.FC = () => {
           >
             <option value="">全部状态</option>
             <option value="NORMAL">启用</option>
-            <option value="DISABLED">禁用</option>
+            <option value="DISABLED">停用</option>
+            <option value="FAULT">故障</option>
+            <option value="WARNING">预警</option>
+            <option value="CRITICAL">临界</option>
+            <option value="MAINTENANCE">维保中</option>
           </select>
         </div>
         <div className="flex items-center gap-2">
@@ -610,7 +620,11 @@ const MachineBaseList: React.FC = () => {
                   >
                     <option value="">请选择状态</option>
                     <option value="NORMAL">启用</option>
-                    <option value="DISABLED">禁用</option>
+                    <option value="DISABLED">停用</option>
+                    <option value="FAULT">故障</option>
+                    <option value="WARNING">预警</option>
+                    <option value="CRITICAL">临界</option>
+                    <option value="MAINTENANCE">维保中</option>
                   </select>
                 </div>
               </div>
