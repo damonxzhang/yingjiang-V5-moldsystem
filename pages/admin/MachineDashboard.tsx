@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineCodeOption, MachineTodo } from '../../services/dashboardService';
+import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, EnableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineCodeOption, MachineTodo, ToggleMachineStatusRequest } from '../../services/dashboardService';
 import { AuthService } from '../../services/authService';
 
 interface MachineDashboardProps {
@@ -61,6 +61,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [isDisablingMold, setIsDisablingMold] = useState(false);
   // 模具停用错误信息
   const [disableMoldError, setDisableMoldError] = useState<string>('');
+  // 模具启用加载状态
+  const [isEnablingMold, setIsEnablingMold] = useState(false);
+  // 模具启用错误信息
+  const [enableMoldError, setEnableMoldError] = useState<string>('');
   // 模具安装加载状态
   const [isInstallingMold, setIsInstallingMold] = useState(false);
   // 模具卸载加载状态
@@ -82,17 +86,27 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [loginPromptAction, setLoginPromptAction] = useState('');
 
+  // 设备状态切换弹窗状态
+  const [showMachineStatusModal, setShowMachineStatusModal] = useState(false);
+  const [machineStatusAction, setMachineStatusAction] = useState<'NORMAL' | 'DEACTIVATED' | 'ABNORMAL' | null>(null);
+  const [machineStatusReason, setMachineStatusReason] = useState('');
+  const [isTogglingMachineStatus, setIsTogglingMachineStatus] = useState(false);
+  const [machineStatusError, setMachineStatusError] = useState('');
+
   // 筛选状态
   const [filterProduct, setFilterProduct] = useState('');
   // 筛选状态
   const [filterMachine, setFilterMachine] = useState('');      // 机台编号筛选关键字
   const [filterMold, setFilterMold] = useState('');            // 模具编号筛选关键字
+  const [filterMachineType, setFilterMachineType] = useState(''); // 机台类型筛选
   const [onlyProducible, setOnlyProducible] = useState(false); // 仅显示可生产设备（模具未下线且未超期）
   const [onlyAbnormal, setOnlyAbnormal] = useState(false);     // 仅显示异常生产设备（模具超期、即将保养或下线）
   // 数据刷新触发器
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   // Product 下拉列表选项
   const [productOptions, setProductOptions] = useState<MachineCodeOption[]>([]);
+  // 机台类型列表
+  const [machineTypes, setMachineTypes] = useState<string[]>([]);
 
   // 页面加载时获取 Product 下拉列表
   const hasFetchedProductOptions = useRef(false);
@@ -111,12 +125,33 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     fetchProductOptions();
   }, []);
 
+  // 页面加载时获取机台类型列表
+  const hasFetchedMachineTypes = useRef(false);
+  useEffect(() => {
+    if (hasFetchedMachineTypes.current) return;
+    hasFetchedMachineTypes.current = true;
+    const fetchMachineTypesData = async () => {
+      try {
+        // 根据当前部门获取机台类型
+        const dept = currentMaterialType === 'ALL' ? 'ALL' : currentMaterialType;
+        const types = await DashboardService.fetchMachineTypes(dept);
+        setMachineTypes(Array.isArray(types) ? types : []);
+      } catch (error) {
+        console.error('获取机台类型列表失败:', error);
+        setMachineTypes([]);
+      }
+    };
+    fetchMachineTypesData();
+  }, [currentMaterialType]);
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
   // 用于防抖的定时器ref
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // 标记是否是材料类型切换（按钮点击不需要防抖，输入框需要防抖）
+  const isMaterialTypeChangeRef = useRef<boolean>(false);
 
   // 调用API获取看板数据
   useEffect(() => {
@@ -125,12 +160,16 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       clearTimeout(debounceTimerRef.current);
     }
 
-    // 设置防抖延迟（机器码和模具编号输入完成后500ms再请求）
+    // 根据是否是材料类型切换决定延迟时间
+    // 材料类型切换（按钮点击）使用 0ms，输入框使用 500ms 防抖
+    const delay = isMaterialTypeChangeRef.current ? 0 : 500;
+
     debounceTimerRef.current = setTimeout(async () => {
       try {
         const data = await DashboardService.fetchDashboardMachinesStatus({
           department: currentMaterialType,
           product_type: filterProduct,
+          type: filterMachineType,
           machine_code: filterMachine,
           mold_code: filterMold,
           only_producible: onlyProducible,
@@ -140,7 +179,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       } catch (error) {
         console.error('获取看板数据失败:', error);
       }
-    }, 500);
+    }, delay);
+
+    // 重置标记
+    isMaterialTypeChangeRef.current = false;
 
     // 清理函数
     return () => {
@@ -148,7 +190,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [filterProduct, filterMachine, filterMold, onlyProducible, onlyAbnormal, refreshTrigger, currentMaterialType]);
+  }, [filterProduct, filterMachine, filterMold, filterMachineType, onlyProducible, onlyAbnormal, refreshTrigger, currentMaterialType]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleString('zh-CN', {
@@ -168,6 +210,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       const data = await DashboardService.fetchDashboardMachinesStatus({
         department: currentMaterialType,
         product_type: filterProduct,
+        type: filterMachineType,
         machine_code: filterMachine,
         mold_code: filterMold,
         only_producible: onlyProducible,
@@ -309,12 +352,11 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     const defaultSlot = availablePos.length > 0 ? availablePos[0] : 'P1';
     setSelectedMoldPos(defaultSlot as any);
 
-    // 调用 API 获取机台详情
+    // 调用 API 获取机台详情（不传 slot 参数，获取所有 slots 数据）
     setIsLoadingMachineDetail(true);
     try {
       const detail = await DashboardService.fetchMachineDetail({
-        machine_id: machine.machine_id,
-        slot: defaultSlot
+        machine_id: machine.machine_id
       });
        const authData = AuthService.getStoredAuth();
       if(detail.department != authData?.department){
@@ -348,7 +390,11 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         }else{
           detail.operation = true; // 可操作
         }
-        setMachineDetail(detail);
+        // 保留原有的 slots 数据，只更新 current_mold
+        setMachineDetail(prev => prev ? {
+          ...detail,
+          slots: prev.slots // 保留完整的 slots 数组
+        } : detail);
       } catch (error: any) {
         console.error('获取机台详情失败:', error);
         alert('获取机台详情失败: ' + (error.message || '未知错误'));
@@ -373,6 +419,62 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     window.location.href = '/';
   };
 
+  // 处理打开设备状态切换弹窗
+  const handleOpenMachineStatusModal = (action: 'NORMAL' | 'DEACTIVATED' | 'ABNORMAL') => {
+    setMachineStatusAction(action);
+    setMachineStatusReason('');
+    setMachineStatusError('');
+    setShowMachineStatusModal(true);
+  };
+
+  // 处理关闭设备状态切换弹窗
+  const handleCloseMachineStatusModal = () => {
+    setShowMachineStatusModal(false);
+    setMachineStatusAction(null);
+    setMachineStatusReason('');
+    setMachineStatusError('');
+  };
+
+  // 处理设备状态切换
+  const handleToggleMachineStatus = async () => {
+    if (!machineDetail?.machine_id || !machineStatusAction) {
+      setMachineStatusError('缺少必要的参数');
+      return;
+    }
+
+    if (!machineStatusReason.trim()) {
+      setMachineStatusError('请输入原因');
+      return;
+    }
+
+    setIsTogglingMachineStatus(true);
+    setMachineStatusError('');
+
+    try {
+      const response = await DashboardService.toggleMachineStatus({
+        machine_id: machineDetail.machine_id,
+        status: machineStatusAction,
+        reason: machineStatusReason.trim()
+      });
+
+      if (response?.code === 200) {
+        // 关闭弹窗
+        handleCloseMachineStatusModal();
+        // 刷新机台详情
+        await handleSlotChange(selectedMoldPos);
+        // 刷新看板数据
+        await refreshDashboardData();
+        alert(machineStatusAction === 'NORMAL' ? '设备启用成功' : '设备停用成功');
+      } else {
+        setMachineStatusError(response.message || '操作失败');
+      }
+    } catch (error: any) {
+      setMachineStatusError(error.message || '操作失败');
+    } finally {
+      setIsTogglingMachineStatus(false);
+    }
+  };
+
   const handleAction = (type: string) => {
     if (type === 'MAINTENANCE') {
       // 预设一个默认的时间范围（当前时间到4小时后）
@@ -384,6 +486,14 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       });
       // 重置错误状态
       setMaintenanceError('');
+    }
+    if (type === 'ACTIVATE') {
+      // 重置启用错误状态
+      setEnableMoldError('');
+    }
+    if (type === 'DEACTIVATE') {
+      // 重置停用错误状态
+      setDisableMoldError('');
     }
     setTaskType(type);
     setShowTaskModal(true);
@@ -534,6 +644,42 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     }
   };
 
+  // 处理模具启用
+  const handleEnableMold = async () => {
+    debugger
+    if (!selectedMachine || !selectedMoldPos) {
+      setEnableMoldError('请选择机台和模具位置');
+      return;
+    }
+
+    // 优先使用 machineDetail 中的数据
+    if (!machineDetail?.current_mold?.mold_id) {
+      setEnableMoldError('未找到对应的模具信息');
+      return;
+    }
+
+    setIsEnablingMold(true);
+    setEnableMoldError('');
+
+    try {
+      const requestData = {
+        mold_id: machineDetail.current_mold.mold_id
+      };
+
+      const response = await DashboardService.enableMold(requestData as EnableMoldRequest);
+
+      if (response?.code === 200) {
+        setTaskType('ACTIVATE_SUCCESS');
+      } else {
+        setEnableMoldError(response.message || '模具启用失败');
+      }
+    } catch (error: any) {
+      setEnableMoldError(error.message || '模具启用失败');
+    } finally {
+      setIsEnablingMold(false);
+    }
+  };
+
   // 处理模具安装/卸载
   const handleMoldAction = async (action: 'INSTALL' | 'UNINSTALL') => {
     if (!selectedMachine || !selectedMoldPos) {
@@ -621,6 +767,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       setShowTaskModal(true);
       setShowInventory(false);
       // 刷新数据
+      isMaterialTypeChangeRef.current = true;
       setRefreshTrigger(prev => prev + 1);
     } catch (error: any) {
       console.error('模具安装失败:', error);
@@ -879,6 +1026,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             <button 
               onClick={() => {
                 if (currentMaterialType !== '大材料') {
+                  // 标记为材料类型切换，使用0ms延迟
+                  isMaterialTypeChangeRef.current = true;
                   setCurrentMaterialType('大材料');
                   // 触发数据刷新
                   setRefreshTrigger(prev => prev + 1);
@@ -891,6 +1040,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             <button 
               onClick={() => {
                 if (currentMaterialType !== '小材料') {
+                  // 标记为材料类型切换，使用0ms延迟
+                  isMaterialTypeChangeRef.current = true;
                   setCurrentMaterialType('小材料');
                   // 触发数据刷新
                   setRefreshTrigger(prev => prev + 1);
@@ -915,9 +1066,12 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       <div className="bg-slate-900/60 border border-blue-500/20 rounded-xl p-2 mb-2 flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-blue-500 uppercase">Product:</span>
-          <select 
+          <select
             value={filterProduct}
-            onChange={(e) => setFilterProduct(e.target.value)}
+            onChange={(e) => {
+              isMaterialTypeChangeRef.current = true;
+              setFilterProduct(e.target.value);
+            }}
             className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[10px] text-blue-100 focus:outline-none focus:border-blue-500"
           >
             <option value="">All Products</option>
@@ -929,13 +1083,16 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
 <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-blue-500 uppercase">机器类型:</span>
-          <select 
-            value={filterProduct}
-            onChange={(e) => setFilterProduct(e.target.value)}
+          <select
+            value={filterMachineType}
+            onChange={(e) => {
+              isMaterialTypeChangeRef.current = true;
+              setFilterMachineType(e.target.value);
+            }}
             className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[10px] text-blue-100 focus:outline-none focus:border-blue-500"
           >
             <option value="">所有</option>
-            {Array.isArray(productOptions) && productOptions.map(p => <option key={p.machine_id} value={p.machine_code}>{p.machine_code}</option>)}
+            {Array.isArray(machineTypes) && machineTypes.map((type, index) => <option key={index} value={type}>{type}</option>)}
           </select>
         </div>
 
@@ -965,10 +1122,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         </div>
 
         <label className="flex items-center gap-2 cursor-pointer group">
-          <input 
+          <input
             type="checkbox"
             checked={onlyProducible}
-            onChange={(e) => setOnlyProducible(e.target.checked)}
+            onChange={(e) => {
+              isMaterialTypeChangeRef.current = true;
+              setOnlyProducible(e.target.checked);
+            }}
             className="hidden"
           />
           <div className={`w-3 h-3 rounded border ${onlyProducible ? 'bg-blue-500 border-blue-500' : 'border-slate-600 group-hover:border-blue-500'} flex items-center justify-center transition-colors`}>
@@ -978,10 +1138,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         </label>
 
         <label className="flex items-center gap-2 cursor-pointer group">
-          <input 
+          <input
             type="checkbox"
             checked={onlyAbnormal}
-            onChange={(e) => setOnlyAbnormal(e.target.checked)}
+            onChange={(e) => {
+              isMaterialTypeChangeRef.current = true;
+              setOnlyAbnormal(e.target.checked);
+            }}
             className="hidden"
           />
           <div className={`w-3 h-3 rounded border ${onlyAbnormal ? 'bg-rose-500 border-rose-500' : 'border-slate-600 group-hover:border-rose-500'} flex items-center justify-center transition-colors`}>
@@ -1044,7 +1207,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
               return (
             <div className={`grid ${
               validMoldEntries.length === 4 ? 'grid-cols-4' :
-              validMoldEntries.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
+              validMoldEntries.length === 3 ? 'grid-cols-3' :
+              validMoldEntries.length === 2 ? 'grid-cols-2' : 'grid-cols-1'
             } gap-1.5 my-2 flex-1`}>
               {validMoldEntries.map(([pos, mold]: [string, any]) => {
                 return (
@@ -1106,15 +1270,35 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             <div className="bg-blue-900/30 p-6 border-b border-blue-500/30 flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-black text-blue-100 uppercase tracking-widest">设备指挥中心: {machineDetail?.machine_code || selectedMachine.machine_code}
-                   <button className="ml-3 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider bg-green-600/20 text-green-400 border border-green-500/30 hover:bg-green-600/30 transition-all">
-                    <i className="fas fa-check-circle"></i> 启用
-                  </button>
-                  <button className="ml-2 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 transition-all">
-                    <i className="fas fa-ban"></i> 停用
-                  </button>
+                  {machineDetail?.status !== 'NORMAL' && (
+                    <button
+                      onClick={() => isGuestMode ? handleGuestActionClick('启用设备') : (!machineDetail?.operation ? '' : handleOpenMachineStatusModal('NORMAL'))}
+                      disabled={!isGuestMode && !machineDetail?.operation}
+                      className={`ml-3 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
+                        (isGuestMode || !machineDetail?.operation)
+                          ? 'bg-slate-700 text-slate-500 border border-slate-600 cursor-not-allowed'
+                          : 'bg-green-600/20 text-green-400 border border-green-500/30 hover:bg-green-600/30'
+                      }`}
+                    >
+                      <i className="fas fa-check-circle"></i> 启用
+                    </button>
+                  )}
+                  {machineDetail?.status === 'NORMAL' && (
+                    <button
+                      onClick={() => isGuestMode ? handleGuestActionClick('停用设备') : (!machineDetail?.operation ? '' : handleOpenMachineStatusModal('DEACTIVATED'))}
+                      disabled={!isGuestMode && !machineDetail?.operation}
+                      className={`ml-3 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
+                        (isGuestMode || !machineDetail?.operation)
+                          ? 'bg-slate-700 text-slate-500 border border-slate-600 cursor-not-allowed'
+                          : 'bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30'
+                      }`}
+                    >
+                      <i className="fas fa-ban"></i> 停用
+                    </button>
+                  )}
                 </h2>
                 <div className="flex gap-4 mt-1">
-                  <p className="text-slate-500 text-xs font-mono">机器类型: {(machineDetail as any)?.part_no || selectedMachine.part_no || '---'}</p>
+                  <p className="text-slate-500 text-xs font-mono">机器类型: {machineDetail?.machine_type || '---'}</p>
                 </div>
                
               </div>
@@ -1178,7 +1362,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 const currentMold = machineDetail?.current_mold;
                 const mold = (selectedMachine.molds as any)[selectedMoldPos] || Object.values(selectedMachine.molds)[0];
                 if (!mold && !currentMold) return null;
-
+                // 从 current_mold 获取 mold_status 和 product_type，处理 null 情况
+                const moldStatus = currentMold?.mold_status || '--';
+                const productType = currentMold?.product_type || '--';
                 // 获取维护状态显示
                 const getMaintenanceStatusText = (status: string) => {
                   switch (status) {
@@ -1206,17 +1392,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           <h3 className="text-[10px] font-black text-blue-500 uppercase">模具状态 ({selectedMoldPos})</h3>
                           {isLoadingMachineDetail ? (
                             <span className="text-[10px] text-slate-500">加载中...</span>
-                          ) : currentMold ? (
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded ${getMaintenanceStatusColor(currentMold.maintenance_status)}`}>
-                              {getMaintenanceStatusText(currentMold.maintenance_status)}
-                            </span>
                           ) : (
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded ${
                               mold.status === 'EMPTY' ? 'bg-slate-500/20 text-slate-500' :
                               mold.color === 'green' ? 'bg-green-500/20 text-green-500' :
                               mold.color === 'blue' ? 'bg-blue-500/20 text-blue-500' :
                               mold.color === 'yellow' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-red-500/20 text-red-500'
-                            }`}>{mold.statusText}/启用</span>
+                            }`}>{mold.statusText}/{moldStatus}</span>
                           )}
                         </div>
                         <div className="grid grid-cols-2 gap-y-3 text-xs">
@@ -1244,7 +1426,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           <span className="text-slate-400">{(currentMold?.max_shots || mold.max_shots || 0).toLocaleString()}</span>
 
                            <span className="text-slate-400">产品类型:</span>
-                          <span className="text-slate-400">aaaaa</span>
+                          <span className="text-blue-200 font-bold">{productType}</span>
 
                           <span className="text-slate-400">寿命使用:</span>
                           <span className={(currentMold?.life_percent || mold.life_percent) >= 90 ? 'text-red-500 font-bold' : (currentMold?.life_percent || mold.life_percent) >= 75 ? 'text-yellow-500' : 'text-green-500'}>
@@ -1404,6 +1586,70 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 className="px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/20 transition-all"
               >
                 前往登录
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 设备状态切换弹窗 */}
+      {showMachineStatusModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-blue-500/50 rounded-2xl w-full max-w-md shadow-2xl">
+            {/* 弹窗头部 */}
+            <div className={`p-5 border-b border-blue-500/30 ${machineStatusAction === 'NORMAL' ? 'bg-green-900/20' : 'bg-red-900/20'}`}>
+              <h3 className={`text-lg font-black uppercase tracking-widest flex items-center gap-2 ${machineStatusAction === 'NORMAL' ? 'text-green-100' : 'text-red-100'}`}>
+                <i className={`fas ${machineStatusAction === 'NORMAL' ? 'fa-check-circle text-green-400' : 'fa-ban text-red-400'}`}></i>
+                {machineStatusAction === 'NORMAL' ? '启用设备' : '停用设备'}
+              </h3>
+            </div>
+            {/* 弹窗内容 */}
+            <div className="p-6 space-y-4">
+              <p className="text-slate-300 text-sm">
+                您正在<span className={machineStatusAction === 'NORMAL' ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
+                  {machineStatusAction === 'NORMAL' ? '启用' : '停用'}
+                </span>设备：<span className="text-blue-300 font-bold">{machineDetail?.machine_code || selectedMachine?.machine_code}</span>
+              </p>
+              <div className="space-y-2">
+                <label className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+                  操作原因 <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  value={machineStatusReason}
+                  onChange={(e) => setMachineStatusReason(e.target.value)}
+                  placeholder={`请输入${machineStatusAction === 'NORMAL' ? '启用' : '停用'}原因...`}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                  rows={3}
+                  disabled={isTogglingMachineStatus}
+                />
+              </div>
+              {machineStatusError && (
+                <div className="bg-red-900/30 border border-red-500/30 rounded-lg p-3 flex items-center gap-2">
+                  <i className="fas fa-exclamation-triangle text-red-400"></i>
+                  <span className="text-red-400 text-xs font-medium">{machineStatusError}</span>
+                </div>
+              )}
+            </div>
+            {/* 弹窗按钮 */}
+            <div className="p-5 border-t border-blue-500/30 flex gap-3 justify-end">
+              <button
+                onClick={handleCloseMachineStatusModal}
+                disabled={isTogglingMachineStatus}
+                className="px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleToggleMachineStatus}
+                disabled={isTogglingMachineStatus}
+                className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                  machineStatusAction === 'NORMAL'
+                    ? 'bg-green-600 hover:bg-green-500 shadow-green-900/20'
+                    : 'bg-red-600 hover:bg-red-500 shadow-red-900/20'
+                }`}
+              >
+                {isTogglingMachineStatus && <i className="fas fa-spinner fa-spin"></i>}
+                {isTogglingMachineStatus ? '处理中...' : '确认'}
               </button>
             </div>
           </div>
@@ -1849,6 +2095,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 </div>
                 <button
                   onClick={() => {
+                    isMaterialTypeChangeRef.current = true;
                     setShowTaskModal(false);
                     setSelectedMachine(null);
                     setSelectedMoldInfo(null);
@@ -1882,6 +2129,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 </div>
                 <button
                   onClick={() => {
+                    isMaterialTypeChangeRef.current = true;
                     setShowTaskModal(false);
                     setSelectedMachine(null);
                     setRefreshTrigger(prev => prev + 1);
@@ -1890,6 +2138,44 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 >
                   确认并关闭
                 </button>
+              </div>
+            ) : taskType === 'ACTIVATE' ? (
+              <div className="text-center">
+                <div className="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl animate-pulse">
+                  <i className="fas fa-check-circle"></i>
+                </div>
+                <h2 className="text-xl font-black text-white mb-2 uppercase tracking-widest">确认启用模具</h2>
+                <div className="bg-green-950/20 p-4 rounded-2xl border border-green-900/30 mb-8 text-left space-y-2">
+                  <p className="text-[10px] text-green-400 uppercase font-bold tracking-widest">确认事项</p>
+                  <p className="text-xs text-slate-300">
+                    您正在启用模具: <span className="text-green-400 font-bold">{(selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id}</span>
+                  </p>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    启用后，该模具将恢复到生产可用列表中，可以被安装到机台上进行生产。
+                  </p>
+                </div>
+                {enableMoldError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4 text-center">
+                    <p className="text-red-400 text-xs font-bold">{enableMoldError}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowTaskModal(false)}
+                    disabled={isEnablingMold}
+                    className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-black text-sm uppercase tracking-widest transition-all disabled:opacity-50"
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={handleEnableMold}
+                    disabled={isEnablingMold}
+                    className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-green-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isEnablingMold ? '启用中...' : '确认启用'}
+                  </button>
+                </div>
               </div>
             ) : taskType === 'DEACTIVATE' ? (
               <div className="text-center">
@@ -1929,6 +2215,28 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   </button>
                 </div>
               </div>
+            ) : taskType === 'ACTIVATE_SUCCESS' ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <i className="fas fa-check text-green-500 text-2xl"></i>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-4">模具已启用</h2>
+                <p className="text-slate-400 text-sm mb-10 leading-relaxed px-4">
+                  模具 {machineDetail?.current_mold?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id} 已标记为"已启用"状态。相关数据已同步至模具台账。
+                </p>
+                <button
+                  onClick={() => {
+                    isMaterialTypeChangeRef.current = true;
+                    setShowTaskModal(false);
+                    setSelectedMachine(null);
+                    setMachineDetail(null);
+                    setRefreshTrigger(prev => prev + 1);
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-500 py-3.5 rounded-xl font-bold text-sm transition-all"
+                >
+                  关闭并返回
+                </button>
+              </div>
             ) : taskType === 'DEACTIVATE_SUCCESS' ? (
               <div className="text-center py-8">
                 <div className="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -1940,6 +2248,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 </p>
                 <button
                   onClick={() => {
+                    isMaterialTypeChangeRef.current = true;
                     setShowTaskModal(false);
                     setSelectedMachine(null);
                     setMachineDetail(null);

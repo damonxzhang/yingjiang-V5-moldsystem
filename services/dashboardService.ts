@@ -47,6 +47,7 @@ export interface DashboardStatusRequest {
   department: string;           // 必填, 过滤部门: 大材料, 小材料, ALL (查看全部)
   only_alerts?: boolean;
   product_type?: string;
+  type?: string;                // 机台类型筛选
   machine_code?: string;
   mold_code?: string;
   only_producible?: boolean;
@@ -70,6 +71,7 @@ export async function fetchDashboardMachinesStatus(
     department: '大材料',         // 默认值为大材料
     only_alerts: false,
     product_type: '',
+    type: '',                     // 机台类型筛选，默认为空
     machine_code: '',
     mold_code: '',
     only_producible: false,
@@ -432,6 +434,53 @@ export async function disableMold(
   return data as DisableMoldResponse;
 }
 
+// 模具启用请求参数
+export interface EnableMoldRequest {
+  mold_id: string;
+  user_id: string;
+}
+
+// 模具启用响应
+export interface EnableMoldResponse {
+  code: number;
+  success: boolean;
+  message?: string;
+}
+
+/**
+ * 模具启用
+ */
+export async function enableMold(
+  params: EnableMoldRequest
+): Promise<EnableMoldResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody = {
+    ...params,
+    user_id: String(authData.user_id)
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/mold/enable`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '模具启用失败');
+  }
+
+  return data as EnableMoldResponse;
+}
+
 // 模具安装/卸载请求参数
 export interface MoldActionRequest {
   action: 'INSTALL' | 'UNINSTALL';
@@ -487,6 +536,8 @@ export interface MachineSlot {
   slot: string;
   short_name: string;
   status: string;
+  product_type: string;
+  mold_status: string;
 }
 
 // 当前模具详细信息
@@ -497,6 +548,8 @@ export interface CurrentMoldDetail {
   full_name: string;
   type: string;
   mold_category: string;
+  product_type: string;
+  mold_status: string;
   pending_tasks: number;
   current_shots: number;
   warning_threshold: number;
@@ -510,11 +563,14 @@ export interface CurrentMoldDetail {
 export interface MachineDetailResponse {
   machine_id: string;
   machine_code: string;
+  machine_type: string;
+  status: 'NORMAL' | 'DEACTIVATED' | 'ABNORMAL';
+  status_label?: string;
   product_type: string;
   batch_no: string;
   pending_tasks: number;
   slots: MachineSlot[];
-  current_mold: CurrentMoldDetail;
+  current_mold: CurrentMoldDetail | null;
   department: string;
   operation?: boolean;
 }
@@ -585,6 +641,44 @@ export interface MachineCodesResponse {
 export interface MachineCodeOption {
   machine_id: number;
   machine_code: string;
+}
+
+/**
+ * 获取机台类型列表
+ */
+export async function fetchMachineTypes(department: string = 'ALL'): Promise<string[]> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/machines/types`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authData.token}`
+      },
+      body: JSON.stringify({
+        department: department
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.code === 200 && Array.isArray(data.data)) {
+      return data.data as string[];
+    }
+
+    if (Array.isArray(data)) {
+      return data as string[];
+    }
+
+    return [];
+  } catch (error) {
+    console.error('获取机台类型列表失败:', error);
+    return [];
+  }
 }
 
 /**
@@ -693,6 +787,56 @@ export async function fetchMachineTodoList(
   return [];
 }
 
+// 设备状态切换请求参数
+export interface ToggleMachineStatusRequest {
+  machine_id: string;
+  status: 'NORMAL' | 'DEACTIVATED' | 'ABNORMAL';
+  user_id?: string;
+  reason?: string;
+}
+
+// 设备状态切换响应
+export interface ToggleMachineStatusResponse {
+  code: number;
+  success: boolean;
+  message?: string;
+  data?: any;
+}
+
+/**
+ * 切换设备状态（启用/停用/异常）
+ */
+export async function toggleMachineStatus(
+  params: ToggleMachineStatusRequest
+): Promise<ToggleMachineStatusResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody: ToggleMachineStatusRequest = {
+    ...params,
+    user_id: params.user_id || String(authData.user_id)
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/machine/toggle-status`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '设备状态切换失败');
+  }
+
+  return data as ToggleMachineStatusResponse;
+}
+
 /**
  * Dashboard 服务
  */
@@ -700,9 +844,12 @@ export const DashboardService = {
   fetchDashboardMachinesStatus,
   fetchMachineDetail,
   fetchMachineCodes,
+  fetchMachineTypes,
   createMaintenanceTask,
   createRepairTask,
   disableMold,
+  enableMold,
   moldAction,
-  fetchMachineTodoList
+  fetchMachineTodoList,
+  toggleMachineStatus
 };
