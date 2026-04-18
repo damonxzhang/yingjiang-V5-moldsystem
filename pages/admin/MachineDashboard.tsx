@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, EnableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineCodeOption, MachineTodo } from '../../services/dashboardService';
+import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, EnableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineCodeOption, MachineTodo, ToggleMachineStatusRequest } from '../../services/dashboardService';
 import { AuthService } from '../../services/authService';
 
 interface MachineDashboardProps {
@@ -85,6 +85,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   // 登录提示弹窗状态
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [loginPromptAction, setLoginPromptAction] = useState('');
+
+  // 设备状态切换弹窗状态
+  const [showMachineStatusModal, setShowMachineStatusModal] = useState(false);
+  const [machineStatusAction, setMachineStatusAction] = useState<'NORMAL' | 'DEACTIVATED' | 'ABNORMAL' | null>(null);
+  const [machineStatusReason, setMachineStatusReason] = useState('');
+  const [isTogglingMachineStatus, setIsTogglingMachineStatus] = useState(false);
+  const [machineStatusError, setMachineStatusError] = useState('');
 
   // 筛选状态
   const [filterProduct, setFilterProduct] = useState('');
@@ -410,6 +417,62 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     AuthService.logout();
     // 刷新页面回到登录页
     window.location.href = '/';
+  };
+
+  // 处理打开设备状态切换弹窗
+  const handleOpenMachineStatusModal = (action: 'NORMAL' | 'DEACTIVATED' | 'ABNORMAL') => {
+    setMachineStatusAction(action);
+    setMachineStatusReason('');
+    setMachineStatusError('');
+    setShowMachineStatusModal(true);
+  };
+
+  // 处理关闭设备状态切换弹窗
+  const handleCloseMachineStatusModal = () => {
+    setShowMachineStatusModal(false);
+    setMachineStatusAction(null);
+    setMachineStatusReason('');
+    setMachineStatusError('');
+  };
+
+  // 处理设备状态切换
+  const handleToggleMachineStatus = async () => {
+    if (!machineDetail?.machine_id || !machineStatusAction) {
+      setMachineStatusError('缺少必要的参数');
+      return;
+    }
+
+    if (!machineStatusReason.trim()) {
+      setMachineStatusError('请输入原因');
+      return;
+    }
+
+    setIsTogglingMachineStatus(true);
+    setMachineStatusError('');
+
+    try {
+      const response = await DashboardService.toggleMachineStatus({
+        machine_id: machineDetail.machine_id,
+        status: machineStatusAction,
+        reason: machineStatusReason.trim()
+      });
+
+      if (response?.code === 200) {
+        // 关闭弹窗
+        handleCloseMachineStatusModal();
+        // 刷新机台详情
+        await handleSlotChange(selectedMoldPos);
+        // 刷新看板数据
+        await refreshDashboardData();
+        alert(machineStatusAction === 'NORMAL' ? '设备启用成功' : '设备停用成功');
+      } else {
+        setMachineStatusError(response.message || '操作失败');
+      }
+    } catch (error: any) {
+      setMachineStatusError(error.message || '操作失败');
+    } finally {
+      setIsTogglingMachineStatus(false);
+    }
   };
 
   const handleAction = (type: string) => {
@@ -1207,12 +1270,32 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             <div className="bg-blue-900/30 p-6 border-b border-blue-500/30 flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-black text-blue-100 uppercase tracking-widest">设备指挥中心: {machineDetail?.machine_code || selectedMachine.machine_code}
-                   <button className="ml-3 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider bg-green-600/20 text-green-400 border border-green-500/30 hover:bg-green-600/30 transition-all">
-                    <i className="fas fa-check-circle"></i> 启用
-                  </button>
-                  <button className="ml-2 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 transition-all">
-                    <i className="fas fa-ban"></i> 停用
-                  </button>
+                  {machineDetail?.status !== 'NORMAL' && (
+                    <button
+                      onClick={() => isGuestMode ? handleGuestActionClick('启用设备') : (!machineDetail?.operation ? '' : handleOpenMachineStatusModal('NORMAL'))}
+                      disabled={!isGuestMode && !machineDetail?.operation}
+                      className={`ml-3 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
+                        (isGuestMode || !machineDetail?.operation)
+                          ? 'bg-slate-700 text-slate-500 border border-slate-600 cursor-not-allowed'
+                          : 'bg-green-600/20 text-green-400 border border-green-500/30 hover:bg-green-600/30'
+                      }`}
+                    >
+                      <i className="fas fa-check-circle"></i> 启用
+                    </button>
+                  )}
+                  {machineDetail?.status === 'NORMAL' && (
+                    <button
+                      onClick={() => isGuestMode ? handleGuestActionClick('停用设备') : (!machineDetail?.operation ? '' : handleOpenMachineStatusModal('DEACTIVATED'))}
+                      disabled={!isGuestMode && !machineDetail?.operation}
+                      className={`ml-3 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
+                        (isGuestMode || !machineDetail?.operation)
+                          ? 'bg-slate-700 text-slate-500 border border-slate-600 cursor-not-allowed'
+                          : 'bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30'
+                      }`}
+                    >
+                      <i className="fas fa-ban"></i> 停用
+                    </button>
+                  )}
                 </h2>
                 <div className="flex gap-4 mt-1">
                   <p className="text-slate-500 text-xs font-mono">机器类型: {machineDetail?.machine_type || '---'}</p>
@@ -1279,7 +1362,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 const currentMold = machineDetail?.current_mold;
                 const mold = (selectedMachine.molds as any)[selectedMoldPos] || Object.values(selectedMachine.molds)[0];
                 if (!mold && !currentMold) return null;
-                let slot_status = machineDetail?.slots?.find(s => s.slot === selectedMoldPos)?.mold_status || '---'
+                // 从 current_mold 获取 mold_status 和 product_type，处理 null 情况
+                const moldStatus = currentMold?.mold_status || '--';
+                const productType = currentMold?.product_type || '--';
                 // 获取维护状态显示
                 const getMaintenanceStatusText = (status: string) => {
                   switch (status) {
@@ -1313,7 +1398,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                               mold.color === 'green' ? 'bg-green-500/20 text-green-500' :
                               mold.color === 'blue' ? 'bg-blue-500/20 text-blue-500' :
                               mold.color === 'yellow' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-red-500/20 text-red-500'
-                            }`}>{mold.statusText}/{slot_status}</span>
+                            }`}>{mold.statusText}/{moldStatus}</span>
                           )}
                         </div>
                         <div className="grid grid-cols-2 gap-y-3 text-xs">
@@ -1341,7 +1426,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           <span className="text-slate-400">{(currentMold?.max_shots || mold.max_shots || 0).toLocaleString()}</span>
 
                            <span className="text-slate-400">产品类型:</span>
-                          <span className="text-blue-200 font-bold">{machineDetail?.slots?.find(s => s.slot === selectedMoldPos)?.product_type || '---'}</span>
+                          <span className="text-blue-200 font-bold">{productType}</span>
 
                           <span className="text-slate-400">寿命使用:</span>
                           <span className={(currentMold?.life_percent || mold.life_percent) >= 90 ? 'text-red-500 font-bold' : (currentMold?.life_percent || mold.life_percent) >= 75 ? 'text-yellow-500' : 'text-green-500'}>
@@ -1501,6 +1586,70 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 className="px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/20 transition-all"
               >
                 前往登录
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 设备状态切换弹窗 */}
+      {showMachineStatusModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-blue-500/50 rounded-2xl w-full max-w-md shadow-2xl">
+            {/* 弹窗头部 */}
+            <div className={`p-5 border-b border-blue-500/30 ${machineStatusAction === 'NORMAL' ? 'bg-green-900/20' : 'bg-red-900/20'}`}>
+              <h3 className={`text-lg font-black uppercase tracking-widest flex items-center gap-2 ${machineStatusAction === 'NORMAL' ? 'text-green-100' : 'text-red-100'}`}>
+                <i className={`fas ${machineStatusAction === 'NORMAL' ? 'fa-check-circle text-green-400' : 'fa-ban text-red-400'}`}></i>
+                {machineStatusAction === 'NORMAL' ? '启用设备' : '停用设备'}
+              </h3>
+            </div>
+            {/* 弹窗内容 */}
+            <div className="p-6 space-y-4">
+              <p className="text-slate-300 text-sm">
+                您正在<span className={machineStatusAction === 'NORMAL' ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
+                  {machineStatusAction === 'NORMAL' ? '启用' : '停用'}
+                </span>设备：<span className="text-blue-300 font-bold">{machineDetail?.machine_code || selectedMachine?.machine_code}</span>
+              </p>
+              <div className="space-y-2">
+                <label className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+                  操作原因 <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  value={machineStatusReason}
+                  onChange={(e) => setMachineStatusReason(e.target.value)}
+                  placeholder={`请输入${machineStatusAction === 'NORMAL' ? '启用' : '停用'}原因...`}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                  rows={3}
+                  disabled={isTogglingMachineStatus}
+                />
+              </div>
+              {machineStatusError && (
+                <div className="bg-red-900/30 border border-red-500/30 rounded-lg p-3 flex items-center gap-2">
+                  <i className="fas fa-exclamation-triangle text-red-400"></i>
+                  <span className="text-red-400 text-xs font-medium">{machineStatusError}</span>
+                </div>
+              )}
+            </div>
+            {/* 弹窗按钮 */}
+            <div className="p-5 border-t border-blue-500/30 flex gap-3 justify-end">
+              <button
+                onClick={handleCloseMachineStatusModal}
+                disabled={isTogglingMachineStatus}
+                className="px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleToggleMachineStatus}
+                disabled={isTogglingMachineStatus}
+                className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                  machineStatusAction === 'NORMAL'
+                    ? 'bg-green-600 hover:bg-green-500 shadow-green-900/20'
+                    : 'bg-red-600 hover:bg-red-500 shadow-red-900/20'
+                }`}
+              >
+                {isTogglingMachineStatus && <i className="fas fa-spinner fa-spin"></i>}
+                {isTogglingMachineStatus ? '处理中...' : '确认'}
               </button>
             </div>
           </div>

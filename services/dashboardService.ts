@@ -548,6 +548,8 @@ export interface CurrentMoldDetail {
   full_name: string;
   type: string;
   mold_category: string;
+  product_type: string;
+  mold_status: string;
   pending_tasks: number;
   current_shots: number;
   warning_threshold: number;
@@ -562,11 +564,13 @@ export interface MachineDetailResponse {
   machine_id: string;
   machine_code: string;
   machine_type: string;
+  status: 'NORMAL' | 'DEACTIVATED' | 'ABNORMAL';
+  status_label?: string;
   product_type: string;
   batch_no: string;
   pending_tasks: number;
   slots: MachineSlot[];
-  current_mold: CurrentMoldDetail;
+  current_mold: CurrentMoldDetail | null;
   department: string;
   operation?: boolean;
 }
@@ -783,6 +787,56 @@ export async function fetchMachineTodoList(
   return [];
 }
 
+// 设备状态切换请求参数
+export interface ToggleMachineStatusRequest {
+  machine_id: string;
+  status: 'NORMAL' | 'DEACTIVATED' | 'ABNORMAL';
+  user_id?: string;
+  reason?: string;
+}
+
+// 设备状态切换响应
+export interface ToggleMachineStatusResponse {
+  code: number;
+  success: boolean;
+  message?: string;
+  data?: any;
+}
+
+/**
+ * 切换设备状态（启用/停用/异常）
+ */
+export async function toggleMachineStatus(
+  params: ToggleMachineStatusRequest
+): Promise<ToggleMachineStatusResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody: ToggleMachineStatusRequest = {
+    ...params,
+    user_id: params.user_id || String(authData.user_id)
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/machine/toggle-status`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '设备状态切换失败');
+  }
+
+  return data as ToggleMachineStatusResponse;
+}
+
 /**
  * Dashboard 服务
  */
@@ -796,5 +850,6 @@ export const DashboardService = {
   disableMold,
   enableMold,
   moldAction,
-  fetchMachineTodoList
+  fetchMachineTodoList,
+  toggleMachineStatus
 };
