@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineCodeOption, MachineTodo } from '../../services/dashboardService';
+import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, EnableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineCodeOption, MachineTodo } from '../../services/dashboardService';
 import { AuthService } from '../../services/authService';
 
 interface MachineDashboardProps {
@@ -61,6 +61,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [isDisablingMold, setIsDisablingMold] = useState(false);
   // 模具停用错误信息
   const [disableMoldError, setDisableMoldError] = useState<string>('');
+  // 模具启用加载状态
+  const [isEnablingMold, setIsEnablingMold] = useState(false);
+  // 模具启用错误信息
+  const [enableMoldError, setEnableMoldError] = useState<string>('');
   // 模具安装加载状态
   const [isInstallingMold, setIsInstallingMold] = useState(false);
   // 模具卸载加载状态
@@ -393,6 +397,14 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       // 重置错误状态
       setMaintenanceError('');
     }
+    if (type === 'ACTIVATE') {
+      // 重置启用错误状态
+      setEnableMoldError('');
+    }
+    if (type === 'DEACTIVATE') {
+      // 重置停用错误状态
+      setDisableMoldError('');
+    }
     setTaskType(type);
     setShowTaskModal(true);
   };
@@ -539,6 +551,42 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       setDisableMoldError(error.message || '模具停用失败');
     } finally {
       setIsDisablingMold(false);
+    }
+  };
+
+  // 处理模具启用
+  const handleEnableMold = async () => {
+    debugger
+    if (!selectedMachine || !selectedMoldPos) {
+      setEnableMoldError('请选择机台和模具位置');
+      return;
+    }
+
+    // 优先使用 machineDetail 中的数据
+    if (!machineDetail?.current_mold?.mold_id) {
+      setEnableMoldError('未找到对应的模具信息');
+      return;
+    }
+
+    setIsEnablingMold(true);
+    setEnableMoldError('');
+
+    try {
+      const requestData = {
+        mold_id: machineDetail.current_mold.mold_id
+      };
+
+      const response = await DashboardService.enableMold(requestData as EnableMoldRequest);
+
+      if (response?.code === 200) {
+        setTaskType('ACTIVATE_SUCCESS');
+      } else {
+        setEnableMoldError(response.message || '模具启用失败');
+      }
+    } catch (error: any) {
+      setEnableMoldError(error.message || '模具启用失败');
+    } finally {
+      setIsEnablingMold(false);
     }
   };
 
@@ -1919,6 +1967,44 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   确认并关闭
                 </button>
               </div>
+            ) : taskType === 'ACTIVATE' ? (
+              <div className="text-center">
+                <div className="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl animate-pulse">
+                  <i className="fas fa-check-circle"></i>
+                </div>
+                <h2 className="text-xl font-black text-white mb-2 uppercase tracking-widest">确认启用模具</h2>
+                <div className="bg-green-950/20 p-4 rounded-2xl border border-green-900/30 mb-8 text-left space-y-2">
+                  <p className="text-[10px] text-green-400 uppercase font-bold tracking-widest">确认事项</p>
+                  <p className="text-xs text-slate-300">
+                    您正在启用模具: <span className="text-green-400 font-bold">{(selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id}</span>
+                  </p>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    启用后，该模具将恢复到生产可用列表中，可以被安装到机台上进行生产。
+                  </p>
+                </div>
+                {enableMoldError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4 text-center">
+                    <p className="text-red-400 text-xs font-bold">{enableMoldError}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowTaskModal(false)}
+                    disabled={isEnablingMold}
+                    className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-black text-sm uppercase tracking-widest transition-all disabled:opacity-50"
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={handleEnableMold}
+                    disabled={isEnablingMold}
+                    className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-green-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isEnablingMold ? '启用中...' : '确认启用'}
+                  </button>
+                </div>
+              </div>
             ) : taskType === 'DEACTIVATE' ? (
               <div className="text-center">
                 <div className="w-20 h-20 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl animate-pulse">
@@ -1956,6 +2042,28 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                     {isDisablingMold ? '停用中...' : '确认停用'}
                   </button>
                 </div>
+              </div>
+            ) : taskType === 'ACTIVATE_SUCCESS' ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <i className="fas fa-check text-green-500 text-2xl"></i>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-4">模具已启用</h2>
+                <p className="text-slate-400 text-sm mb-10 leading-relaxed px-4">
+                  模具 {machineDetail?.current_mold?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_code || (selectedMachine?.molds as any)[selectedMoldPos]?.mold_id} 已标记为"已启用"状态。相关数据已同步至模具台账。
+                </p>
+                <button
+                  onClick={() => {
+                    isMaterialTypeChangeRef.current = true;
+                    setShowTaskModal(false);
+                    setSelectedMachine(null);
+                    setMachineDetail(null);
+                    setRefreshTrigger(prev => prev + 1);
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-500 py-3.5 rounded-xl font-bold text-sm transition-all"
+                >
+                  关闭并返回
+                </button>
               </div>
             ) : taskType === 'DEACTIVATE_SUCCESS' ? (
               <div className="text-center py-8">

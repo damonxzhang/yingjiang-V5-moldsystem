@@ -432,6 +432,53 @@ export async function disableMold(
   return data as DisableMoldResponse;
 }
 
+// 模具启用请求参数
+export interface EnableMoldRequest {
+  mold_id: string;
+  user_id: string;
+}
+
+// 模具启用响应
+export interface EnableMoldResponse {
+  code: number;
+  success: boolean;
+  message?: string;
+}
+
+/**
+ * 模具启用
+ */
+export async function enableMold(
+  params: EnableMoldRequest
+): Promise<EnableMoldResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  const requestBody = {
+    ...params,
+    user_id: String(authData.user_id)
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/mold/enable`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '模具启用失败');
+  }
+
+  return data as EnableMoldResponse;
+}
+
 // 模具安装/卸载请求参数
 export interface MoldActionRequest {
   action: 'INSTALL' | 'UNINSTALL';
@@ -703,6 +750,7 @@ export const DashboardService = {
   createMaintenanceTask,
   createRepairTask,
   disableMold,
+  enableMold,
   moldAction,
   fetchMachineTodoList
 };
