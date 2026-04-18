@@ -17,7 +17,7 @@ export const STATUS_LABELS: Record<string, string> = {
   MAINTENANCE: '保养中',
   REPAIR: '维修中',
   PENDING_BUYOFF: '待BUYOFF',
-  SCRAPPED: '已报废',
+  SCRAPPED: '已停用',
   DEACTIVATED: '已停用',
 };
 
