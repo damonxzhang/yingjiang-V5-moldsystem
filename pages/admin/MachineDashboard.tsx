@@ -1342,7 +1342,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           <span className="text-slate-400">{(currentMold?.max_shots || mold.max_shots || 0).toLocaleString()}</span>
 
                            <span className="text-slate-400">产品类型:</span>
-                          <span className="text-slate-400">aaaaa</span>
+                          <span className="text-blue-200 font-bold">{machineDetail?.slots?.find(s => s.slot === selectedMoldPos)?.product_type || '---'}</span>
 
                           <span className="text-slate-400">寿命使用:</span>
                           <span className={(currentMold?.life_percent || mold.life_percent) >= 90 ? 'text-red-500 font-bold' : (currentMold?.life_percent || mold.life_percent) >= 75 ? 'text-yellow-500' : 'text-green-500'}>
