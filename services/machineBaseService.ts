@@ -57,7 +57,7 @@ export async function fetchMachineBaseList(
   }
 
   const requestBody = {
-    department: params.department || 'ALL',
+    department:authData.department || params.department ||  'ALL',
     machine_code: params.machine_code || '',
     status: params.status || '',
     page: params.page || 1,
