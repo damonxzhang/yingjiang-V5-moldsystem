@@ -67,7 +67,8 @@ function mapApiMoldToFrontend(apiMold: MoldListItem): Mold {
     productType: apiMold.product_type,   // mold.productType -> product_type
     department: apiMold.department === '大材料' ? '大材料' : '小材料',
     maintenanceCycle: apiMold.maintenance_cycle,  // mold.maintenanceCycle -> maintenance_cycle
-    maintenanceStartTime: apiMold.start_time       // mold.maintenanceStartTime -> start_time
+    maintenanceStartTime: apiMold.start_time,      // mold.maintenanceStartTime -> start_time
+    moldStatus: apiMold.mold_status                // mold.moldStatus -> mold_status (启用/停用)
   };
 }
 
@@ -251,7 +252,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
       if (response.code === 200) {
         alert(response.data.message || (isActivate ? '启用成功' : '停用成功'));
         // 只更新该条数据状态
-        setMolds(molds.map(m => m.id === id ? { ...m, status: isActivate ? MoldStatus.Idle : MoldStatus.Deactivated } : m));
+        setMolds(molds.map(m => m.id === id ? { ...m, status: isActivate ? MoldStatus.Idle : MoldStatus.Deactivated, moldStatus: isActivate ? '启用' : '停用' } : m));
       } else {
         alert(response.message || (isActivate ? '启用失败' : '停用失败'));
       }
@@ -412,11 +413,9 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
             className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
             <option value="">全部状态</option>
-            <option value="IDLE">空闲</option>
             <option value="IN_USE">使用中</option>
             <option value="MAINTENANCE">保养中</option>
             <option value="REPAIR">维修中</option>
-            <option value="DEACTIVATED">已停用</option>
             <option value="SCRAP">已停用</option>
           </select>
         </div>
@@ -535,7 +534,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
                 </td>
                 {!isAuditMode && (
                   <td className="px-4 py-4 text-center">
-                    {mold.status === MoldStatus.Deactivated ? (
+                    {mold.moldStatus === '停用' ? (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
                         <i className="fas fa-times-circle"></i> 已失效
                       </span>
@@ -556,7 +555,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
                     <button onClick={() => handleViewBOM(mold)} className="text-indigo-600 p-2 hover:bg-indigo-50 rounded-lg transition-colors" title="查看 BOM 详情">
                       <i className="fas fa-sitemap mr-1"></i> BOM
                     </button>
-                    {mold.status !== MoldStatus.Deactivated ? (
+                    {mold.moldStatus !== '停用' ? (
                       <button
                         onClick={() => handleToggleStatus(mold.id, 'deactivate')}
                         className="text-red-500 p-2 hover:bg-red-50 rounded-lg transition-colors"
