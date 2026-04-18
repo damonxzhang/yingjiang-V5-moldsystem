@@ -1216,7 +1216,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                               mold.color === 'green' ? 'bg-green-500/20 text-green-500' :
                               mold.color === 'blue' ? 'bg-blue-500/20 text-blue-500' :
                               mold.color === 'yellow' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-red-500/20 text-red-500'
-                            }`}>{mold.statusText}</span>
+                            }`}>{mold.statusText}/启用</span>
                           )}
                         </div>
                         <div className="grid grid-cols-2 gap-y-3 text-xs">
