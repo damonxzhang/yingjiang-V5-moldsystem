@@ -1392,12 +1392,12 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           {isLoadingMachineDetail ? (
                             <span className="text-[10px] text-slate-500">加载中...</span>
                           ) : (
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded ${
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded whitespace-nowrap inline-flex items-center ${
                               mold.status === 'EMPTY' ? 'bg-slate-500/20 text-slate-500' :
                               mold.color === 'green' ? 'bg-green-500/20 text-green-500' :
                               mold.color === 'blue' ? 'bg-blue-500/20 text-blue-500' :
                               mold.color === 'yellow' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-red-500/20 text-red-500'
-                            }`}>{mold.statusText}/{moldStatus}</span>
+                            }`}>{mold.statusText}/<span className={`whitespace-nowrap inline-block align-middle ${moldStatus === '停用' ? 'text-red-500' : moldStatus === '启用' ? 'text-green-500' : ''}`}>{moldStatus}</span></span>
                           )}
                         </div>
                         <div className="grid grid-cols-2 gap-y-3 text-xs">
