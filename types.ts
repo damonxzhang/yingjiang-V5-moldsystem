@@ -136,6 +136,9 @@ export interface Mold {
 
   // API 原始 mold_id，用于调用详情接口
   moldId?: number;
+  
+  // 模具启用状态 (启用 / 停用)，对应 API 的 mold_status 字段
+  moldStatus?: string;
 }
 
 export interface WorkOrderSpare {
