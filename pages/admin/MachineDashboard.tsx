@@ -925,6 +925,23 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
           </select>
         </div>
 
+
+
+<div className="flex items-center gap-2">
+          <span className="text-[10px] font-black text-blue-500 uppercase">机器类型:</span>
+          <select 
+            value={filterProduct}
+            onChange={(e) => setFilterProduct(e.target.value)}
+            className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[10px] text-blue-100 focus:outline-none focus:border-blue-500"
+          >
+            <option value="">所有</option>
+            {Array.isArray(productOptions) && productOptions.map(p => <option key={p.machine_id} value={p.machine_code}>{p.machine_code}</option>)}
+          </select>
+        </div>
+
+
+
+
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-blue-500 uppercase">Machine:</span>
           <input 
@@ -1088,10 +1105,18 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
           <div className="bg-slate-900 border border-blue-500/50 rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl">
             <div className="bg-blue-900/30 p-6 border-b border-blue-500/30 flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-black text-blue-100 uppercase tracking-widest">设备指挥中心: {machineDetail?.machine_code || selectedMachine.machine_code}</h2>
+                <h2 className="text-xl font-black text-blue-100 uppercase tracking-widest">设备指挥中心: {machineDetail?.machine_code || selectedMachine.machine_code}
+                   <button className="ml-3 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider bg-green-600/20 text-green-400 border border-green-500/30 hover:bg-green-600/30 transition-all">
+                    <i className="fas fa-check-circle"></i> 启用
+                  </button>
+                  <button className="ml-2 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 transition-all">
+                    <i className="fas fa-ban"></i> 停用
+                  </button>
+                </h2>
                 <div className="flex gap-4 mt-1">
-                  <p className="text-slate-500 text-xs font-mono">批次号: {(machineDetail as any)?.part_no || selectedMachine.part_no || '---'}</p>
+                  <p className="text-slate-500 text-xs font-mono">机器类型: {(machineDetail as any)?.part_no || selectedMachine.part_no || '---'}</p>
                 </div>
+               
               </div>
               <button onClick={() => setSelectedMachine(null)} className="text-blue-400 hover:text-white transition-colors">
                 <i className="fas fa-times text-2xl"></i>
@@ -1218,6 +1243,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           <span className="text-slate-400">最大寿命:</span>
                           <span className="text-slate-400">{(currentMold?.max_shots || mold.max_shots || 0).toLocaleString()}</span>
 
+                           <span className="text-slate-400">产品类型:</span>
+                          <span className="text-slate-400">aaaaa</span>
+
                           <span className="text-slate-400">寿命使用:</span>
                           <span className={(currentMold?.life_percent || mold.life_percent) >= 90 ? 'text-red-500 font-bold' : (currentMold?.life_percent || mold.life_percent) >= 75 ? 'text-yellow-500' : 'text-green-500'}>
                             {currentMold?.life_percent || mold.life_percent}%
@@ -1327,6 +1355,15 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                         }`}
                       >
                         <i className="fas fa-ban"></i> 模具停用
+                      </button>
+                      <button
+                        onClick={() => isGuestMode ? handleGuestActionClick('模具启用') : (!machineDetail?.operation ? '' : handleAction('ACTIVATE'))}
+                        disabled={(!isGuestMode && false) || !machineDetail?.operation}
+                        className={`w-full py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 mt-1 ${
+                           (isGuestMode || !machineDetail?.operation)  ? 'bg-slate-800/30 text-slate-600 border border-slate-700/50 cursor-not-allowed' : 'bg-green-600/20 text-green-400 border border-green-500/30 hover:bg-green-600/30 hover:text-green-300'
+                        }`}
+                      >
+                        <i className="fas fa-check-circle"></i> 模具启用
                       </button>
                     </div>
                   </div>
