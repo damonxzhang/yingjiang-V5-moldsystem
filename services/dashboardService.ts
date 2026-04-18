@@ -790,7 +790,7 @@ export async function fetchMachineTodoList(
 // 设备状态切换请求参数
 export interface ToggleMachineStatusRequest {
   machine_id: string;
-  status: 'NORMAL' | 'DEACTIVATED' | 'ABNORMAL';
+  status: 'NORMAL' | 'DISABLED';
   user_id?: string;
   reason?: string;
 }

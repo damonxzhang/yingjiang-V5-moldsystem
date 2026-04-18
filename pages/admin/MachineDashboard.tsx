@@ -88,7 +88,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
   // 设备状态切换弹窗状态
   const [showMachineStatusModal, setShowMachineStatusModal] = useState(false);
-  const [machineStatusAction, setMachineStatusAction] = useState<'NORMAL' | 'DEACTIVATED' | 'ABNORMAL' | null>(null);
+  const [machineStatusAction, setMachineStatusAction] = useState<'NORMAL' | 'DISABLED' | null>(null);
   const [machineStatusReason, setMachineStatusReason] = useState('');
   const [isTogglingMachineStatus, setIsTogglingMachineStatus] = useState(false);
   const [machineStatusError, setMachineStatusError] = useState('');
@@ -420,7 +420,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   };
 
   // 处理打开设备状态切换弹窗
-  const handleOpenMachineStatusModal = (action: 'NORMAL' | 'DEACTIVATED' | 'ABNORMAL') => {
+  const handleOpenMachineStatusModal = (action: 'NORMAL' | 'DISABLED') => {
     setMachineStatusAction(action);
     setMachineStatusReason('');
     setMachineStatusError('');
@@ -1284,7 +1284,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   )}
                   {machineDetail?.status === 'NORMAL' && (
                     <button
-                      onClick={() => isGuestMode ? handleGuestActionClick('停用设备') : (!machineDetail?.operation ? '' : handleOpenMachineStatusModal('DEACTIVATED'))}
+                      onClick={() => isGuestMode ? handleGuestActionClick('停用设备') : (!machineDetail?.operation ? '' : handleOpenMachineStatusModal('DISABLED'))}
                       disabled={!isGuestMode && !machineDetail?.operation}
                       className={`ml-3 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
                         (isGuestMode || !machineDetail?.operation)
