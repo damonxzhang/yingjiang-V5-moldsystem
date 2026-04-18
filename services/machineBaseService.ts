@@ -11,7 +11,7 @@ const API_BASE_URL = 'http://212.64.29.230:8087';
 export interface MachineBaseListItem {
   machine_id: number;
   machine_code: string;
-  status: 'NORMAL' | 'ABNORMAL' | 'MAINTENANCE' | 'STOPPED';
+  status: 'NORMAL' | 'DISABLED' | 'FAULT';
   location: string;
   type: string;
   part_no: string;

@@ -22,7 +22,7 @@ interface MachineBase {
   location: string;
   partNo: string;
   totalSlots: number;
-  status: 'NORMAL' | 'ABNORMAL' | 'MAINTENANCE' | 'STOPPED';
+  status: 'NORMAL' | 'DISABLED' | 'FAULT';
   createdAt: string;
 }
 
@@ -30,10 +30,9 @@ interface MachineBase {
  * 状态标签映射
  */
 const STATUS_LABELS: Record<string, string> = {
-  'NORMAL': '正常',
-  'ABNORMAL': '异常',
-  'MAINTENANCE': '维护中',
-  'STOPPED': '已停机'
+  'NORMAL': '启用',
+  'DISABLED': '禁用',
+  'FAULT': '异常'
 };
 
 /**
@@ -41,9 +40,8 @@ const STATUS_LABELS: Record<string, string> = {
  */
 const STATUS_COLORS: Record<string, string> = {
   'NORMAL': 'bg-green-100 text-green-700 border-green-200',
-  'ABNORMAL': 'bg-red-100 text-red-700 border-red-200',
-  'MAINTENANCE': 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  'STOPPED': 'bg-slate-100 text-slate-700 border-slate-200'
+  'DISABLED': 'bg-red-100 text-red-700 border-red-200',
+  'FAULT': 'bg-orange-100 text-orange-700 border-orange-200'
 };
 
 const ITEMS_PER_PAGE = 20;
@@ -346,10 +344,8 @@ const MachineBaseList: React.FC = () => {
             className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
             <option value="">全部状态</option>
-            <option value="NORMAL">正常</option>
-            <option value="ABNORMAL">异常</option>
-            <option value="MAINTENANCE">维护中</option>
-            <option value="STOPPED">已停机</option>
+            <option value="NORMAL">启用</option>
+            <option value="DISABLED">禁用</option>
           </select>
         </div>
         <div className="flex items-center gap-2">
@@ -613,10 +609,8 @@ const MachineBaseList: React.FC = () => {
                     className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-slate-50"
                   >
                     <option value="">请选择状态</option>
-                    <option value="NORMAL">正常</option>
-                    <option value="ABNORMAL">异常</option>
-                    <option value="MAINTENANCE">维护中</option>
-                    <option value="STOPPED">已停机</option>
+                    <option value="NORMAL">启用</option>
+                    <option value="DISABLED">禁用</option>
                   </select>
                 </div>
               </div>
