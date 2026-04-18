@@ -559,6 +559,7 @@ export interface CurrentMoldDetail {
 export interface MachineDetailResponse {
   machine_id: string;
   machine_code: string;
+  machine_type: string;
   product_type: string;
   batch_no: string;
   pending_tasks: number;

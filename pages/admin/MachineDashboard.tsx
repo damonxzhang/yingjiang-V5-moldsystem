@@ -1212,7 +1212,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   </button>
                 </h2>
                 <div className="flex gap-4 mt-1">
-                  <p className="text-slate-500 text-xs font-mono">机器类型: {(machineDetail as any)?.part_no || selectedMachine.part_no || '---'}</p>
+                  <p className="text-slate-500 text-xs font-mono">机器类型: {machineDetail?.machine_type || '---'}</p>
                 </div>
                
               </div>
