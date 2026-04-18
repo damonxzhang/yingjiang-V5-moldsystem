@@ -163,6 +163,7 @@
           "status": "NORMAL",
           "part_no": "BMD-01",
           "type": "MOLDING_MACHINE",
+          "product_type": "QFN-16",
           "mold_count": 4,
           "molds": [
             {
@@ -185,6 +186,7 @@
 * **请求体参数备注**:
   * `type`: 机台类型，可通过 `2.10` 接口获取可选列表。
 * **返回值参数备注**:
+  * `product_type`: 机台当前生产的产品类型（取自第一个已安装并启用的模具）。
   * `pending_todos_count`: 机台待办清单条数（来自 `MachineTodos` 表的未读记录数）。
 
 ### 2.10 后台接口->设备生产看板->获取机台类型列表
@@ -451,8 +453,45 @@
 ## 3. 模具机台绑定 (Mold-Machine Binding)
 
 ### 3.1 后台接口->模具机台绑定->左侧选择模具接口
-* **用途**: 获取当前闲置中的模具列表，用于绑定模台功能。
+* **用途**: 获取模具列表，支持模糊搜索及部门筛选，用于绑定模台功能。
 * **接口**: `POST /api/admin/dashboard/molds/available`
+* **请求体**:
+  ```json
+  {
+    "department": "ALL", // 必填, 部门名称 (如: 大材料, 小材料, ALL)
+    "mold_code": "" // 可选, 支持模具编号、名称、简称模糊查询
+  }
+  ```
+* **返回数据**:
+  ```json
+  {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "molds": [
+        {
+          "mold_id": 1,
+          "mold_code": "T-101",
+          "short_name": "T-101",
+          "department": "大材料",
+          "status": "IDLE",
+          "location": "CAB-A01",
+          "cabinet_code": "A123456",
+          "package_type": "QFN",
+          "current_shots": "123,456",
+          "life_limit": "500,000",
+          "progress": 24.7,
+          "can_install": true
+        }
+      ]
+    }
+  }
+  ```
+* **逻辑说明**:
+  * 如果未提供 `mold_code` 搜索词，接口默认仅返回 `status = 'IDLE'` (闲置中) 的模具。
+  * 如果提供了搜索词，将返回所有匹配的模具（模糊匹配 `mold_code`, `name`, `short_name`）。
+  * `can_install`: 标识模具当前是否可被绑定（仅 `IDLE` 状态为 true）。
+
 
 ### 3.2 后台接口->模具机台绑定->获取机台编号接口
 * **用途**: 获取所有已注册的机台编号及 ID。
@@ -577,7 +616,7 @@
   {
     "department": "ALL", // 必填, 部门名称 (如: 大材料, 小材料, ALL)
     "machine_code": "", // 可选, 机台编号模糊查询
-    "status": "", // 可选, 状态 (NORMAL, ABNORMAL, etc.)
+    "status": "", // 可选, 状态 (NORMAL: 启用, DISABLED: 禁用, FAULT: 异常)
     "page": 1,
     "page_size": 20
   }
@@ -605,6 +644,17 @@
     }
   }
   ```
+* **返回值参数备注**:
+  * `total`: 满足筛选条件的机台总记录数。
+  * `list`: 机台对象数组。
+    * `status`: 机台状态 (NORMAL: 启用, DISABLED: 禁用, FAULT: 异常)。
+    * `department`: 归属部门的显示名称。
+    * `total_slots`: 该机台配置的总槽位数量。
+    * `created_at`: 机台档案创建时间，格式为 `YYYY-MM-DD HH:mm:ss`。
+* **逻辑说明**:
+  * 接口默认会过滤掉 `status = 'DELETED'` (已逻辑删除) 的机台。
+  * 如果指定了 `status` 筛选参数，则按指定状态精确查询。
+  * `department` 参数支持模糊匹配部门名称。
 
 ### 8.2 后台接口->机台台账->获取机台详情
 * **用途**: 获取指定机台的详细档案参数。
