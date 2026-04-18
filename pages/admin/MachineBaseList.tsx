@@ -307,8 +307,7 @@ const MachineBaseList: React.FC = () => {
               setModalLoading(false);
               setCurrentMachine({
                 department: getUserDepartment() === 'ALL' ? '大材料' : getUserDepartment(),
-                status: 'NORMAL',
-                totalSlots: 4
+                status: 'NORMAL'
               });
             }}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-indigo-700 transition-colors"
@@ -352,10 +351,10 @@ const MachineBaseList: React.FC = () => {
             <option value="">全部状态</option>
             <option value="NORMAL">启用</option>
             <option value="DISABLED">停用</option>
-            <option value="FAULT">故障</option>
+            {/* <option value="FAULT">故障</option>
             <option value="WARNING">预警</option>
             <option value="CRITICAL">临界</option>
-            <option value="MAINTENANCE">维保中</option>
+            <option value="MAINTENANCE">维保中</option> */}
           </select>
         </div>
         <div className="flex items-center gap-2">
@@ -450,12 +449,6 @@ const MachineBaseList: React.FC = () => {
                         className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors"
                       >
                         编辑
-                      </button>
-                      <button
-                        onClick={() => handleDelete(machine.machineId)}
-                        className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors"
-                      >
-                        删除
                       </button>
                     </div>
                   </td>
@@ -600,17 +593,6 @@ const MachineBaseList: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">模台数量</label>
-                  <input
-                    type="number"
-                    value={currentMachine.totalSlots || ''}
-                    onChange={(e) => setCurrentMachine({ ...currentMachine, totalSlots: parseInt(e.target.value) || 0 })}
-                    disabled={modalMode === 'VIEW' || modalLoading}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-slate-50"
-                    placeholder="请输入模台数量"
-                  />
-                </div>
-                <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">状态</label>
                   <select
                     value={currentMachine.status || ''}
@@ -621,10 +603,10 @@ const MachineBaseList: React.FC = () => {
                     <option value="">请选择状态</option>
                     <option value="NORMAL">启用</option>
                     <option value="DISABLED">停用</option>
-                    <option value="FAULT">故障</option>
+                    {/* <option value="FAULT">故障</option>
                     <option value="WARNING">预警</option>
                     <option value="CRITICAL">临界</option>
-                    <option value="MAINTENANCE">维保中</option>
+                    <option value="MAINTENANCE">维保中</option> */}
                   </select>
                 </div>
               </div>
