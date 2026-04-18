@@ -1066,7 +1066,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       {/* Filter Bar */}
       <div className="bg-slate-900/60 border border-blue-500/20 rounded-xl p-2 mb-2 flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black text-blue-500 uppercase">Product:</span>
+          <span className="text-[10px] font-black text-blue-500 uppercase">产品类型:</span>
           <select
             value={filterProduct}
             onChange={(e) => {
@@ -1075,7 +1075,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             }}
             className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[10px] text-blue-100 focus:outline-none focus:border-blue-500"
           >
-            <option value="">All Products</option>
+            <option value="">所有</option>
             {Array.isArray(productOptions) && productOptions.map(p => <option key={p.machine_id} value={p.machine_code}>{p.machine_code}</option>)}
           </select>
         </div>
@@ -1101,7 +1101,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black text-blue-500 uppercase">Machine:</span>
+          <span className="text-[10px] font-black text-blue-500 uppercase">机器编号:</span>
           <input 
             type="text"
             placeholder="Search BMD..."
@@ -1112,7 +1112,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black text-blue-500 uppercase">Mold ID:</span>
+          <span className="text-[10px] font-black text-blue-500 uppercase">模具编号:</span>
           <input 
             type="text"
             placeholder="Search T..."
