@@ -701,3 +701,41 @@
     }
   }
   ```
+
+### 8.6 后台接口->机台台账->获取机台状态变更记录
+* **用途**: 查询指定机台的历史状态变更记录（启用/停用/异常）。
+* **接口**: `POST /api/admin/machine/status-history`
+* **请求体**:
+  ```json
+  {
+    "machine_id": "1", // 必填, 机台 ID
+    "page": 1, // 可选, 页码, 默认 1
+    "page_size": 10 // 可选, 每页条数, 默认 10
+  }
+  ```
+* **返回数据**:
+  ```json
+  {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "total": 15,
+      "items": [
+        {
+          "id": 1,
+          "machine_id": 1,
+          "machine_code": "MC-101",
+          "action": "ENABLE",
+          "reason": "正常启用",
+          "operator_id": 1,
+          "operator_name": "张三",
+          "created_at": "2026-04-18 10:00:00"
+        }
+      ],
+      "page": 1,
+      "page_size": 10
+    }
+  }
+  ```
+
+### 9. 模具管理 (Mold Management)
