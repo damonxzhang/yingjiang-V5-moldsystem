@@ -85,7 +85,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
     { id: 'maintenance_option_manage', name: '保养选项管理', icon: 'fa-wrench', permission: Permission.MAINTENANCE_OPTION_MANAGE },
     { id: 'repair_option_manage', name: '维修选项管理', icon: 'fa-toolbox', permission: Permission.REPAIR_OPTION_MANAGE },
     { id: 'machine_slot_config', name: '机台模台配置', icon: 'fa-microchip', permission: Permission.MACHINE_CONFIG },
-    { id: 'machine_base_list', name: '机台列表', icon: 'fa-server', permission: Permission.MACHINE_CONFIG },
+    { id: 'machine_base_list', name: '机台管理', icon: 'fa-server', permission: Permission.MACHINE_CONFIG },
     { id: 'machine_status_history', name: '机台启用日志', icon: 'fa-clock-rotate-left', permission: Permission.MACHINE_CONFIG },
     { id: 'role_manage', name: '角色权限管理', icon: 'fa-user-shield', permission: Permission.ROLE_MANAGE },
     { id: 'user_manage', name: '用户账号管理', icon: 'fa-users-gear', permission: Permission.USER_MANAGE },

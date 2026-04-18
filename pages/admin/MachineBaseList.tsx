@@ -398,7 +398,6 @@ const MachineBaseList: React.FC = () => {
                 <th className="px-4 py-4 font-bold">位置</th>
                 <th className="px-4 py-4 font-bold">机台类型</th>
                 <th className="px-4 py-4 font-bold">资产编号</th>
-                <th className="px-4 py-4 font-bold">模台数量</th>
                 <th className="px-4 py-4 font-bold">状态</th>
                 <th className="px-4 py-4 font-bold">创建时间</th>
                 <th className="px-4 py-4 font-bold text-right">操作</th>
@@ -423,9 +422,6 @@ const MachineBaseList: React.FC = () => {
                   </td>
                   <td className="px-4 py-4">
                     <span className="font-mono text-xs text-slate-500">{machine.partNo}</span>
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className="text-slate-600">{machine.totalSlots}</span>
                   </td>
                   <td className="px-4 py-4">
                     <span className={`px-2 py-1 rounded-md text-xs font-bold border ${STATUS_COLORS[machine.status]}`}>
