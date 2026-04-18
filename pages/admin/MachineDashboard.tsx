@@ -117,6 +117,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   }, []);
   // 用于防抖的定时器ref
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // 标记是否是材料类型切换（按钮点击不需要防抖，输入框需要防抖）
+  const isMaterialTypeChangeRef = useRef<boolean>(false);
 
   // 调用API获取看板数据
   useEffect(() => {
@@ -125,7 +127,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       clearTimeout(debounceTimerRef.current);
     }
 
-    // 设置防抖延迟（机器码和模具编号输入完成后500ms再请求）
+    // 根据是否是材料类型切换决定延迟时间
+    // 材料类型切换（按钮点击）使用 0ms，输入框使用 500ms 防抖
+    const delay = isMaterialTypeChangeRef.current ? 0 : 500;
+
     debounceTimerRef.current = setTimeout(async () => {
       try {
         const data = await DashboardService.fetchDashboardMachinesStatus({
@@ -140,7 +145,10 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       } catch (error) {
         console.error('获取看板数据失败:', error);
       }
-    }, 500);
+    }, delay);
+
+    // 重置标记
+    isMaterialTypeChangeRef.current = false;
 
     // 清理函数
     return () => {
@@ -621,6 +629,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       setShowTaskModal(true);
       setShowInventory(false);
       // 刷新数据
+      isMaterialTypeChangeRef.current = true;
       setRefreshTrigger(prev => prev + 1);
     } catch (error: any) {
       console.error('模具安装失败:', error);
@@ -879,6 +888,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             <button 
               onClick={() => {
                 if (currentMaterialType !== '大材料') {
+                  // 标记为材料类型切换，使用0ms延迟
+                  isMaterialTypeChangeRef.current = true;
                   setCurrentMaterialType('大材料');
                   // 触发数据刷新
                   setRefreshTrigger(prev => prev + 1);
@@ -891,6 +902,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             <button 
               onClick={() => {
                 if (currentMaterialType !== '小材料') {
+                  // 标记为材料类型切换，使用0ms延迟
+                  isMaterialTypeChangeRef.current = true;
                   setCurrentMaterialType('小材料');
                   // 触发数据刷新
                   setRefreshTrigger(prev => prev + 1);
@@ -915,9 +928,12 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       <div className="bg-slate-900/60 border border-blue-500/20 rounded-xl p-2 mb-2 flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-blue-500 uppercase">Product:</span>
-          <select 
+          <select
             value={filterProduct}
-            onChange={(e) => setFilterProduct(e.target.value)}
+            onChange={(e) => {
+              isMaterialTypeChangeRef.current = true;
+              setFilterProduct(e.target.value);
+            }}
             className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[10px] text-blue-100 focus:outline-none focus:border-blue-500"
           >
             <option value="">All Products</option>
@@ -929,9 +945,12 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
 <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-blue-500 uppercase">机器类型:</span>
-          <select 
+          <select
             value={filterProduct}
-            onChange={(e) => setFilterProduct(e.target.value)}
+            onChange={(e) => {
+              isMaterialTypeChangeRef.current = true;
+              setFilterProduct(e.target.value);
+            }}
             className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[10px] text-blue-100 focus:outline-none focus:border-blue-500"
           >
             <option value="">所有</option>
@@ -965,10 +984,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         </div>
 
         <label className="flex items-center gap-2 cursor-pointer group">
-          <input 
+          <input
             type="checkbox"
             checked={onlyProducible}
-            onChange={(e) => setOnlyProducible(e.target.checked)}
+            onChange={(e) => {
+              isMaterialTypeChangeRef.current = true;
+              setOnlyProducible(e.target.checked);
+            }}
             className="hidden"
           />
           <div className={`w-3 h-3 rounded border ${onlyProducible ? 'bg-blue-500 border-blue-500' : 'border-slate-600 group-hover:border-blue-500'} flex items-center justify-center transition-colors`}>
@@ -978,10 +1000,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         </label>
 
         <label className="flex items-center gap-2 cursor-pointer group">
-          <input 
+          <input
             type="checkbox"
             checked={onlyAbnormal}
-            onChange={(e) => setOnlyAbnormal(e.target.checked)}
+            onChange={(e) => {
+              isMaterialTypeChangeRef.current = true;
+              setOnlyAbnormal(e.target.checked);
+            }}
             className="hidden"
           />
           <div className={`w-3 h-3 rounded border ${onlyAbnormal ? 'bg-rose-500 border-rose-500' : 'border-slate-600 group-hover:border-rose-500'} flex items-center justify-center transition-colors`}>
@@ -1044,7 +1069,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
               return (
             <div className={`grid ${
               validMoldEntries.length === 4 ? 'grid-cols-4' :
-              validMoldEntries.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
+              validMoldEntries.length === 3 ? 'grid-cols-3' :
+              validMoldEntries.length === 2 ? 'grid-cols-2' : 'grid-cols-1'
             } gap-1.5 my-2 flex-1`}>
               {validMoldEntries.map(([pos, mold]: [string, any]) => {
                 return (
@@ -1849,6 +1875,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 </div>
                 <button
                   onClick={() => {
+                    isMaterialTypeChangeRef.current = true;
                     setShowTaskModal(false);
                     setSelectedMachine(null);
                     setSelectedMoldInfo(null);
@@ -1882,6 +1909,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 </div>
                 <button
                   onClick={() => {
+                    isMaterialTypeChangeRef.current = true;
                     setShowTaskModal(false);
                     setSelectedMachine(null);
                     setRefreshTrigger(prev => prev + 1);
@@ -1940,6 +1968,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 </p>
                 <button
                   onClick={() => {
+                    isMaterialTypeChangeRef.current = true;
                     setShowTaskModal(false);
                     setSelectedMachine(null);
                     setMachineDetail(null);
