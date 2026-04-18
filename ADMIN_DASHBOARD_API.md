@@ -686,7 +686,7 @@
   ```json
   {
     "machine_id": "1", // 必填, 机台 ID
-    "status": "NORMAL", // 必填, 状态 (NORMAL: 启用, DEACTIVATED: 禁用, ABNORMAL: 异常)
+    "status": "NORMAL", // 必填, 状态 (NORMAL: 启用, DISABLED: 禁用, FAULT: 异常)
     "user_id": "1", // 可选, 操作人 ID
     "reason": "手动停用" // 可选, 停用理由
   }
