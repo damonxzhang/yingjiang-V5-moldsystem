@@ -537,6 +537,7 @@ export interface MachineSlot {
   short_name: string;
   status: string;
   product_type: string;
+  mold_status: string;
 }
 
 // 当前模具详细信息

@@ -345,12 +345,11 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     const defaultSlot = availablePos.length > 0 ? availablePos[0] : 'P1';
     setSelectedMoldPos(defaultSlot as any);
 
-    // 调用 API 获取机台详情
+    // 调用 API 获取机台详情（不传 slot 参数，获取所有 slots 数据）
     setIsLoadingMachineDetail(true);
     try {
       const detail = await DashboardService.fetchMachineDetail({
-        machine_id: machine.machine_id,
-        slot: defaultSlot
+        machine_id: machine.machine_id
       });
        const authData = AuthService.getStoredAuth();
       if(detail.department != authData?.department){
@@ -384,7 +383,11 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         }else{
           detail.operation = true; // 可操作
         }
-        setMachineDetail(detail);
+        // 保留原有的 slots 数据，只更新 current_mold
+        setMachineDetail(prev => prev ? {
+          ...detail,
+          slots: prev.slots // 保留完整的 slots 数组
+        } : detail);
       } catch (error: any) {
         console.error('获取机台详情失败:', error);
         alert('获取机台详情失败: ' + (error.message || '未知错误'));
@@ -1276,7 +1279,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 const currentMold = machineDetail?.current_mold;
                 const mold = (selectedMachine.molds as any)[selectedMoldPos] || Object.values(selectedMachine.molds)[0];
                 if (!mold && !currentMold) return null;
-
+                let slot_status = machineDetail?.slots?.find(s => s.slot === selectedMoldPos)?.mold_status || '---'
                 // 获取维护状态显示
                 const getMaintenanceStatusText = (status: string) => {
                   switch (status) {
@@ -1304,17 +1307,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           <h3 className="text-[10px] font-black text-blue-500 uppercase">模具状态 ({selectedMoldPos})</h3>
                           {isLoadingMachineDetail ? (
                             <span className="text-[10px] text-slate-500">加载中...</span>
-                          ) : currentMold ? (
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded ${getMaintenanceStatusColor(currentMold.maintenance_status)}`}>
-                              {getMaintenanceStatusText(currentMold.maintenance_status)}
-                            </span>
                           ) : (
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded ${
                               mold.status === 'EMPTY' ? 'bg-slate-500/20 text-slate-500' :
                               mold.color === 'green' ? 'bg-green-500/20 text-green-500' :
                               mold.color === 'blue' ? 'bg-blue-500/20 text-blue-500' :
                               mold.color === 'yellow' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-red-500/20 text-red-500'
-                            }`}>{mold.statusText}/启用</span>
+                            }`}>{mold.statusText}/{slot_status}</span>
                           )}
                         </div>
                         <div className="grid grid-cols-2 gap-y-3 text-xs">
