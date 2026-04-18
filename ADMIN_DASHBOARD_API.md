@@ -534,8 +534,66 @@
 ## 5. 模具管理 (Mold Management)
 
 ### 5.1 后台接口->模具管理->模具台账
+
 * **用途**: 获取模具台账列表，支持部门、编号、状态筛选。
 * **接口**: `POST /api/admin/mold/list`
+* **请求体**:
+
+  ```json
+  {
+    "department": "ALL", // 必填, 部门名称 (如: 大材料, 小材料, ALL)
+    "mold_code": "", // 可选, 模具编号模糊查询
+    "status": "", // 可选, 状态 (IDLE: 闲置, IN_USE: 使用中, MAINTENANCE: 保养中, REPAIR: 维修中, DEACTIVATED: 停用, SCRAP: 停用)
+    "page": 1,
+    "page_size": 20
+  }
+  ```
+* **返回数据**:
+
+  ```json
+  {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "total": 100,
+      "list": [
+        {
+          "mold_id": 1,
+          "mold_code": "MD-2026-001",
+          "short_name": "T100",
+          "full_name": "Precision Mold T100",
+          "mold_category" : "MOLDING",
+          "product_type": "QFN-16",
+          "location": "A-01-01",
+          "thickness": "150mm",
+          "package_type": "QFN",
+          "package_size": "5x5",
+          "current_shots": 450000,
+          "max_shots": 500000,
+          "maintenance_cycle": 50000,
+          "start_time": "2026-01-01",
+          "current_machine": "BMD-01",
+          "status": "IN_USE",
+          "mold_status": "启用",
+          "department": "大材料"
+        }
+      ]
+    }
+  }
+  ```
+* **返回值参数备注**:
+  * `total`: 满足筛选条件的模具总记录数。
+  * `list`: 模具对象数组。
+    * `max_shots`: 模具设计的总寿命冲次（对应数据库 `life_limit` 字段）。
+    * `current_machine`: 模具当前挂载的机台编号。若未挂载则返回 "离线/库房"。
+    * `mold_status`: 模具启用状态 (启用 / 停用)。
+    * `status`: 模具当前状态代码：
+      * `IDLE`: **闲置** - 模具在库房中，可随时调用。
+      * `IN_USE`: **使用中** - 模具正在机台上进行生产。
+      * `MAINTENANCE`: **保养中** - 模具正在进行例行保养。
+      * `REPAIR`: **维修中** - 模具发生故障，正在维修。
+      * `DEACTIVATED`: **已停用** - 模具已被手动停用。
+      * `SCRAP`: **已停用 。
 
 ### 5.2 后台接口->模具管理->模具库查询
 * **用途**: 弹出模具库列表，支持高级搜索和分页。
@@ -647,7 +705,13 @@
 * **返回值参数备注**:
   * `total`: 满足筛选条件的机台总记录数。
   * `list`: 机台对象数组。
-    * `status`: 机台状态 (NORMAL: 启用, DISABLED: 禁用, FAULT: 异常)。
+    * `status`: 机台状态，可能的值包括：
+      * `NORMAL`: **启用 / 正常** - 机台处于正常工作状态。
+      * `DISABLED`: **禁用 / 停用** - 机台已被手动停用，不再参与生产调度。
+      * `FAULT`: **异常 / 故障** - 机台发生故障，需要维修。
+      * `WARNING`: **预警** - 机台关联的模具寿命接近临界值或有待办任务。
+      * `CRITICAL`: **临界 / 严重** - 机台关联的模具寿命已耗尽或有紧急故障。
+      * `MAINTENANCE`: **维保中** - 机台正在进行计划内保养。
     * `department`: 归属部门的显示名称。
     * `total_slots`: 该机台配置的总槽位数量。
     * `created_at`: 机台档案创建时间，格式为 `YYYY-MM-DD HH:mm:ss`。
