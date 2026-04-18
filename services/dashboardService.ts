@@ -47,6 +47,7 @@ export interface DashboardStatusRequest {
   department: string;           // 必填, 过滤部门: 大材料, 小材料, ALL (查看全部)
   only_alerts?: boolean;
   product_type?: string;
+  type?: string;                // 机台类型筛选
   machine_code?: string;
   mold_code?: string;
   only_producible?: boolean;
@@ -70,6 +71,7 @@ export async function fetchDashboardMachinesStatus(
     department: '大材料',         // 默认值为大材料
     only_alerts: false,
     product_type: '',
+    type: '',                     // 机台类型筛选，默认为空
     machine_code: '',
     mold_code: '',
     only_producible: false,
@@ -635,6 +637,44 @@ export interface MachineCodeOption {
 }
 
 /**
+ * 获取机台类型列表
+ */
+export async function fetchMachineTypes(department: string = 'ALL'): Promise<string[]> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/machines/types`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authData.token}`
+      },
+      body: JSON.stringify({
+        department: department
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.code === 200 && Array.isArray(data.data)) {
+      return data.data as string[];
+    }
+
+    if (Array.isArray(data)) {
+      return data as string[];
+    }
+
+    return [];
+  } catch (error) {
+    console.error('获取机台类型列表失败:', error);
+    return [];
+  }
+}
+
+/**
  * 获取所有机台编号列表
  */
 export async function fetchMachineCodes(): Promise<MachineCodeOption[]> {
@@ -747,6 +787,7 @@ export const DashboardService = {
   fetchDashboardMachinesStatus,
   fetchMachineDetail,
   fetchMachineCodes,
+  fetchMachineTypes,
   createMaintenanceTask,
   createRepairTask,
   disableMold,

@@ -91,12 +91,15 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   // 筛选状态
   const [filterMachine, setFilterMachine] = useState('');      // 机台编号筛选关键字
   const [filterMold, setFilterMold] = useState('');            // 模具编号筛选关键字
+  const [filterMachineType, setFilterMachineType] = useState(''); // 机台类型筛选
   const [onlyProducible, setOnlyProducible] = useState(false); // 仅显示可生产设备（模具未下线且未超期）
   const [onlyAbnormal, setOnlyAbnormal] = useState(false);     // 仅显示异常生产设备（模具超期、即将保养或下线）
   // 数据刷新触发器
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   // Product 下拉列表选项
   const [productOptions, setProductOptions] = useState<MachineCodeOption[]>([]);
+  // 机台类型列表
+  const [machineTypes, setMachineTypes] = useState<string[]>([]);
 
   // 页面加载时获取 Product 下拉列表
   const hasFetchedProductOptions = useRef(false);
@@ -114,6 +117,25 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     };
     fetchProductOptions();
   }, []);
+
+  // 页面加载时获取机台类型列表
+  const hasFetchedMachineTypes = useRef(false);
+  useEffect(() => {
+    if (hasFetchedMachineTypes.current) return;
+    hasFetchedMachineTypes.current = true;
+    const fetchMachineTypesData = async () => {
+      try {
+        // 根据当前部门获取机台类型
+        const dept = currentMaterialType === 'ALL' ? 'ALL' : currentMaterialType;
+        const types = await DashboardService.fetchMachineTypes(dept);
+        setMachineTypes(Array.isArray(types) ? types : []);
+      } catch (error) {
+        console.error('获取机台类型列表失败:', error);
+        setMachineTypes([]);
+      }
+    };
+    fetchMachineTypesData();
+  }, [currentMaterialType]);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -140,6 +162,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         const data = await DashboardService.fetchDashboardMachinesStatus({
           department: currentMaterialType,
           product_type: filterProduct,
+          type: filterMachineType,
           machine_code: filterMachine,
           mold_code: filterMold,
           only_producible: onlyProducible,
@@ -160,7 +183,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [filterProduct, filterMachine, filterMold, onlyProducible, onlyAbnormal, refreshTrigger, currentMaterialType]);
+  }, [filterProduct, filterMachine, filterMold, filterMachineType, onlyProducible, onlyAbnormal, refreshTrigger, currentMaterialType]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleString('zh-CN', {
@@ -180,6 +203,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       const data = await DashboardService.fetchDashboardMachinesStatus({
         department: currentMaterialType,
         product_type: filterProduct,
+        type: filterMachineType,
         machine_code: filterMachine,
         mold_code: filterMold,
         only_producible: onlyProducible,
@@ -994,15 +1018,15 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-blue-500 uppercase">机器类型:</span>
           <select
-            value={filterProduct}
+            value={filterMachineType}
             onChange={(e) => {
               isMaterialTypeChangeRef.current = true;
-              setFilterProduct(e.target.value);
+              setFilterMachineType(e.target.value);
             }}
             className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[10px] text-blue-100 focus:outline-none focus:border-blue-500"
           >
             <option value="">所有</option>
-            {Array.isArray(productOptions) && productOptions.map(p => <option key={p.machine_id} value={p.machine_code}>{p.machine_code}</option>)}
+            {Array.isArray(machineTypes) && machineTypes.map((type, index) => <option key={index} value={type}>{type}</option>)}
           </select>
         </div>
 
