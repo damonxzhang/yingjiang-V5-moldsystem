@@ -94,7 +94,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
    * 处理访客登录 - 快速进入看板
    */
   const handleGuestLogin = (dept: 'big' | 'small') => {
-    debugger;
     const deptName = dept === 'big' ? '大材料' : '小材料';
     const role = dept === 'big' ? 'MOLD_ENGINEER_BIG' : 'MOLD_ENGINEER_SMALL';
 

@@ -646,7 +646,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
 
   // 处理模具启用
   const handleEnableMold = async () => {
-    debugger
     if (!selectedMachine || !selectedMoldPos) {
       setEnableMoldError('请选择机台和模具位置');
       return;

@@ -195,8 +195,7 @@ const MachineBaseList: React.FC = () => {
 
     try {
       const response = await deleteMachineBase(machineId);
-
-      if (response.code === 200 && response.data?.success) {
+      if (response.code === 200) {
         alert('删除成功');
         // 重置加载标志，确保能刷新数据
         isLoadingRef.current = false;
