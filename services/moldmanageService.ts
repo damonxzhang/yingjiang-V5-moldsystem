@@ -22,7 +22,8 @@ export interface MoldListItem {
   maintenance_cycle: string;
   start_time: string;
   current_machine: string;
-  status: 'IDLE' | 'IN_USE' | 'MAINTENANCE' | 'DEACTIVATED';
+  status: 'IDLE' | 'IN_USE' | 'MAINTENANCE' | 'REPAIR' | 'DEACTIVATED' | 'SCRAP';
+  mold_status: string; // 模具启用状态 (启用 / 停用)
   department: string;
 }
 

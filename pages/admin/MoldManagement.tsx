@@ -33,7 +33,9 @@ function mapApiMoldToFrontend(apiMold: MoldListItem): Mold {
     'IDLE': MoldStatus.Idle,
     'IN_USE': MoldStatus.InUse,
     'MAINTENANCE': MoldStatus.Maintenance,
-    'DEACTIVATED': MoldStatus.Deactivated
+    'REPAIR': MoldStatus.Repair,
+    'DEACTIVATED': MoldStatus.Deactivated,
+    'SCRAP': MoldStatus.Scrapped
   };
   return {
     id: apiMold.mold_code,           // mold.id -> mold_code
@@ -412,8 +414,10 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
             <option value="">全部状态</option>
             <option value="IDLE">空闲</option>
             <option value="IN_USE">使用中</option>
-            <option value="MAINTENANCE">维护中</option>
+            <option value="MAINTENANCE">保养中</option>
+            <option value="REPAIR">维修中</option>
             <option value="DEACTIVATED">已停用</option>
+            <option value="SCRAP">已停用</option>
           </select>
         </div>
         <div className="flex items-center gap-2">
