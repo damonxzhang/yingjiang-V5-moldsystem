@@ -231,6 +231,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       const status = item.status; // 机台状态: NORMAL, MAINTENANCE_DUE, OVERDUE, BUYOFF, DISABLED, OFFLINE
       const pending_todos_count = item.pending_todos_count || 0;
       const part_no = item.part_no;
+      const product_type = item.product_type;
       const mold_count = item.mold_count;
 
       // 根据 life_percent 计算前端状态
@@ -329,10 +330,11 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         status,
         pending_todos_count,
         part_no,
+        product_type,
         mold_count,
         // 前端需要的额外字段
         colorClass,
-        currentProduct: part_no || '',
+        currentProduct: product_type || '',
         molds
       };
     });
