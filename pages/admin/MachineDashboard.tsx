@@ -1356,11 +1356,24 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
               validMoldEntries.length === 2 ? 'grid-cols-2' : 'grid-cols-1'
             } gap-1.5 my-2 flex-1`}>
               {validMoldEntries.map(([pos, mold]: [string, any]) => {
+                // 任务状态横条颜色映射
+                const getTaskBarColor = (m: any) => {
+                  const s = (m.status || '').toUpperCase();
+                  if (s === 'EMPTY' || m.color === 'slate') return 'bg-slate-600'; // 物色
+                  if (s === 'OVERDUE' || m.isOffline || m.color === 'red') return 'bg-red-500'; // 红色
+                  if (s === 'UPCOMING' || m.color === 'yellow') return 'bg-yellow-500'; // 黄色
+                  if (s === 'BUYOFF' || m.color === 'blue') return 'bg-blue-500'; // 蓝色
+                  if (s === 'MAINTENANCE') return 'bg-purple-500'; // 紫色
+                  return 'bg-blue-500'; // 默认蓝色
+                };
+                const barColor = getTaskBarColor(mold);
+                const isWhiteBar = barColor === 'bg-white';
                 return (
                   <div key={pos} className="flex flex-col gap-1.5">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-1.5">
                       <span className="text-[10px] text-slate-500 font-bold">{pos}</span>
-                      {mold.isOffline && <span className="w-2.5 h-2.5 bg-red-600 rounded-full"></span>}
+                      <div className={`flex-1 h-1 rounded-full ${barColor} ${isWhiteBar ? 'border border-slate-600' : ''}`}></div>
+                      {mold.isOffline && <span className="w-2.5 h-2.5 bg-red-600 rounded-full shrink-0"></span>}
                     </div>
                     <div className={`h-6 rounded border-2 flex items-center justify-between px-1.5 text-[9px] font-black relative overflow-hidden ${
                       mold.status === 'EMPTY' ? 'bg-slate-500/5 border-slate-500/30 text-slate-500/0' :
@@ -1455,50 +1468,70 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             <div className="flex">
               {/* Left Sidebar: Pos Selector */}
               <div className="w-24 bg-slate-950/50 border-r border-blue-900/30 flex flex-col p-2 gap-2">
-                {machineDetail?.slots ? (
-                  machineDetail.slots.map((slot) => {
-                    const isActive = selectedMoldPos === slot.slot;
-                    const getStatusColor = (status: string) => {
-                      return status === 'EMPTY' ? 'text-slate-500' : 'text-green-500';
-                    };
-                    return (
-                      <button
-                        key={slot.slot}
-                        onClick={() => handleSlotChange(slot.slot)}
-                        className={`p-3 rounded-xl border flex flex-col items-center gap-1 transition-all ${
-                          isActive
-                            ? 'bg-blue-600 border-blue-400 scale-105 shadow-lg shadow-blue-900/50'
-                            : 'bg-slate-900 border-slate-800 hover:border-blue-500/50'
-                        }`}
-                      >
-                        <span className={`text-xs font-black ${isActive ? 'text-white' : 'text-slate-500'}`}>{slot.slot}</span>
-                        <span className={`text-[9px] font-bold ${getStatusColor(slot.status)}`}>{slot.short_name}</span>
-                      </button>
-                    );
-                  })
-                ) : (
-                  Object.keys(selectedMachine.molds).map(pos => {
-                    const mold = (selectedMachine.molds as any)[pos];
-                    if (!mold) return null;
-                    const isActive = selectedMoldPos === pos;
-                    return (
-                      <button
-                        key={pos}
-                        onClick={() => handleSlotChange(pos)}
-                        className={`p-3 rounded-xl border flex flex-col items-center gap-1 transition-all ${
-                          isActive
-                            ? 'bg-blue-600 border-blue-400 scale-105 shadow-lg shadow-blue-900/50'
-                            : 'bg-slate-900 border-slate-800 hover:border-blue-500/50'
-                        }`}
-                      >
-                        <span className={`text-xs font-black ${isActive ? 'text-white' : 'text-slate-500'}`}>{pos}</span>
-                        <span className={`text-[9px] font-bold ${
-                          mold.status === 'EMPTY' ? 'text-slate-500' : 'text-green-500'
-                        }`}>{mold.mold_code || mold.mold_id}</span>
-                      </button>
-                    );
-                  })
-                )}
+                {(() => {
+                  // 获取任务状态颜色映射: 物色/紫色/蓝色/红色/黄色/白色
+                  const getTaskStatusColor = (status: string, shortName: string) => {
+                    const s = (status || '').toUpperCase();
+                    if (s === 'EMPTY' || !shortName || shortName === '') return 'bg-slate-600'; // 物色
+                    if (s === 'OVERDUE' || s === 'OFFLINE' || s === 'DISABLED') return 'bg-red-500'; // 红色
+                    if (s === 'UPCOMING' || s === 'MAINTENANCE_DUE') return 'bg-yellow-500'; // 黄色
+                    if (s === 'BUYOFF') return 'bg-white'; // 白色
+                    if (s === 'MAINTENANCE') return 'bg-purple-500'; // 紫色
+                    return 'bg-blue-500'; // 蓝色 - 正常
+                  };
+
+                  if (machineDetail?.slots) {
+                    return machineDetail.slots.map((slot) => {
+                      const isActive = selectedMoldPos === slot.slot;
+                      const taskBarColor = getTaskStatusColor(slot.status, slot.short_name);
+                      const isWhiteBar = taskBarColor === 'bg-white';
+                      return (
+                        <button
+                          key={slot.slot}
+                          onClick={() => handleSlotChange(slot.slot)}
+                          className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                            isActive
+                              ? 'bg-blue-600 border-blue-400 scale-105 shadow-lg shadow-blue-900/50'
+                              : 'bg-slate-900 border-slate-800 hover:border-blue-500/50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1 w-full">
+                            <span className={`text-xs font-black ${isActive ? 'text-white' : 'text-slate-500'}`}>{slot.slot}</span>
+                            <div className={`flex-1 h-1 rounded-full ${taskBarColor} ${isWhiteBar ? 'border border-slate-600' : ''}`}></div>
+                          </div>
+                          <span className={`text-[9px] font-bold ${slot.status === 'EMPTY' ? 'text-slate-500' : 'text-green-500'}`}>{slot.short_name}</span>
+                        </button>
+                      );
+                    });
+                  } else {
+                    return Object.keys(selectedMachine.molds).map(pos => {
+                      const mold = (selectedMachine.molds as any)[pos];
+                      if (!mold) return null;
+                      const isActive = selectedMoldPos === pos;
+                      const taskBarColor = getTaskStatusColor(mold.status, mold.mold_code);
+                      const isWhiteBar = taskBarColor === 'bg-white';
+                      return (
+                        <button
+                          key={pos}
+                          onClick={() => handleSlotChange(pos)}
+                          className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                            isActive
+                              ? 'bg-blue-600 border-blue-400 scale-105 shadow-lg shadow-blue-900/50'
+                              : 'bg-slate-900 border-slate-800 hover:border-blue-500/50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1 w-full">
+                            <span className={`text-xs font-black ${isActive ? 'text-white' : 'text-slate-500'}`}>{pos}</span>
+                            <div className={`flex-1 h-1 rounded-full ${taskBarColor} ${isWhiteBar ? 'border border-slate-600' : ''}`}></div>
+                          </div>
+                          <span className={`text-[9px] font-bold ${
+                            mold.status === 'EMPTY' ? 'text-slate-500' : 'text-green-500'
+                          }`}>{mold.mold_code || mold.mold_id}</span>
+                        </button>
+                      );
+                    });
+                  }
+                })()}
               </div>
 
               {/* Right Content: Detail & Action for selected POS */}

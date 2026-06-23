@@ -9,7 +9,7 @@ interface MaintenanceFlowProps {
 }
 
 const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
-  const [step, setStep] = useState<'LIST' | 'SCAN' | 'SOURCE' | 'MACHINE_CHECK' | 'MAINTAINING' | 'END_DECISION' | 'DESTINATION' | 'FINAL'>('LIST');
+  const [step, setStep] = useState<'LIST' | 'SCAN' | 'SOURCE' | 'MAINTAINING' | 'END_DECISION' | 'DESTINATION' | 'FINAL' | 'BUYOFF'>('LIST');
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
   const [selectedMold, setSelectedMold] = useState<Mold | null>(null);
   const [moldTableNo, setMoldTableNo] = useState('');
@@ -18,6 +18,24 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isFinished, setIsFinished] = useState(true);
   const [destination, setDestination] = useState<'CABINET' | 'MACHINE'>('CABINET');
+  // BUYOFF 表单状态
+  const [buyoffFormData, setBuyoffFormData] = useState({
+    processId: 'PROC-2026-0323',
+    nickName: '张三',
+    userId: 'U123456',
+    findStation: 'mold',
+    detailReason: '',
+    buyoffReason: '',
+    buyoffMethod: '',
+    buyoffStandard: '',
+    materialType: 'BGA',
+    isCustom: 'false',
+    customField: '',
+    buyoffStatus: '1',
+    keyid: `BO-${Date.now()}`,
+    moldID: ''
+  });
+  const [buyoffLoading, setBuyoffLoading] = useState(false);
 
   const handleScanMold = (id: string) => {
     const mold = MOCK_MOLDS.find(m => m.id === id);
@@ -34,6 +52,21 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
   const handleSource = (type: 'CABINET' | 'MACHINE') => {
     setSourceType(type);
     setStep('MAINTAINING');
+  };
+
+  // BUYOFF 提交处理
+  const handleBuyoffSubmit = () => {
+    setBuyoffLoading(true);
+    // 模拟调用凡工接口获取数据
+    setTimeout(() => {
+      setBuyoffFormData(prev => ({
+        ...prev,
+        buyoffReason: '外部验证通过',
+        buyoffMethod: '自动探测',
+        buyoffStandard: 'STD-V2.0'
+      }));
+      setBuyoffLoading(false);
+    }, 1500);
   };
 
   const toggleMaintenanceItem = (item: string) => {
@@ -172,7 +205,7 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
                 <div className="text-center">
                   <p className="text-xl font-black text-slate-800">生产机台</p>
                   <p className="text-sm text-slate-500 font-medium mt-1">
-                    当前位置: <span className="text-amber-600 font-bold">{selectedMold.location}</span>
+                    机台号：<span className="text-amber-600 font-bold">{selectedMold.location}</span>、模台号：<span className="text-amber-600 font-bold">{selectedWorkOrder?.moldId === 'TY06' ? 'P1' : selectedWorkOrder?.moldId === 'TY12' ? 'P2' : selectedWorkOrder?.moldId === 'TY02' ? 'P3' : '-'}</span>
                   </p>
                 </div>
               </div>
@@ -381,11 +414,198 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
             </div>
 
             <button 
-              onClick={onBack}
+              onClick={() => {
+                setBuyoffFormData(prev => ({ ...prev, moldID: selectedMold?.id || '' }));
+                setStep('BUYOFF');
+              }}
               className="w-full bg-slate-900 text-white font-black py-5 rounded-3xl shadow-2xl active:scale-95 transition-all text-xl mt-4"
             >
               完成并关闭流程
             </button>
+          </div>
+        )}
+
+        {step === 'BUYOFF' && (
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 pb-6">
+            <div className="bg-purple-600 text-white p-4 rounded-2xl shadow-xl text-center font-bold sticky top-0 z-10">
+              状态转为 BUYOFF
+            </div>
+
+            <div className="bg-white border-2 border-slate-100 p-5 rounded-2xl shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b pb-2">
+                <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                  <i className="fas fa-edit text-indigo-500"></i>
+                  BUYOFF 信息录入
+                </h4>
+                <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold border border-amber-200">
+                  【只给小材料部门使用】
+                </span>
+              </div>
+
+              {/* 只读字段 */}
+              <div className="grid grid-cols-2 gap-3 text-[10px]">
+                <div className="space-y-1">
+                  <label className="text-slate-400 font-bold uppercase">Process ID</label>
+                  <div className="bg-slate-50 p-2 rounded border border-slate-100 text-slate-600 font-mono">{buyoffFormData.processId}</div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-400 font-bold uppercase">User ID</label>
+                  <div className="bg-slate-50 p-2 rounded border border-slate-100 text-slate-600 font-mono">{buyoffFormData.userId}</div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-400 font-bold uppercase">Nick Name</label>
+                  <div className="bg-slate-50 p-2 rounded border border-slate-100 text-slate-600">{buyoffFormData.nickName}</div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-400 font-bold uppercase">Station</label>
+                  <div className="bg-slate-50 p-2 rounded border border-slate-100 text-slate-600 font-mono">{buyoffFormData.findStation}</div>
+                </div>
+              </div>
+
+              {/* 输入字段 */}
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Detail Reason (手动输入)</label>
+                  <textarea 
+                    value={buyoffFormData.detailReason}
+                    onChange={(e) => setBuyoffFormData(prev => ({ ...prev, detailReason: e.target.value }))}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                    placeholder="请输入详细原因..."
+                    rows={2}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700">Material Type</label>
+                    <select 
+                      value={buyoffFormData.materialType}
+                      onChange={(e) => setBuyoffFormData(prev => ({ ...prev, materialType: e.target.value }))}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 outline-none appearance-none"
+                    >
+                      {['BGA', 'QFN', 'PQFN', 'FCCSP'].map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700">Is Custom</label>
+                    <select 
+                      value={buyoffFormData.isCustom}
+                      onChange={(e) => setBuyoffFormData(prev => ({ ...prev, isCustom: e.target.value }))}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 outline-none appearance-none"
+                    >
+                      <option value="false">False</option>
+                      <option value="true">True</option>
+                    </select>
+                  </div>
+                </div>
+
+                {buyoffFormData.isCustom === 'true' && (
+                  <div className="space-y-1 animate-in slide-in-from-top-2 duration-300">
+                    <label className="text-xs font-bold text-slate-700 text-indigo-600">Custom Info (自定义字段)</label>
+                    <input 
+                      type="text" 
+                      value={buyoffFormData.customField}
+                      onChange={(e) => setBuyoffFormData(prev => ({ ...prev, customField: e.target.value }))}
+                      className="w-full p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                      placeholder="请输入自定义信息..."
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3 text-[10px]">
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold uppercase">Key ID (唯一编号)</label>
+                    <div className="bg-slate-50 p-2 rounded border border-slate-100 text-slate-600 font-mono truncate">{buyoffFormData.keyid}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold uppercase">Mold ID</label>
+                    <div className="bg-slate-50 p-2 rounded border border-slate-100 text-slate-600 font-mono">{buyoffFormData.moldID}</div>
+                  </div>
+                </div>
+
+                {/* 凡工接口数据同步 */}
+                <div className="pt-2 space-y-2 border-t border-slate-100 mt-2">
+                  <div className="flex items-center gap-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">
+                    <i className="fas fa-plug animate-pulse"></i>
+                    凡工接口数据同步
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center p-2 bg-slate-50 rounded border border-dashed border-slate-200">
+                      <span className="text-[10px] text-slate-500 font-bold">Buyoff Reason</span>
+                      <span className={`text-[10px] font-mono ${buyoffFormData.buyoffReason ? 'text-indigo-600 font-bold' : 'text-slate-300 italic'}`}>
+                        {buyoffFormData.buyoffReason || '等待接口返回...'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-slate-50 rounded border border-dashed border-slate-200">
+                      <span className="text-[10px] text-slate-500 font-bold">Buyoff Method</span>
+                      <span className={`text-[10px] font-mono ${buyoffFormData.buyoffMethod ? 'text-indigo-600 font-bold' : 'text-slate-300 italic'}`}>
+                        {buyoffFormData.buyoffMethod || '等待接口返回...'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-slate-50 rounded border border-dashed border-slate-200">
+                      <span className="text-[10px] text-slate-500 font-bold">Buyoff Standard</span>
+                      <span className={`text-[10px] font-mono ${buyoffFormData.buyoffStandard ? 'text-indigo-600 font-bold' : 'text-slate-300 italic'}`}>
+                        {buyoffFormData.buyoffStandard || '等待接口返回...'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button 
+                  onClick={handleBuyoffSubmit}
+                  disabled={buyoffLoading}
+                  className={`w-full py-4 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2 ${buyoffLoading ? 'bg-slate-100 text-slate-400 animate-pulse' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                >
+                  {buyoffLoading ? (
+                    <>
+                      <i className="fas fa-spinner animate-spin"></i>
+                      正在调用凡工接口...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-satellite-dish"></i>
+                      执行 BUYOFF 状态确认
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* 凡工接口返回数据展示 */}
+              {buyoffFormData.buyoffReason && (
+                <div className="bg-green-50 border border-green-200 rounded-2xl p-4 space-y-3 animate-in fade-in duration-500">
+                  <h4 className="text-xs font-black text-green-600 uppercase tracking-widest flex items-center gap-2 border-b border-green-200 pb-2">
+                    <i className="fas fa-database text-green-500"></i>
+                    接口返回数据验证
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2 text-[10px]">
+                    <div className="flex justify-between items-center p-2 bg-white rounded">
+                      <span className="text-slate-500 font-bold uppercase">Buyoff Reason</span>
+                      <span className="text-slate-800 font-mono font-bold">{buyoffFormData.buyoffReason}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white rounded">
+                      <span className="text-slate-500 font-bold uppercase">Buyoff Method</span>
+                      <span className="text-slate-800 font-mono font-bold">{buyoffFormData.buyoffMethod}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white rounded">
+                      <span className="text-slate-500 font-bold uppercase">Buyoff Standard</span>
+                      <span className="text-slate-800 font-mono font-bold">{buyoffFormData.buyoffStandard}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-indigo-50 rounded border border-indigo-100">
+                      <span className="text-indigo-500 font-bold uppercase">Buyoff Status</span>
+                      <span className="bg-indigo-600 text-white px-2 py-0.5 rounded-full font-bold">{buyoffFormData.buyoffStatus}</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={onBack}
+                    className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 mt-2"
+                  >
+                    完成流程并关闭
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
