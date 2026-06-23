@@ -8,6 +8,121 @@ interface MachineDashboardProps {
   department?: string;
 }
 
+/** 自定义下拉日期时间选择器 */
+const DateTimeDropdownPicker: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  label: string;
+}> = ({ value, onChange, label }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const date = value ? new Date(value) : new Date();
+  const [year, setYear] = useState(date.getFullYear());
+  const [month, setMonth] = useState(date.getMonth() + 1);
+  const [day, setDay] = useState(date.getDate());
+  const [hour, setHour] = useState(date.getHours());
+  const [minute, setMinute] = useState(date.getMinutes());
+
+  // 当外部 value 变化时同步内部状态
+  useEffect(() => {
+    const d = value ? new Date(value) : new Date();
+    setYear(d.getFullYear());
+    setMonth(d.getMonth() + 1);
+    setDay(d.getDate());
+    setHour(d.getHours());
+    setMinute(d.getMinutes());
+  }, [value]);
+
+  // 动态计算选项范围
+  const baseYear = value ? new Date(value).getFullYear() : new Date().getFullYear();
+  const years = Array.from({ length: 11 }, (_, i) => baseYear - 5 + i);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
+  const pad2 = (n: number) => n.toString().padStart(2, '0');
+
+  const handleConfirm = () => {
+    const newVal = `${year}-${pad2(month)}-${pad2(day)}T${pad2(hour)}:${pad2(minute)}`;
+    onChange(newVal);
+    setIsOpen(false);
+  };
+
+  const displayText = value
+    ? `${year}年${month}月${day}日 ${pad2(hour)}:${pad2(minute)}`
+    : '请选择时间';
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-blue-100 hover:border-blue-500 transition-all flex items-center justify-between"
+      >
+        <span>{displayText}</span>
+        <i className={`fas fa-chevron-down text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}></i>
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl z-10 space-y-3">
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="text-[8px] text-slate-500 font-bold uppercase mb-1 block">年</label>
+              <select value={year} onChange={(e) => { setYear(Number(e.target.value)); }}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
+              >
+                {years.map((y) => <option key={y} value={y}>{y}年</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[8px] text-slate-500 font-bold uppercase mb-1 block">月</label>
+              <select value={month} onChange={(e) => setMonth(Number(e.target.value))}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
+              >
+                {months.map((m) => <option key={m} value={m}>{m}月</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[8px] text-slate-500 font-bold uppercase mb-1 block">日</label>
+              <select value={day} onChange={(e) => setDay(Number(e.target.value))}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
+              >
+                {days.map((d) => <option key={d} value={d}>{d}日</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[8px] text-slate-500 font-bold uppercase mb-1 block">时</label>
+              <select value={hour} onChange={(e) => setHour(Number(e.target.value))}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
+              >
+                {hours.map((h) => <option key={h} value={h}>{pad2(h)}时</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[8px] text-slate-500 font-bold uppercase mb-1 block">分</label>
+              <select value={minute} onChange={(e) => setMinute(Number(e.target.value))}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
+              >
+                {minutes.map((m) => <option key={m} value={m}>{pad2(m)}分</option>)}
+              </select>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+          >
+            确认选择
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBackToAdmin, department }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   // 检查是否为访客模式 - 通过 user_id 判断
@@ -46,7 +161,16 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
   const [taskType, setTaskType] = useState<string>('');
   const [maintenanceTimeRange, setMaintenanceTimeRange] = useState({ start: '', end: '' });
+  const [needBorrowMachine, setNeedBorrowMachine] = useState<boolean>(false);
   const [showLegendModal, setShowLegendModal] = useState(false);
+  // 系统定时保养任务确认弹窗
+  const [showMaintenanceConfirmModal, setShowMaintenanceConfirmModal] = useState(false);
+  const [confirmTodoItem, setConfirmTodoItem] = useState<MachineTodo | null>(null);
+  const [confirmTimeRange, setConfirmTimeRange] = useState({ start: '', end: '' });
+  // 用户自定义保养时间
+  const [userMaintenanceStart, setUserMaintenanceStart] = useState('');
+  const [userMaintenanceEnd, setUserMaintenanceEnd] = useState('');
+  const [userTimeError, setUserTimeError] = useState('');
   // 存储API返回的看板数据
   const [dashboardData, setDashboardData] = useState<DashboardStatusResponse | null>(null);
   // 创建保养任务加载状态
@@ -229,7 +353,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       const machine_code = item.machine_code;
       const machine_id = item.machine_id;
       const status = item.status; // 机台状态: NORMAL, MAINTENANCE_DUE, OVERDUE, BUYOFF, DISABLED, OFFLINE
-      const pending_todos_count = item.pending_todos_count || 0;
+      const pending_todos_count = item.machine_code === 'BMD-01' ? 3 : (item.pending_todos_count || 0);
       const part_no = item.part_no;
       const product_type = item.product_type;
       const mold_count = item.mold_count;
@@ -488,6 +612,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       });
       // 重置错误状态
       setMaintenanceError('');
+      // 重置借机选项
+      setNeedBorrowMachine(false);
     }
     if (type === 'ACTIVATE') {
       // 重置启用错误状态
@@ -534,6 +660,23 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     });
   };
 
+  // 处理系统定时保养任务确认
+  const handleMaintenanceConfirm = (todo: MachineTodo) => {
+    setConfirmTodoItem(todo);
+    // 从 payload 中获取保养时间范围
+    const start = todo.payload?.start_time || '';
+    const end = todo.payload?.end_time || '';
+    setConfirmTimeRange({ start, end });
+    // 预填用户自定义时间：开始时间默认为当前时间，结束时间默认为有效时间结束时间
+    const now = new Date();
+    const pad2 = (n: number) => n.toString().padStart(2, '0');
+    const nowStr = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}T${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+    setUserMaintenanceStart(nowStr);
+    setUserMaintenanceEnd(end ? end.replace(' ', 'T').slice(0, 16) : nowStr);
+    setUserTimeError('');
+    setShowMaintenanceConfirmModal(true);
+  };
+
   // 处理创建保养任务
   const handleCreateMaintenanceTask = async () => {
     if (!selectedMachine || !selectedMoldPos) {
@@ -557,6 +700,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         user_id: '', // 将由 service 自动填充
         start_time: maintenanceTimeRange.start.replace('T', ' '),
         end_time: maintenanceTimeRange.end.replace('T', ' '),
+        need_borrow_machine: needBorrowMachine,
         // description: '例行保养'
       };
 
@@ -780,7 +924,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   // console.log('allMachines:', allMachines);
   // console.log("selectedMoldPos:",selectedMoldPos)
   // console.log("selectedMachine:",selectedMachine)
-  
+
   return (
     <div className="h-screen bg-[#020617] text-white p-2 font-sans overflow-hidden flex flex-col">
       {/* 看板说明弹窗 */}
@@ -1863,21 +2007,34 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => toggleTaskComplete(todo.machine_id, todo.mold_id, todo.type)}
-                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
-                          isCompleted
-                            ? 'bg-green-600 text-white border-green-500'
-                            : 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white'
-                        }`}
-                      >
-                        {isCompleted ? (
-                          <span className="flex items-center gap-1">
-                            <i className="fas fa-check-circle"></i>
-                            已完成
-                          </span>
-                        ) : '确认完成'}
-                      </button>
+                      {todo.type === 'MAINTENANCE' ? (
+                        <button
+                          onClick={() => handleMaintenanceConfirm(todo)}
+                          className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
+                            isCompleted
+                              ? 'bg-green-600 text-white border-green-500'
+                              : 'bg-amber-600/20 text-amber-400 border border-amber-500/30 hover:bg-amber-600 hover:text-white'
+                          }`}
+                        >
+                          确认信息
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => toggleTaskComplete(todo.machine_id, todo.mold_id, todo.type)}
+                          className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
+                            isCompleted
+                              ? 'bg-green-600 text-white border-green-500'
+                              : 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white'
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <span className="flex items-center gap-1">
+                              <i className="fas fa-check-circle"></i>
+                              已完成
+                            </span>
+                          ) : '确认完成'}
+                        </button>
+                      )}
                     </div>
                   );
                 })
@@ -1940,6 +2097,41 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-blue-100 focus:outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
+                </div>
+
+                <div className="bg-slate-950/50 p-4 rounded-2xl border border-blue-900/30 space-y-3">
+                  <p className="text-[10px] font-black text-blue-500 uppercase">是否需要借机</p>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="radio"
+                        name="needBorrowMachine"
+                        checked={needBorrowMachine}
+                        onChange={() => setNeedBorrowMachine(true)}
+                        className="hidden"
+                      />
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${needBorrowMachine ? 'border-amber-500' : 'border-slate-600 group-hover:border-slate-400'}`}>
+                        {needBorrowMachine && <div className="w-2 h-2 rounded-full bg-amber-500"></div>}
+                      </div>
+                      <span className={`text-sm font-bold transition-colors ${needBorrowMachine ? 'text-amber-400' : 'text-slate-400'}`}>是</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="radio"
+                        name="needBorrowMachine"
+                        checked={!needBorrowMachine}
+                        onChange={() => setNeedBorrowMachine(false)}
+                        className="hidden"
+                      />
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${!needBorrowMachine ? 'border-blue-500' : 'border-slate-600 group-hover:border-slate-400'}`}>
+                        {!needBorrowMachine && <div className="w-2 h-2 rounded-full bg-blue-500"></div>}
+                      </div>
+                      <span className={`text-sm font-bold transition-colors ${!needBorrowMachine ? 'text-blue-400' : 'text-slate-400'}`}>否</span>
+                    </label>
+                  </div>
+                  {needBorrowMachine && (
+                    <p className="text-[10px] text-amber-400/80 italic mt-2">选择"是"将触发借机流程，设备将进入停机状态。</p>
+                  )}
                 </div>
 
                 {maintenanceError && (
@@ -2281,6 +2473,174 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 系统定时保养任务确认弹窗 */}
+      {showMaintenanceConfirmModal && confirmTodoItem && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-blue-500/50 rounded-3xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="space-y-5">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                  <i className="fas fa-tools"></i>
+                </div>
+                <h2 className="text-xl font-black text-white mb-2 uppercase tracking-widest">保养任务确认</h2>
+                <p className="text-slate-400 text-xs">
+                  系统定时任务已生成保养工单，请确认以下信息。
+                </p>
+              </div>
+
+              {/* 任务基础信息 */}
+              <div className="bg-slate-950/50 p-4 rounded-2xl border border-blue-900/30 space-y-2.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-400">机台编号</span>
+                  <span className="text-blue-400 font-bold">{todoMachine?.machine_code}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-400">模具编号</span>
+                  <span className="text-blue-400 font-bold">{confirmTodoItem.mold_code}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-400">模具位置</span>
+                  <span className="text-blue-400 font-bold">{confirmTodoItem.slot}</span>
+                </div>
+                {confirmTodoItem.user_name && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">操作人员</span>
+                    <span className="text-blue-400 font-bold">{confirmTodoItem.user_name}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-400">创建时间</span>
+                  <span className="text-blue-400 font-bold">{confirmTodoItem.created_at}</span>
+                </div>
+                <div className="flex justify-between text-xs border-t border-slate-800 pt-2.5 mt-1">
+                  <span className="text-slate-400">当前系统时间</span>
+                  <span className="text-green-400 font-bold font-mono">{formatDate(currentTime)}</span>
+                </div>
+              </div>
+
+              {/* 保养有效时间范围 - 来自第三方系统（只读） */}
+              <div className="bg-red-500/10 border-2 border-red-500/30 p-4 rounded-2xl space-y-3">
+                <div className="flex items-center gap-2">
+                  <i className="fas fa-cloud text-red-400 text-xs"></i>
+                  <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">第三方系统同步 - 保养有效时间范围</span>
+                </div>
+                <div className="bg-slate-950/80 p-3 rounded-xl border border-red-500/20 space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-red-300/70">有效开始时间</span>
+                    <span className="text-red-300 font-bold font-mono">{confirmTimeRange.start || '---'}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-red-300/70">有效结束时间</span>
+                    <span className="text-red-300 font-bold font-mono">{confirmTimeRange.end || '---'}</span>
+                  </div>
+                </div>
+                {confirmTimeRange.start && confirmTimeRange.end && (
+                  <p className="text-[10px] text-red-400/90 text-center font-bold leading-relaxed">
+                    <i className="fas fa-clock mr-1"></i>
+                    您的自定义时间必须在此范围内，超时将无法提交！
+                  </p>
+                )}
+                {(!confirmTimeRange.start || !confirmTimeRange.end) && (
+                  <p className="text-[10px] text-red-400/90 text-center font-bold">
+                    <i className="fas fa-exclamation-circle mr-1"></i>
+                    未设置有效时间范围，请尽快联系管理员确认保养周期。
+                  </p>
+                )}
+              </div>
+
+              {/* 用户自定义保养时间 */}
+              <div className="bg-blue-500/5 border border-blue-500/20 p-4 rounded-2xl space-y-3">
+                <div className="flex items-center gap-2">
+                  <i className="fas fa-pen text-blue-400 text-xs"></i>
+                  <span className="text-[10px] font-black text-blue-400 uppercase tracking-wider">自定义保养时间（手动填写）</span>
+                </div>
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-slate-400 font-bold">计划开始时间</label>
+                    <DateTimeDropdownPicker
+                      value={userMaintenanceStart}
+                      onChange={(val) => {
+                        setUserMaintenanceStart(val);
+                        setUserTimeError('');
+                      }}
+                      label="计划开始时间"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-slate-400 font-bold">计划结束时间</label>
+                    <DateTimeDropdownPicker
+                      value={userMaintenanceEnd}
+                      onChange={(val) => {
+                        setUserMaintenanceEnd(val);
+                        setUserTimeError('');
+                      }}
+                      label="计划结束时间"
+                    />
+                  </div>
+                </div>
+                {userTimeError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-2.5 flex items-center gap-2">
+                    <i className="fas fa-exclamation-triangle text-red-400 text-[10px]"></i>
+                    <span className="text-red-400 text-[10px] font-bold">{userTimeError}</span>
+                  </div>
+                )}
+                <p className="text-[9px] text-slate-500 italic">
+                  <i className="fas fa-info-circle mr-1"></i>
+                  自定义时间必须在上述有效时间范围内，且开始时间不能早于结束时间。
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => {
+                    setShowMaintenanceConfirmModal(false);
+                    setConfirmTodoItem(null);
+                  }}
+                  className="flex-1 bg-slate-800 hover:bg-slate-700 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                >
+                  关闭
+                </button>
+                <button
+                  onClick={() => {
+                    // 校验用户自定义时间
+                    const effectiveStart = confirmTimeRange.start?.replace(' ', 'T');
+                    const effectiveEnd = confirmTimeRange.end?.replace(' ', 'T');
+
+                    if (!userMaintenanceStart || !userMaintenanceEnd) {
+                      setUserTimeError('请填写计划开始时间和结束时间');
+                      return;
+                    }
+
+                    if (effectiveStart && userMaintenanceStart < effectiveStart) {
+                      setUserTimeError('计划开始时间不能早于有效开始时间');
+                      return;
+                    }
+
+                    if (effectiveEnd && userMaintenanceEnd > effectiveEnd) {
+                      setUserTimeError('计划结束时间不能晚于有效结束时间');
+                      return;
+                    }
+
+                    if (userMaintenanceStart >= userMaintenanceEnd) {
+                      setUserTimeError('计划开始时间必须早于结束时间');
+                      return;
+                    }
+
+                    // 校验通过，标记为已完成
+                    toggleTaskComplete(confirmTodoItem.machine_id?.toString() || '', confirmTodoItem.mold_id?.toString() || '', confirmTodoItem.type);
+                    setShowMaintenanceConfirmModal(false);
+                    setConfirmTodoItem(null);
+                  }}
+                  className="flex-1 bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-amber-900/20"
+                >
+                  确认并标记完成
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

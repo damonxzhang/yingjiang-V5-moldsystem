@@ -12,6 +12,7 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
   const [step, setStep] = useState<'LIST' | 'SCAN' | 'SOURCE' | 'MACHINE_CHECK' | 'MAINTAINING' | 'END_DECISION' | 'DESTINATION' | 'FINAL'>('LIST');
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
   const [selectedMold, setSelectedMold] = useState<Mold | null>(null);
+  const [moldTableNo, setMoldTableNo] = useState('');
   const [sourceType, setSourceType] = useState<'CABINET' | 'MACHINE'>('CABINET');
   const [maintenanceInfo, setMaintenanceInfo] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -22,8 +23,8 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
     const mold = MOCK_MOLDS.find(m => m.id === id);
     if (mold) {
       setSelectedMold(mold);
-      // 自动识别取模位置
-      setSourceType(mold.machineId ? 'MACHINE' : 'CABINET');
+      // 始终显示为设备取模
+      setSourceType('MACHINE');
       setStep('SOURCE');
     } else {
       alert(`未识别到模具 ID: ${id}！请使用 Mock 数据中的 ID (如 TY101, QF16)`);
@@ -32,19 +33,6 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
 
   const handleSource = (type: 'CABINET' | 'MACHINE') => {
     setSourceType(type);
-    if (type === 'MACHINE') {
-      setStep('MACHINE_CHECK');
-    } else {
-      setStep('MAINTAINING');
-    }
-  };
-
-  const handleMachineCapacity = (canProduce: boolean) => {
-    if (canProduce) {
-      alert("判定结果：设备可继续生产（部分模具拆下）。");
-    } else {
-      alert("判定结果：进入借机流程（设备无法继续生产）。");
-    }
     setStep('MAINTAINING');
   };
 
@@ -142,6 +130,15 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
                 onKeyDown={(e) => e.key === 'Enter' && handleScanMold((e.target as HTMLInputElement).value)}
                 className="mt-8 w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-center font-mono outline-none focus:ring-2 focus:ring-amber-500 transition-all text-amber-400"
               />
+              <input 
+                type="text" 
+                placeholder="请扫描模台编号"
+                value={moldTableNo}
+                onChange={(e) => setMoldTableNo(e.target.value)}
+                className="mt-3 w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-center font-mono outline-none focus:ring-2 focus:ring-amber-500 transition-all text-amber-400"
+              />
+              <p className="text-red-400 text-xs mt-4">* 扫描模具设备成功后即正式开始保养，后台的模具、设备、任务三个边框会变成红色</p>
+              <p className="text-red-400 text-xs mt-1">* 扫码时系统会校验是否符合预设的保养时间范围</p>
             </div>
             <button 
               onClick={() => handleScanMold(selectedWorkOrder?.moldId || 'QF16')}
@@ -169,15 +166,11 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
               <h4 className="text-sm font-black text-amber-800 uppercase tracking-wider text-center">系统检测到取模位置</h4>
               
               <div className="flex flex-col items-center justify-center py-4">
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4 shadow-lg ${
-                  sourceType === 'CABINET' ? 'bg-indigo-500 text-white' : 'bg-blue-500 text-white'
-                }`}>
-                  <i className={`fas ${sourceType === 'CABINET' ? 'fa-warehouse' : 'fa-industry'}`}></i>
+                <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4 shadow-lg bg-blue-500 text-white">
+                  <i className="fas fa-industry"></i>
                 </div>
                 <div className="text-center">
-                  <p className="text-xl font-black text-slate-800">
-                    {sourceType === 'CABINET' ? '模具柜' : '生产机台'}
-                  </p>
+                  <p className="text-xl font-black text-slate-800">生产机台</p>
                   <p className="text-sm text-slate-500 font-medium mt-1">
                     当前位置: <span className="text-amber-600 font-bold">{selectedMold.location}</span>
                   </p>
@@ -200,30 +193,6 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
                 </button>
               </div>
             </div>
-          </div>
-        )}
-
-        {step === 'MACHINE_CHECK' && (
-          <div className="space-y-6">
-             <div className="bg-slate-900 text-white p-6 rounded-2xl border-l-4 border-amber-500 shadow-lg">
-               <h3 className="font-bold mb-4 flex items-center gap-2 text-amber-400">
-                 <i className="fas fa-exclamation-triangle"></i>
-                 设备生产能力判定
-               </h3>
-               <div className="space-y-3 text-xs text-slate-400 font-medium">
-                 <p className="flex gap-2">1. 仅剩一个模具 {"->"} 强制停机</p>
-                 <p className="flex gap-2">2. 全部模具拆除 {"->"} 强制停机</p>
-                 <p className="flex gap-2 text-green-400 font-bold">3. 部分拆除且可平衡 {"->"} 可继续生产</p>
-               </div>
-             </div>
-             
-             <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-               <p className="text-slate-800 font-black mb-8 text-center text-lg">拆卸后，设备是否可继续生产？</p>
-               <div className="grid grid-cols-2 gap-4">
-                 <button onClick={() => handleMachineCapacity(true)} className="py-4 bg-green-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-transform">是 (还机)</button>
-                 <button onClick={() => handleMachineCapacity(false)} className="py-4 bg-red-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-transform">否 (借机流程)</button>
-               </div>
-             </div>
           </div>
         )}
 
@@ -412,10 +381,7 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
             </div>
 
             <button 
-              onClick={() => {
-                alert(`保养流程执行完毕！数据已实时同步至后台，模具已归位至：${destination === 'CABINET' ? '模具柜' : '生产机台'}。`);
-                onBack();
-              }}
+              onClick={onBack}
               className="w-full bg-slate-900 text-white font-black py-5 rounded-3xl shadow-2xl active:scale-95 transition-all text-xl mt-4"
             >
               完成并关闭流程

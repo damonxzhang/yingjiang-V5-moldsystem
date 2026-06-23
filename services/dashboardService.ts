@@ -184,6 +184,7 @@ export interface CreateMaintenanceTaskRequest {
   start_time: string;
   end_time: string;
   description?: string;
+  need_borrow_machine?: boolean;
 }
 
 // 创建保养任务响应
@@ -756,35 +757,70 @@ export interface MachineTodoListRequest {
 export async function fetchMachineTodoList(
   params: MachineTodoListRequest
 ): Promise<MachineTodo[]> {
-  const authData = AuthService.getStoredAuth();
-  if (!authData) {
-    throw new Error('未登录或登录已过期');
-  }
+  return getMockTodoList(params.machine_id);
+}
 
-  const response = await fetch(`${API_BASE_URL}/api/admin/machine/todo-list`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${authData.token}`
+/** Mock 待办清单测试数据 */
+function getMockTodoList(machineId: string): MachineTodo[] {
+  const now = new Date();
+  const formatDate = (d: Date) => {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
+
+  return [
+    {
+      id: 2001,
+      machine_id: Number(machineId) || 1,
+      mold_id: 301,
+      mold_code: 'TY16',
+      slot: 'P1',
+      user_id: 0,
+      user_name: '系统定时任务',
+      created_at: formatDate(new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)),
+      is_read: 0,
+      type: 'MAINTENANCE',
+      payload: {
+        start_time: formatDate(new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)),
+        end_time: formatDate(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)),
+        description: '系统定时保养任务 - 季度PM'
+      }
     },
-    body: JSON.stringify({
-      machine_id: params.machine_id
-    })
-  });
-
-  const data = await response.json();
-
-  if (data.code !== 200) {
-    throw new Error(data.message || '获取待办清单失败');
-  }
-
-  // 确保返回的是数组
-  if (Array.isArray(data.data)) {
-    return data.data as MachineTodo[];
-  }
-  
-  // 如果 data.data 不是数组，返回空数组
-  return [];
+    {
+      id: 2002,
+      machine_id: Number(machineId) || 1,
+      mold_id: 302,
+      mold_code: 'TY12',
+      slot: 'P2',
+      user_id: 0,
+      user_name: '系统定时任务',
+      created_at: formatDate(new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)),
+      is_read: 0,
+      type: 'MAINTENANCE',
+      payload: {
+        start_time: formatDate(new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)),
+        end_time: formatDate(new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)),
+        description: '系统定时保养任务 - 冲次达到阈值'
+      }
+    },
+    {
+      id: 2003,
+      machine_id: Number(machineId) || 1,
+      mold_id: 303,
+      mold_code: 'TY02',
+      slot: 'P3',
+      user_id: 0,
+      user_name: '系统定时任务',
+      created_at: formatDate(new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000)),
+      is_read: 0,
+      type: 'MAINTENANCE',
+      payload: {
+        start_time: formatDate(new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000)),
+        end_time: formatDate(new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000)),
+        description: '系统定时保养任务 - 半年PM'
+      }
+    }
+  ];
 }
 
 // 设备状态切换请求参数

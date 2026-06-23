@@ -188,6 +188,36 @@ export const MOCK_MOLDS: Mold[] = [
     substrateThickness: '0.4', pinCode: 'H',
     shortName: 'DEMO-TY71', thickness: '160mm', moldCategory: '小材料模具', productType: 'SOP', department: '小材料',
     components: generateComponents('SN-TY71-演示')
+  },
+  { 
+    id: 'TY06', name: 'APP 演示专用模具 (TY06)', type: '注塑模', vendor: 'TOWA', 
+    shotTotal: 60000, lifeLimit: 300000, status: MoldStatus.InUse, location: 'BMD-01', 
+    machineId: 'BMD-01', buyoffStatus: BuyoffStatus.Pass,
+    serialNumber: 'SN-TY06-演示', orderNumber: 'ORD-DEMO-04', cabNo: 'C004', 
+    packageType: 'QFN', packageSize: 'SMALL', packageThickness: '0.5', 
+    substrateThickness: '0.2', pinCode: 'F',
+    shortName: 'DEMO-TY06', thickness: '120mm', moldCategory: '小材料模具', productType: 'QFN', department: '小材料',
+    components: generateComponents('SN-TY06-演示')
+  },
+  { 
+    id: 'TY12', name: 'APP 演示专用模具 (TY12)', type: '压铸模', vendor: 'I-PEX', 
+    shotTotal: 85000, lifeLimit: 200000, status: MoldStatus.InUse, location: 'BMD-01', 
+    machineId: 'BMD-01', buyoffStatus: BuyoffStatus.Pass,
+    serialNumber: 'SN-TY12-演示', orderNumber: 'ORD-DEMO-05', cabNo: 'C005', 
+    packageType: 'BGA', packageSize: 'MEDIUM', packageThickness: '0.6', 
+    substrateThickness: '0.3', pinCode: 'G',
+    shortName: 'DEMO-TY12', thickness: '200mm', moldCategory: '大材料模具', productType: 'BGA', department: '大材料',
+    components: generateComponents('SN-TY12-演示')
+  },
+  { 
+    id: 'TY02', name: 'APP 演示专用模具 (TY02)', type: '注塑模', vendor: 'TOWA', 
+    shotTotal: 72000, lifeLimit: 250000, status: MoldStatus.InUse, location: 'BMD-01', 
+    machineId: 'BMD-01', buyoffStatus: BuyoffStatus.Pass,
+    serialNumber: 'SN-TY02-演示', orderNumber: 'ORD-DEMO-06', cabNo: 'C006', 
+    packageType: 'SOP', packageSize: 'STANDARD', packageThickness: '0.7', 
+    substrateThickness: '0.4', pinCode: 'H',
+    shortName: 'DEMO-TY02', thickness: '160mm', moldCategory: '小材料模具', productType: 'SOP', department: '小材料',
+    components: generateComponents('SN-TY02-演示')
   }
 ];
 
@@ -321,21 +351,30 @@ export const MOCK_WORK_ORDERS: WorkOrder[] = [
   // 待办保养工单 (PENDING MAINTENANCE)
   {
     id: 'WO-M-20240209-01',
-    moldId: 'QF16',
+    moldId: 'TY06',
     type: 'MAINTENANCE',
     status: 'PENDING',
     operator: '-',
     createdAt: '2024-02-09 09:00',
-    description: '例行周保养 - QF16',
+    description: '例行周保养 - TY06',
   },
   {
     id: 'WO-M-20240209-02',
-    moldId: 'MD-2024-001',
+    moldId: 'TY12',
     type: 'MAINTENANCE',
     status: 'PENDING',
     operator: '-',
     createdAt: '2024-02-09 10:30',
-    description: '季度常规 PM - MD-2024-001',
+    description: '季度常规 PM - TY12',
+  },
+  {
+    id: 'WO-M-20240209-03',
+    moldId: 'TY02',
+    type: 'MAINTENANCE',
+    status: 'PENDING',
+    operator: '-',
+    createdAt: '2024-02-09 14:00',
+    description: '月度保养 - TY02',
   },
   // 待办维修工单 (PENDING REPAIR)
   {

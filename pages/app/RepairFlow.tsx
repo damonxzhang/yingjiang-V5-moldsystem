@@ -22,8 +22,8 @@ const RepairFlow: React.FC<RepairFlowProps> = ({ onBack }) => {
     const mold = MOCK_MOLDS.find(m => m.id === id);
     if (mold) {
       setSelectedMold(mold);
-      // 自动识别取模位置
-      setSourceType(mold.machineId ? 'MACHINE' : 'CABINET');
+      // 始终显示为设备取模
+      setSourceType('MACHINE');
       setStep('SOURCE');
     } else {
       alert(`未识别到模具 ID: ${id}！请使用 Mock 数据中的 ID (如 TY101, TY71)`);
@@ -163,15 +163,11 @@ const RepairFlow: React.FC<RepairFlowProps> = ({ onBack }) => {
               <h4 className="text-sm font-black text-blue-800 uppercase tracking-wider text-center">系统检测到取模位置</h4>
               
               <div className="flex flex-col items-center justify-center py-4">
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4 shadow-lg ${
-                  sourceType === 'CABINET' ? 'bg-indigo-500 text-white' : 'bg-amber-500 text-white'
-                }`}>
-                  <i className={`fas ${sourceType === 'CABINET' ? 'fa-archive' : 'fa-industry'}`}></i>
+                <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4 shadow-lg bg-amber-500 text-white">
+                  <i className="fas fa-industry"></i>
                 </div>
                 <div className="text-center">
-                  <p className="text-xl font-black text-slate-800">
-                    {sourceType === 'CABINET' ? '模具柜' : '生产机台'}
-                  </p>
+                  <p className="text-xl font-black text-slate-800">生产机台</p>
                   <p className="text-sm text-slate-500 font-medium mt-1">
                     当前位置: <span className="text-blue-600 font-bold">{selectedMold.location}</span>
                   </p>
