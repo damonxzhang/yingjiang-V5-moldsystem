@@ -2033,7 +2033,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                             <span className="text-[10px] font-bold text-slate-400">{todo.mold_code}</span>
                           </div>
                           <p className={`text-xs font-black ${isCompleted ? 'text-green-400 line-through' : 'text-slate-200'}`}>
-                            {todo.type}
+                            {todo.type === 'MAINTENANCE' ? 'MMS推送保养信息' : todo.type}
                           </p>
                           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
                             {todo.created_at}
