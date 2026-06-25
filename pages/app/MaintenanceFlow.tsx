@@ -9,7 +9,7 @@ interface MaintenanceFlowProps {
 }
 
 const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
-  const [step, setStep] = useState<'LIST' | 'SCAN' | 'SOURCE' | 'MAINTAINING' | 'END_DECISION' | 'DESTINATION' | 'FINAL' | 'BUYOFF'>('LIST');
+  const [step, setStep] = useState<'LIST' | 'SCAN' | 'MAINTAINING' | 'END_DECISION' | 'DESTINATION' | 'FINAL' | 'BUYOFF'>('LIST');
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
   const [selectedMold, setSelectedMold] = useState<Mold | null>(null);
   const [moldTableNo, setMoldTableNo] = useState('');
@@ -43,7 +43,7 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
       setSelectedMold(mold);
       // 始终显示为设备取模
       setSourceType('MACHINE');
-      setStep('SOURCE');
+      setStep('MAINTAINING');
     } else {
       alert(`未识别到模具 ID: ${id}！请使用 Mock 数据中的 ID (如 TY101, QF16)`);
     }
@@ -151,6 +151,11 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
 
         {step === 'SCAN' && (
           <div className="space-y-6 pt-10">
+            <div className="bg-red-600 text-white p-4 rounded-xl flex items-center justify-center gap-3 font-black text-lg shadow-lg animate-pulse border-2 border-red-400">
+              <i className="fas fa-qrcode text-2xl"></i>
+              模具拆卸扫码
+              <i className="fas fa-qrcode text-2xl"></i>
+            </div>
             <div className="bg-slate-900 text-white p-10 rounded-3xl shadow-2xl flex flex-col items-center text-center">
               <div className="w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-amber-500/50">
                 <i className="fas fa-tools text-3xl text-white"></i>
@@ -179,53 +184,6 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
             >
               {selectedWorkOrder ? `模拟扫码 ${selectedWorkOrder.moldId}` : '模拟扫码 QF16'}
             </button>
-          </div>
-        )}
-
-        {step === 'SOURCE' && selectedMold && (
-          <div className="space-y-4 pt-4">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
-              <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">当前识别</p>
-                <h3 className="font-bold text-slate-800 text-lg">{selectedMold.id}</h3>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">状态</p>
-                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{selectedMold.status}</span>
-              </div>
-            </div>
-            
-            <div className="bg-amber-50 border-2 border-amber-200 p-6 rounded-3xl space-y-4">
-              <h4 className="text-sm font-black text-amber-800 uppercase tracking-wider text-center">系统检测到取模位置</h4>
-              
-              <div className="flex flex-col items-center justify-center py-4">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4 shadow-lg bg-blue-500 text-white">
-                  <i className="fas fa-industry"></i>
-                </div>
-                <div className="text-center">
-                  <p className="text-xl font-black text-slate-800">生产机台</p>
-                  <p className="text-sm text-slate-500 font-medium mt-1">
-                    机台号：<span className="text-amber-600 font-bold">{selectedMold.location}</span>、模台号：<span className="text-amber-600 font-bold">{selectedWorkOrder?.moldId === 'TY06' ? 'P1' : selectedWorkOrder?.moldId === 'TY12' ? 'P2' : selectedWorkOrder?.moldId === 'TY02' ? 'P3' : '-'}</span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button 
-                  onClick={() => handleSource(sourceType)}
-                  className="w-full bg-amber-600 text-white font-black py-4 rounded-xl shadow-lg active:scale-95 transition-all text-lg flex items-center justify-center gap-3"
-                >
-                  确认位置并开始取出
-                  <i className="fas fa-check-circle"></i>
-                </button>
-                <button 
-                  onClick={() => setStep('SCAN')}
-                  className="w-full mt-3 text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-slate-600 transition-colors"
-                >
-                  位置有误？重新扫码
-                </button>
-              </div>
-            </div>
           </div>
         )}
 
@@ -350,6 +308,11 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
 
         {step === 'FINAL' && (
           <div className="space-y-6 pt-4">
+            <div className="bg-purple-600 text-white p-4 rounded-xl flex items-center justify-center gap-3 font-black text-lg shadow-lg animate-pulse border-2 border-purple-400">
+              <i className="fas fa-qrcode text-2xl"></i>
+              模具安装扫码
+              <i className="fas fa-qrcode text-2xl"></i>
+            </div>
             {isFinished && destination === 'CABINET' && (
               <div className="bg-amber-50 border-2 border-amber-200 p-5 rounded-2xl space-y-3 shadow-inner">
                 <h4 className="text-xs font-black text-amber-800 flex items-center gap-2 uppercase tracking-widest">

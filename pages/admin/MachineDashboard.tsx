@@ -2603,17 +2603,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       label="计划开始时间"
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] text-slate-400 font-bold">计划结束时间</label>
-                    <DateTimeDropdownPicker
-                      value={userMaintenanceEnd}
-                      onChange={(val) => {
-                        setUserMaintenanceEnd(val);
-                        setUserTimeError('');
-                      }}
-                      label="计划结束时间"
-                    />
-                  </div>
                 </div>
                 {userTimeError && (
                   <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-2.5 flex items-center gap-2">
@@ -2643,23 +2632,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                     const effectiveStart = confirmTimeRange.start?.replace(' ', 'T');
                     const effectiveEnd = confirmTimeRange.end?.replace(' ', 'T');
 
-                    if (!userMaintenanceStart || !userMaintenanceEnd) {
-                      setUserTimeError('请填写计划开始时间和结束时间');
+                    if (!userMaintenanceStart) {
+                      setUserTimeError('请填写计划开始时间');
                       return;
                     }
 
                     if (effectiveStart && userMaintenanceStart < effectiveStart) {
                       setUserTimeError('计划开始时间不能早于有效开始时间');
-                      return;
-                    }
-
-                    if (effectiveEnd && userMaintenanceEnd > effectiveEnd) {
-                      setUserTimeError('计划结束时间不能晚于有效结束时间');
-                      return;
-                    }
-
-                    if (userMaintenanceStart >= userMaintenanceEnd) {
-                      setUserTimeError('计划开始时间必须早于结束时间');
                       return;
                     }
 
@@ -2670,7 +2649,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   }}
                   className="flex-1 bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-amber-900/20"
                 >
-                  确认并标记完成
+                  确认时间并提交
                 </button>
               </div>
             </div>
