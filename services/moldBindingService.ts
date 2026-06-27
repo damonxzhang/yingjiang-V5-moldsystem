@@ -1,7 +1,5 @@
 import { AuthService } from './authService';
-
-// API 基础URL
-const API_BASE_URL = 'http://212.64.29.230:8087';
+import { API_BASE_URL } from './apiConfig';
 
 // 可绑定模具列表项
 export interface AvailableMoldItem {

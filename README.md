@@ -1,6 +1,20 @@
-# SmartMold 模具管理系统 - V 5.1.20260623.026
+# SmartMold 模具管理系统 - V 5.1.20260623.027
 
-## V 5.1.20260623.026 更新要点
+## V 5.1.20260623.027 更新要点
+- **全局 API 地址切换机制**：
+  - 新增 `services/apiConfig.ts` 统一配置模块，所有 service 文件统一从此模块读取 `API_BASE_URL`。
+  - 利用 Vite 环境变量机制，通过 `.env` / `.env.production` 文件控制不同环境的 API 地址。
+  - **部署命令**：`npm run build`（测试环境） / `npm run build:prod`（正式环境）。
+  - 涉及 7 个 service 文件：authService、dashboardService、machineBaseService、machineSlotService、machineStatusHistoryService、moldBindingService、moldmanageService。
+
+- **保养流程优化**：
+  - **删除取模确认页（SOURCE 步骤）**：扫码模具成功后直接跳转到"保养中"页面，不再显示取模位置确认页。
+  - **模具拆卸扫码标语**：在扫描二维码页面顶部添加醒目的红色横幅标语「模具拆卸扫码」。
+  - **模具安装扫码标语**：在 FINAL 页面顶部添加醒目的紫色横幅标语「模具安装扫码」。
+  - **计划结束时间移除**：保养确认弹窗中删除"计划结束时间"选择器及相关校验。
+  - **确认时间并提交**：确认按钮文字从"确认并标记完成"改为"确认时间并提交"。
+
+# SmartMold 模具管理系统 - V 5.1.20260623.026
 - **设备看板 - 任务状态彩色横条（P1/P2/P3）**：
   - **卡片级状态指示**：在每个设备卡片的 P1/P2/P3 槽位标签右侧，新增彩色横条，直观反映每个槽位的任务状态。
   - **详情弹窗侧边栏同步**：设备详情弹窗的槽位选择器（P1/P2/P3 按钮）中也同步添加了彩色横条。

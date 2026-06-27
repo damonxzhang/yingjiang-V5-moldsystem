@@ -1,11 +1,9 @@
 import CryptoJS from 'crypto-js';
 import { Role, LoginRequest, LoginResponse, AuthData } from '../types';
+import { API_BASE_URL } from './apiConfig';
 
 // Local Storage 键名
 const AUTH_STORAGE_KEY = 'smartmold_auth';
-
-// API 基础URL
-const API_BASE_URL = 'http://212.64.29.230:8087';
 
 // 加密密钥（生产环境应该从环境变量获取）
 const ENCRYPTION_KEY = 'SmartMoldPro2024SecureKey!@#';

@@ -1,7 +1,5 @@
 import { AuthService } from './authService';
-
-// API 基础URL
-const API_BASE_URL = 'http://212.64.29.230:8087';
+import { API_BASE_URL } from './apiConfig';
 
 // 槽位数据接口
 export interface SlotItem {
