@@ -353,7 +353,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       const machine_code = item.machine_code;
       const machine_id = item.machine_id;
       const status = item.status; // 机台状态: NORMAL, MAINTENANCE_DUE, OVERDUE, BUYOFF, DISABLED, OFFLINE
-      const pending_todos_count = item.machine_code === 'BMD-01' ? 3 : (item.pending_todos_count || 0);
+      const pending_todos_count = item.machine_code === 'BMD-01' ? 1 : (item.pending_todos_count || 0);
       const part_no = item.part_no;
       const product_type = item.product_type;
       const mold_count = item.mold_count;
@@ -2028,10 +2028,20 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       <div className="flex items-center gap-3">
                         <div className={`w-1.5 h-8 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-indigo-500'}`}></div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{todo.slot}</span>
-                            <span className="text-[10px] font-bold text-slate-400">{todo.mold_code}</span>
-                          </div>
+                          {todo.payload?.molds && todo.payload.molds.length > 1 ? (
+                            <div className="flex flex-wrap gap-1.5 mb-1">
+                              {(todo.payload.molds as { mold_code: string; slot: string }[]).map((m, i) => (
+                                <span key={i} className="text-[9px] font-black text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
+                                  {m.slot} {m.mold_code}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{todo.slot}</span>
+                              <span className="text-[10px] font-bold text-slate-400">{todo.mold_code}</span>
+                            </div>
+                          )}
                           <p className={`text-xs font-black ${isCompleted ? 'text-green-400 line-through' : 'text-slate-200'}`}>
                             {todo.type === 'MAINTENANCE' ? 'MMS推送保养信息' : todo.type}
                           </p>
@@ -2531,14 +2541,30 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   <span className="text-slate-400">机台编号</span>
                   <span className="text-blue-400 font-bold">{todoMachine?.machine_code}</span>
                 </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">模具编号</span>
-                  <span className="text-blue-400 font-bold">{confirmTodoItem.mold_code}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">模具位置</span>
-                  <span className="text-blue-400 font-bold">{confirmTodoItem.slot}</span>
-                </div>
+                {confirmTodoItem.payload?.molds && (confirmTodoItem.payload.molds as { mold_code: string; slot: string }[]).length > 1 ? (
+                  <div className="space-y-2">
+                    <span className="text-xs text-slate-400 block">模具信息（共 {(confirmTodoItem.payload.molds as any[]).length} 套）</span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(confirmTodoItem.payload.molds as { mold_code: string; slot: string }[]).map((m, i) => (
+                        <div key={i} className="bg-slate-900 border border-blue-500/30 rounded-xl p-2.5 text-center">
+                          <span className="text-[9px] font-black text-indigo-400 uppercase">{m.slot}</span>
+                          <span className="text-blue-400 font-bold text-sm block mt-0.5">{m.mold_code}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-400">模具编号</span>
+                      <span className="text-blue-400 font-bold">{confirmTodoItem.mold_code}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-400">模具位置</span>
+                      <span className="text-blue-400 font-bold">{confirmTodoItem.slot}</span>
+                    </div>
+                  </>
+                )}
                 {confirmTodoItem.user_name && (
                   <div className="flex justify-between text-xs">
                     <span className="text-slate-400">操作人员</span>

@@ -770,9 +770,9 @@ function getMockTodoList(machineId: string): MachineTodo[] {
     {
       id: 2001,
       machine_id: Number(machineId) || 1,
-      mold_id: 301,
-      mold_code: 'TY16',
-      slot: 'P1',
+      mold_id: 0,
+      mold_code: 'TY16/TY12/TY02',
+      slot: 'P1/P2/P3',
       user_id: 0,
       user_name: '系统定时任务',
       created_at: formatDate(new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)),
@@ -781,41 +781,12 @@ function getMockTodoList(machineId: string): MachineTodo[] {
       payload: {
         start_time: formatDate(new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)),
         end_time: formatDate(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)),
-        description: '系统定时保养任务 - 季度PM'
-      }
-    },
-    {
-      id: 2002,
-      machine_id: Number(machineId) || 1,
-      mold_id: 302,
-      mold_code: 'TY12',
-      slot: 'P2',
-      user_id: 0,
-      user_name: '系统定时任务',
-      created_at: formatDate(new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)),
-      is_read: 0,
-      type: 'MAINTENANCE',
-      payload: {
-        start_time: formatDate(new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)),
-        end_time: formatDate(new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)),
-        description: '系统定时保养任务 - 冲次达到阈值'
-      }
-    },
-    {
-      id: 2003,
-      machine_id: Number(machineId) || 1,
-      mold_id: 303,
-      mold_code: 'TY02',
-      slot: 'P3',
-      user_id: 0,
-      user_name: '系统定时任务',
-      created_at: formatDate(new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000)),
-      is_read: 0,
-      type: 'MAINTENANCE',
-      payload: {
-        start_time: formatDate(new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000)),
-        end_time: formatDate(new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000)),
-        description: '系统定时保养任务 - 半年PM'
+        description: 'MMS推送保养信息 - 半年保养项目',
+        molds: [
+          { mold_code: 'TY16', slot: 'P1' },
+          { mold_code: 'TY12', slot: 'P2' },
+          { mold_code: 'TY02', slot: 'P3' }
+        ]
       }
     }
   ];
