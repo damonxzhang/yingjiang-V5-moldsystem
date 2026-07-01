@@ -464,7 +464,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
           <thead className="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-widest">
             <tr>
               <th className="px-4 py-4 font-bold">模具编号/简名</th>
-              <th className="px-4 py-4 font-bold">分类/产品类型</th>
+              <th className="px-4 py-4 font-bold">项目负责人/产品类型</th>
               <th className="px-4 py-4 font-bold">位置</th>
               <th className="px-4 py-4 font-bold">厚度</th>
               <th className="px-4 py-4 font-bold">PACKAGE TYPE/SIZE</th>
@@ -667,7 +667,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
                         <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm" value={currentMold.thickness || ''} onChange={e => setCurrentMold({...currentMold, thickness: e.target.value})} />
                       </div>
                       <div>
-                        <label className="text-[9px] font-bold text-slate-500 uppercase">模具分类</label>
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">模具负责人</label>
                         <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm" value={currentMold.moldCategory || ''} onChange={e => setCurrentMold({...currentMold, moldCategory: e.target.value})} />
                       </div>
                     </div>
