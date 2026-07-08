@@ -781,11 +781,11 @@ function getMockTodoList(machineId: string): MachineTodo[] {
       payload: {
         start_time: formatDate(new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)),
         end_time: formatDate(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)),
-        description: 'MMS推送保养信息 - 半年保养项目',
+        description: 'MMS半年保养',
         molds: [
-          { mold_code: 'TY16', slot: 'P1' },
-          { mold_code: 'TY12', slot: 'P2' },
-          { mold_code: 'TY02', slot: 'P3' }
+          { mold_code: 'TY16', slot: 'P1', type: 'REMOVAL', text: '模具下架待处理' },
+          { mold_code: 'TY12', slot: 'P2', type: 'MAINTENANCE', text: 'MMS推送保养信息' },
+          { mold_code: 'TY02', slot: 'P3', type: 'REPAIR', text: '维修待处理' }
         ]
       }
     }

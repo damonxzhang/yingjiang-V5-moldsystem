@@ -151,6 +151,27 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
       if (filters.moldCode) {
         fallbackMolds = fallbackMolds.filter(m => m.id.toLowerCase().includes(filters.moldCode.toLowerCase()));
       }
+      if (filters.person) {
+        fallbackMolds = fallbackMolds.filter(m => (m.shortName || '').toLowerCase().includes(filters.person.toLowerCase()));
+      }
+      if (filters.productType) {
+        fallbackMolds = fallbackMolds.filter(m => (m.productType || '').toLowerCase().includes(filters.productType.toLowerCase()));
+      }
+      if (filters.location) {
+        fallbackMolds = fallbackMolds.filter(m => (m.location || '').toLowerCase().includes(filters.location.toLowerCase()));
+      }
+      if (filters.shotCountMin) {
+        const min = Number(filters.shotCountMin);
+        if (!isNaN(min)) {
+          fallbackMolds = fallbackMolds.filter(m => (m.shotTotal || 0) >= min);
+        }
+      }
+      if (filters.shotCountMax) {
+        const max = Number(filters.shotCountMax);
+        if (!isNaN(max)) {
+          fallbackMolds = fallbackMolds.filter(m => (m.shotTotal || 0) <= max);
+        }
+      }
       if (filters.status) {
         fallbackMolds = fallbackMolds.filter(m => {
           const statusMap: Record<MoldStatus, string> = {
@@ -402,7 +423,55 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
             value={filters.moldCode} 
             onChange={(e) => setFilters({...filters, moldCode: e.target.value})} 
             placeholder="输入模具编号"
-            className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-36"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-bold text-slate-700">负责人:</label>
+          <input 
+            type="text" 
+            value={filters.person} 
+            onChange={(e) => setFilters({...filters, person: e.target.value})} 
+            placeholder="输入负责人"
+            className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-bold text-slate-700">产品类型:</label>
+          <input 
+            type="text" 
+            value={filters.productType} 
+            onChange={(e) => setFilters({...filters, productType: e.target.value})} 
+            placeholder="如 BGA, QFN"
+            className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-bold text-slate-700">位置:</label>
+          <input 
+            type="text" 
+            value={filters.location} 
+            onChange={(e) => setFilters({...filters, location: e.target.value})} 
+            placeholder="输入位置"
+            className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-bold text-slate-700">实时 SHOT COUNT:</label>
+          <input 
+            type="number" 
+            value={filters.shotCountMin} 
+            onChange={(e) => setFilters({...filters, shotCountMin: e.target.value})} 
+            placeholder="下限"
+            className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-24"
+          />
+          <span className="text-slate-400">~</span>
+          <input 
+            type="number" 
+            value={filters.shotCountMax} 
+            onChange={(e) => setFilters({...filters, shotCountMax: e.target.value})} 
+            placeholder="上限"
+            className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-24"
           />
         </div>
         <div className="flex items-center gap-2">

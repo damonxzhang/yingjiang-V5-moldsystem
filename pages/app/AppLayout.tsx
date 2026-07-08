@@ -14,7 +14,7 @@ interface AppLayoutProps {
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ userRole, onLogout }) => {
-  const [currentScreen, setCurrentScreen] = useState<'main' | 'inquiry' | 'transfer' | 'maintenance' | 'repair'>('main');
+  const [currentScreen, setCurrentScreen] = useState<'main' | 'inquiry' | 'transfer' | 'maintenance' | 'maintenance_scan' | 'repair'>('main');
   const [showProfile, setShowProfile] = useState(false);
 
   // 获取当前用户信息
@@ -25,6 +25,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ userRole, onLogout }) => {
       case 'inquiry': return <MoldInquiry onBack={() => setCurrentScreen('main')} />;
       case 'transfer': return <TransferFlow onBack={() => setCurrentScreen('main')} />;
       case 'maintenance': return <MaintenanceFlow onBack={() => setCurrentScreen('main')} />;
+      case 'maintenance_scan': return <MaintenanceFlow onBack={() => setCurrentScreen('main')} initialStep="SCAN" />;
       case 'repair': return <RepairFlow onBack={() => setCurrentScreen('main')} />;
       default: return <Home userRole={userRole} onNavigate={setCurrentScreen} />;
     }

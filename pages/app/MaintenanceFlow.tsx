@@ -6,10 +6,11 @@ import { MAINTENANCE_CONTENTS } from '../../constants';
 
 interface MaintenanceFlowProps {
   onBack: () => void;
+  initialStep?: 'LIST' | 'SCAN' | 'MAINTAINING' | 'FINAL';
 }
 
-const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
-  const [step, setStep] = useState<'LIST' | 'SCAN' | 'MAINTAINING' | 'DESTINATION' | 'FINAL' | 'BUYOFF'>('LIST');
+const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack, initialStep }) => {
+  const [step, setStep] = useState<'LIST' | 'SCAN' | 'MAINTAINING' | 'FINAL'>(initialStep || 'LIST');
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
   const [selectedMold, setSelectedMold] = useState<Mold | null>(null);
   const [moldTableNo, setMoldTableNo] = useState('');
@@ -43,7 +44,8 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
   };
 
   const handleMaintenanceComplete = () => {
-    setStep('DESTINATION');
+    setDestination('CABINET');
+    setStep('FINAL');
   };
 
   return (
@@ -198,40 +200,6 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
           </div>
         )}
 
-        {step === 'DESTINATION' && (
-          <div className="space-y-6 pt-6">
-            <h3 className="text-xl font-black text-slate-800 text-center mb-6">保养完成后，模具去向</h3>
-            
-            <button 
-              onClick={() => { setDestination('CABINET'); setStep('FINAL'); }}
-              className="w-full p-6 bg-white border-2 border-slate-100 rounded-3xl flex items-center gap-5 text-left hover:border-green-500 hover:bg-green-50/20 transition-all shadow-sm group"
-            >
-              <div className="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center text-3xl group-active:scale-90 transition-transform">
-                <i className="fas fa-warehouse"></i>
-              </div>
-              <div className="flex-1">
-                <p className="font-black text-slate-800 text-lg">放回模具柜</p>
-                <p className="text-xs text-slate-400 font-medium">状态将自动转为：[ 正常状态 ]</p>
-              </div>
-              <i className="fas fa-chevron-right text-slate-300"></i>
-            </button>
-
-            <button 
-              onClick={() => { setDestination('MACHINE'); setStep('FINAL'); }}
-              className="w-full p-6 bg-white border-2 border-slate-100 rounded-3xl flex items-center gap-5 text-left hover:border-purple-500 hover:bg-purple-50/20 transition-all shadow-sm group"
-            >
-              <div className="w-16 h-16 bg-purple-50 text-purple-500 rounded-full flex items-center justify-center text-3xl group-active:scale-90 transition-transform">
-                <i className="fas fa-industry"></i>
-              </div>
-              <div className="flex-1">
-                <p className="font-black text-slate-800 text-lg">回装至生产机台</p>
-                <p className="text-xs text-slate-400 font-medium">状态将转为：[ 预 BUYOFF ]</p>
-              </div>
-              <i className="fas fa-chevron-right text-slate-300"></i>
-            </button>
-          </div>
-        )}
-
         {step === 'FINAL' && (
           <div className="space-y-6 pt-4">
             <div className="bg-purple-600 text-white p-4 rounded-xl flex items-center justify-center gap-3 font-black text-lg shadow-lg animate-pulse border-2 border-purple-400">
@@ -239,28 +207,6 @@ const MaintenanceFlow: React.FC<MaintenanceFlowProps> = ({ onBack }) => {
               模具安装扫码
               <i className="fas fa-qrcode text-2xl"></i>
             </div>
-            {isFinished && destination === 'CABINET' && (
-              <div className="bg-amber-50 border-2 border-amber-200 p-5 rounded-2xl space-y-3 shadow-inner">
-                <h4 className="text-xs font-black text-amber-800 flex items-center gap-2 uppercase tracking-widest">
-                  <i className="fas fa-shield-halved text-amber-600"></i>
-                  半年 PM 逻辑自动校验提示
-                </h4>
-                <div className="text-[11px] text-amber-700 space-y-1.5 font-medium italic">
-                  <p className="flex items-center gap-2">
-                    <span className="w-1 h-1 bg-amber-400 rounded-full"></span>
-                    回原设备 {"&"} 未错过半年 PM {"->"} 不需二次保养
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <span className="w-1 h-1 bg-amber-400 rounded-full"></span>
-                    回原设备 {"&"} 错过半年 PM {"->"} <span className="text-red-600 font-black">警告：系统将重新触发保养</span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <span className="w-1 h-1 bg-amber-400 rounded-full"></span>
-                    去往其他不同机台 {"->"} <span className="text-red-600 font-black">注意：必须重新触发保养</span>
-                  </p>
-                </div>
-              </div>
-            )}
 
             <div className="bg-slate-900 text-white p-6 rounded-3xl space-y-5 shadow-2xl border-t-8 border-amber-600">
                <p className="text-[10px] text-slate-400 border-b border-slate-800 pb-2 uppercase font-black tracking-widest flex justify-between">

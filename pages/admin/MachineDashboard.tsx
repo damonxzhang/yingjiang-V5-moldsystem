@@ -2018,6 +2018,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 todoList.map((todo) => {
                   const taskId = `${todo.machine_id}-${todo.mold_id}-${todo.type}`;
                   const isCompleted = completedTasks.has(taskId);
+                  const hasMolds = todo.payload?.molds && todo.payload.molds.length > 1;
 
                   return (
                     <div key={todo.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
@@ -2028,9 +2029,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       <div className="flex items-center gap-3">
                         <div className={`w-1.5 h-8 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-indigo-500'}`}></div>
                         <div>
-                          {todo.payload?.molds && todo.payload.molds.length > 1 ? (
-                            <div className="flex flex-wrap gap-1.5 mb-1">
-                              {(todo.payload.molds as { mold_code: string; slot: string }[]).map((m, i) => (
+                          {hasMolds && todo.payload?.molds ? (
+                            <div className="flex flex-wrap gap-1 mb-1">
+                              {(todo.payload.molds as { mold_code: string; slot: string }[]).map((m: { mold_code: string; slot: string }, i: number) => (
                                 <span key={i} className="text-[9px] font-black text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
                                   {m.slot} {m.mold_code}
                                 </span>
@@ -2043,41 +2044,34 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                             </div>
                           )}
                           <p className={`text-xs font-black ${isCompleted ? 'text-green-400 line-through' : 'text-slate-200'}`}>
-                            {todo.type === 'MAINTENANCE' ? 'MMS推送保养信息' : todo.type}
+                            {todo.type === 'MAINTENANCE' ? 'MMS半年保养' : todo.type}
                           </p>
                           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
                             {todo.created_at}
                           </p>
                         </div>
                       </div>
-                      {todo.type === 'MAINTENANCE' ? (
-                        <button
-                          onClick={() => handleMaintenanceConfirm(todo)}
-                          className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
-                            isCompleted
-                              ? 'bg-green-600 text-white border-green-500'
-                              : 'bg-amber-600/20 text-amber-400 border border-amber-500/30 hover:bg-amber-600 hover:text-white'
-                          }`}
-                        >
-                          确认信息
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => toggleTaskComplete(todo.machine_id, todo.mold_id, todo.type)}
-                          className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
-                            isCompleted
-                              ? 'bg-green-600 text-white border-green-500'
-                              : 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white'
-                          }`}
-                        >
-                          {isCompleted ? (
-                            <span className="flex items-center gap-1">
-                              <i className="fas fa-check-circle"></i>
-                              已完成
-                            </span>
-                          ) : '确认完成'}
-                        </button>
-                      )}
+                      <button
+                        onClick={() => {
+                          handleMaintenanceConfirm(todo);
+                        }}
+                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
+                          isCompleted
+                            ? 'bg-green-600 text-white border-green-500'
+                            : todo.type === 'REMOVAL'
+                              ? 'bg-red-600/20 text-red-400 border-red-500/30 hover:bg-red-600 hover:text-white'
+                              : todo.type === 'REPAIR'
+                                ? 'bg-blue-600/20 text-blue-400 border-blue-500/30 hover:bg-blue-600 hover:text-white'
+                                : 'bg-amber-600/20 text-amber-400 border border-amber-500/30 hover:bg-amber-600 hover:text-white'
+                        }`}
+                      >
+                        {isCompleted ? (
+                          <span className="flex items-center gap-1">
+                            <i className="fas fa-check-circle"></i>
+                            已完成
+                          </span>
+                        ) : '确认信息'}
+                      </button>
                     </div>
                   );
                 })
@@ -2541,11 +2535,11 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   <span className="text-slate-400">机台编号</span>
                   <span className="text-blue-400 font-bold">{todoMachine?.machine_code}</span>
                 </div>
-                {confirmTodoItem.payload?.molds && (confirmTodoItem.payload.molds as { mold_code: string; slot: string }[]).length > 1 ? (
-                  <div className="space-y-2">
+                {confirmTodoItem.payload?.molds && (confirmTodoItem.payload.molds as any[]).length > 1 ? (
+                  <div className="space-y-1.5">
                     <span className="text-xs text-slate-400 block">模具信息（共 {(confirmTodoItem.payload.molds as any[]).length} 套）</span>
                     <div className="grid grid-cols-3 gap-2">
-                      {(confirmTodoItem.payload.molds as { mold_code: string; slot: string }[]).map((m, i) => (
+                      {(confirmTodoItem.payload.molds as { mold_code: string; slot: string }[]).map((m: { mold_code: string; slot: string }, i: number) => (
                         <div key={i} className="bg-slate-900 border border-blue-500/30 rounded-xl p-2.5 text-center">
                           <span className="text-[9px] font-black text-indigo-400 uppercase">{m.slot}</span>
                           <span className="text-blue-400 font-bold text-sm block mt-0.5">{m.mold_code}</span>
@@ -2638,7 +2632,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 )}
                 <p className="text-[9px] text-slate-500 italic">
                   <i className="fas fa-info-circle mr-1"></i>
-                  自定义时间必须在上述有效时间范围内，且开始时间不能早于结束时间。
+                  计划开始时间默认是MMS系统提供的有效开始时间
                 </p>
               </div>
 
