@@ -13,7 +13,10 @@ const DateTimeDropdownPicker: React.FC<{
   value: string;
   onChange: (val: string) => void;
   label: string;
-}> = ({ value, onChange, label }) => {
+  minDate?: string;
+  maxDate?: string;
+  onError?: (error: string) => void;
+}> = ({ value, onChange, label, minDate, maxDate, onError }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const date = value ? new Date(value) : new Date();
@@ -33,18 +36,105 @@ const DateTimeDropdownPicker: React.FC<{
     setMinute(d.getMinutes());
   }, [value]);
 
-  // 动态计算选项范围
-  const baseYear = value ? new Date(value).getFullYear() : new Date().getFullYear();
-  const years = Array.from({ length: 11 }, (_, i) => baseYear - 5 + i);
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  const daysInMonth = new Date(year, month, 0).getDate();
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-  const minutes = Array.from({ length: 60 }, (_, i) => i);
+  const minDateObj = minDate ? new Date(minDate) : null;
+  const maxDateObj = maxDate ? new Date(maxDate) : null;
+
   const pad2 = (n: number) => n.toString().padStart(2, '0');
+
+  const getYears = () => {
+    const startYear = minDateObj ? minDateObj.getFullYear() : (value ? new Date(value).getFullYear() : new Date().getFullYear()) - 5;
+    const endYear = maxDateObj ? maxDateObj.getFullYear() : (value ? new Date(value).getFullYear() : new Date().getFullYear()) + 5;
+    return Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
+  };
+
+  const getMonths = () => {
+    const startMonth = minDateObj && year === minDateObj.getFullYear() ? minDateObj.getMonth() + 1 : 1;
+    const endMonth = maxDateObj && year === maxDateObj.getFullYear() ? maxDateObj.getMonth() + 1 : 12;
+    return Array.from({ length: endMonth - startMonth + 1 }, (_, i) => startMonth + i);
+  };
+
+  const getDays = () => {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    let startDay = 1;
+    let endDay = daysInMonth;
+    
+    if (minDateObj && year === minDateObj.getFullYear() && month === minDateObj.getMonth() + 1) {
+      startDay = minDateObj.getDate();
+    }
+    if (maxDateObj && year === maxDateObj.getFullYear() && month === maxDateObj.getMonth() + 1) {
+      endDay = maxDateObj.getDate();
+    }
+    
+    return Array.from({ length: endDay - startDay + 1 }, (_, i) => startDay + i);
+  };
+
+  const getHours = () => {
+    let startHour = 0;
+    let endHour = 23;
+    
+    const isMinDate = minDateObj && year === minDateObj.getFullYear() && month === minDateObj.getMonth() + 1 && day === minDateObj.getDate();
+    const isMaxDate = maxDateObj && year === maxDateObj.getFullYear() && month === maxDateObj.getMonth() + 1 && day === maxDateObj.getDate();
+    
+    if (isMinDate) {
+      startHour = minDateObj.getHours();
+    }
+    if (isMaxDate) {
+      endHour = maxDateObj.getHours();
+    }
+    
+    return Array.from({ length: endHour - startHour + 1 }, (_, i) => startHour + i);
+  };
+
+  const getMinutes = () => {
+    let startMinute = 0;
+    let endMinute = 59;
+    
+    const isMinDate = minDateObj && year === minDateObj.getFullYear() && month === minDateObj.getMonth() + 1 && day === minDateObj.getDate() && hour === minDateObj.getHours();
+    const isMaxDate = maxDateObj && year === maxDateObj.getFullYear() && month === maxDateObj.getMonth() + 1 && day === maxDateObj.getDate() && hour === maxDateObj.getHours();
+    
+    if (isMinDate) {
+      startMinute = minDateObj.getMinutes();
+    }
+    if (isMaxDate) {
+      endMinute = maxDateObj.getMinutes();
+    }
+    
+    return Array.from({ length: endMinute - startMinute + 1 }, (_, i) => startMinute + i);
+  };
+
+  const years = getYears();
+  const months = getMonths();
+  const days = getDays();
+  const hours = getHours();
+  const minutes = getMinutes();
+
+  const truncateToMinute = (date: Date) => {
+    const d = new Date(date);
+    d.setSeconds(0);
+    d.setMilliseconds(0);
+    return d;
+  };
 
   const handleConfirm = () => {
     const newVal = `${year}-${pad2(month)}-${pad2(day)}T${pad2(hour)}:${pad2(minute)}`;
+    const newDate = new Date(newVal);
+    
+    const truncatedNewDate = truncateToMinute(newDate);
+    const truncatedMinDate = minDateObj ? truncateToMinute(minDateObj) : null;
+    const truncatedMaxDate = maxDateObj ? truncateToMinute(maxDateObj) : null;
+    
+    if (truncatedMinDate && truncatedNewDate < truncatedMinDate) {
+      setIsOpen(false);
+      onError?.('时间选择错误，计划开始时间不能早于有效开始时间');
+      return;
+    }
+    
+    if (truncatedMaxDate && truncatedNewDate > truncatedMaxDate) {
+      setIsOpen(false);
+      onError?.('时间选择错误，计划开始时间不能晚于有效结束时间');
+      return;
+    }
+    
     onChange(newVal);
     setIsOpen(false);
   };
@@ -667,12 +757,12 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     const start = todo.payload?.start_time || '';
     const end = todo.payload?.end_time || '';
     setConfirmTimeRange({ start, end });
-    // 预填用户自定义时间：开始时间默认为当前时间，结束时间默认为有效时间结束时间
-    const now = new Date();
+    // 预填用户自定义时间：开始时间默认为有效开始时间，结束时间默认为有效时间结束时间
     const pad2 = (n: number) => n.toString().padStart(2, '0');
-    const nowStr = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}T${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
-    setUserMaintenanceStart(nowStr);
-    setUserMaintenanceEnd(end ? end.replace(' ', 'T').slice(0, 16) : nowStr);
+    const defaultStart = start ? start.replace(' ', 'T').slice(0, 16) : '';
+    const defaultEnd = end ? end.replace(' ', 'T').slice(0, 16) : '';
+    setUserMaintenanceStart(defaultStart);
+    setUserMaintenanceEnd(defaultEnd);
     setUserTimeError('');
     setShowMaintenanceConfirmModal(true);
   };
@@ -2621,6 +2711,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                         setUserTimeError('');
                       }}
                       label="计划开始时间"
+                      minDate={confirmTimeRange.start?.replace(' ', 'T').slice(0, 16)}
+                      maxDate={confirmTimeRange.end?.replace(' ', 'T').slice(0, 16)}
+                      onError={(error) => setUserTimeError(error)}
                     />
                   </div>
                 </div>
@@ -2649,16 +2742,25 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 <button
                   onClick={() => {
                     // 校验用户自定义时间
-                    const effectiveStart = confirmTimeRange.start?.replace(' ', 'T');
-                    const effectiveEnd = confirmTimeRange.end?.replace(' ', 'T');
+                    const effectiveStart = confirmTimeRange.start?.replace(' ', 'T').slice(0, 16);
+                    const effectiveEnd = confirmTimeRange.end?.replace(' ', 'T').slice(0, 16);
 
                     if (!userMaintenanceStart) {
                       setUserTimeError('请填写计划开始时间');
                       return;
                     }
 
-                    if (effectiveStart && userMaintenanceStart < effectiveStart) {
+                    const userDate = new Date(userMaintenanceStart);
+                    const startDate = effectiveStart ? new Date(effectiveStart) : null;
+                    const endDate = effectiveEnd ? new Date(effectiveEnd) : null;
+
+                    if (startDate && userDate < startDate) {
                       setUserTimeError('计划开始时间不能早于有效开始时间');
+                      return;
+                    }
+
+                    if (endDate && userDate > endDate) {
+                      setUserTimeError('计划开始时间不能晚于有效结束时间');
                       return;
                     }
 
