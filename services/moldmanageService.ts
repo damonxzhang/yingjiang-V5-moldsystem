@@ -171,7 +171,7 @@ export interface SaveMoldParams {
   product_type: string;         // 产品类型
   package_type: string;         // 封装规格
   package_size?: string;        // 新增时为空，编辑时为详情接口中的 package_size
-  pin_code: string;             // PIN CODE
+  pin_code?: string;            // PIN CODE
   life_limit?: number;          // 新增时为空，编辑时为详情接口中的 life_limit
   maintenance_cycle: string;    // 保养周期
   start_time: string;           // 开始保养时间

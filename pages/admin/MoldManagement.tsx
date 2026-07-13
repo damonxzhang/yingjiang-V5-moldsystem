@@ -4,6 +4,7 @@ import { MOCK_MOLDS } from '../../services/mockData';
 import { STATUS_COLORS, STATUS_LABELS } from '../../constants';
 import { Mold, MoldStatus, BuyoffStatus, MoldComponent } from '../../types';
 import { fetchMoldList, MoldListItem, fetchMoldDetail, MoldDetailItem, saveMold, fetchInternalComponents, InternalComponentItem, toggleStatus } from '../../services/moldmanageService';
+import { fetchMachineCodes, MachineCodeOption } from '../../services/dashboardService';
 
 /**
  * 将 API 内部组件映射为前端 MoldComponent 类型
@@ -115,8 +116,23 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     moldCode: '',
     status: ''
   });
+  const [productTypeOptions, setProductTypeOptions] = useState<MachineCodeOption[]>([]);
   const isFirstRender = useRef(true);
   const isLoadingRef = useRef(false);
+
+  const loadProductTypes = async () => {
+    try {
+      const types = await fetchMachineCodes();
+      setProductTypeOptions(types);
+    } catch (err) {
+      console.error('获取产品类型失败:', err);
+      setProductTypeOptions([]);
+    }
+  };
+
+  useEffect(() => {
+    loadProductTypes();
+  }, []);
 
   // 从 API 获取模具列表
   const loadMolds = async (page: number = 1) => {
@@ -229,7 +245,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         product_type: currentMold.productType || '',     // 产品类型
         package_type: currentMold.packageType || '',     // 封装规格
         package_size: modalMode === 'EDIT' ? currentMoldDetail?.package_size : undefined,  // 编辑时使用详情中的 package_size
-        pin_code: currentMold.pinCode || '',       // PIN CODE
+        pin_code: currentMold.pinCode || undefined,       // PIN CODE
         life_limit: modalMode === 'EDIT' ? currentMoldDetail?.life_limit : undefined,      // 编辑时使用详情中的 life_limit
         maintenance_cycle: currentMold.maintenanceCycle || '',  // 保养周期
         start_time: currentMold.maintenanceStartTime || '',     // 开始保养时间
@@ -438,13 +454,14 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm font-bold text-slate-700">产品类型:</label>
-          <input 
-            type="text" 
-            value={filters.productType} 
+          <select 
+            value={filters.productType || ''} 
             onChange={(e) => setFilters({...filters, productType: e.target.value})} 
-            placeholder="如 BGA, QFN"
             className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32"
-          />
+          >
+            <option value="">全部</option>
+            {Array.isArray(productTypeOptions) && productTypeOptions.map(p => <option key={p.machine_id} value={p.machine_code}>{p.machine_code}</option>)}
+          </select>
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm font-bold text-slate-700">位置:</label>
@@ -742,7 +759,10 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
                     </div>
                     <div>
                       <label className="text-[9px] font-bold text-slate-500 uppercase">产品类型 (PROD TYPE)</label>
-                      <input type="text" className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm" value={currentMold.productType || ''} onChange={e => setCurrentMold({...currentMold, productType: e.target.value})} />
+                      <select className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm" value={currentMold.productType || ''} onChange={e => setCurrentMold({...currentMold, productType: e.target.value})}>
+                        <option value="">请选择产品类型</option>
+                        {Array.isArray(productTypeOptions) && productTypeOptions.map(p => <option key={p.machine_id} value={p.machine_code}>{p.machine_code}</option>)}
+                      </select>
                     </div>
                     <div>
                       <label className="text-[9px] font-bold text-slate-500 uppercase">封装规格 (PKG TYPE)</label>
