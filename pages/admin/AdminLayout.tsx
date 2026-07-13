@@ -24,6 +24,7 @@ import MoldMachineBinding from './MoldMachineBinding';
 import MachineSlotConfig from './MachineSlotConfig';
 import MachineBaseList from './MachineBaseList';
 import MachineStatusHistory from './MachineStatusHistory';
+import MaintenanceReminderCycle from './MaintenanceReminderCycle';
 
 interface AdminLayoutProps {
   userRole: string;
@@ -31,7 +32,7 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
-  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'binding_machine' | 'maintenance_confirm' | 'repair_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen' | 'role_manage' | 'user_manage' | 'maintenance_option_manage' | 'repair_option_manage' | 'machine_slot_config' | 'machine_base_list' | 'machine_status_history'>('machine_screen');
+  const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'binding_machine' | 'maintenance_confirm' | 'repair_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen' | 'role_manage' | 'user_manage' | 'maintenance_option_manage' | 'repair_option_manage' | 'machine_slot_config' | 'machine_base_list' | 'machine_status_history' | 'maintenance_reminder_cycle'>('machine_screen');
 
   // 检查是否为访客模式 - 通过 user_id 判断
   const isGuestMode = React.useMemo(() => {
@@ -87,6 +88,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
     { id: 'machine_slot_config', name: '机台模台配置', icon: 'fa-microchip', permission: Permission.MACHINE_CONFIG },
     { id: 'machine_base_list', name: '机台管理', icon: 'fa-server', permission: Permission.MACHINE_CONFIG },
     { id: 'machine_status_history', name: '机台启用日志', icon: 'fa-clock-rotate-left', permission: Permission.MACHINE_CONFIG },
+    { id: 'maintenance_reminder_cycle', name: '保养提醒周期', icon: 'fa-calendar-days', permission: Permission.MACHINE_CONFIG },
     { id: 'role_manage', name: '角色权限管理', icon: 'fa-user-shield', permission: Permission.ROLE_MANAGE },
     { id: 'user_manage', name: '用户账号管理', icon: 'fa-users-gear', permission: Permission.USER_MANAGE },
   ];
@@ -156,6 +158,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
       case 'machine_slot_config': return <MachineSlotConfig />;
       case 'machine_base_list': return <MachineBaseList />;
       case 'machine_status_history': return <MachineStatusHistory />;
+      case 'maintenance_reminder_cycle': return <MaintenanceReminderCycle />;
       case 'role_manage': return <RoleManagement />;
       case 'user_manage': return <UserManagement />;
       default: return <div className="p-10 text-slate-400 italic">该模块正在开发中...</div>;
