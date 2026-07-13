@@ -406,10 +406,10 @@ export const MOCK_SPARES: SparePart[] = [
 
 // 保养选项 (Maintenance Options)
 export const MOCK_MAINTENANCE_OPTIONS = [
-  { id: 'MO-001', name: '清洁模腔', category: '半年保养项目', description: '使用专用清洁剂清理模腔残留' },
-  { id: 'MO-002', name: '润滑导柱', category: '半年保养项目', description: '对导柱和导套进行油脂润滑' },
-  { id: 'MO-003', name: '检查加热棒', category: '电气保养', description: '测量加热棒阻值是否正常' },
-  { id: 'MO-004', name: '紧固螺栓', category: '机械保养', description: '检查并紧固模具外部紧固螺栓' },
+  { id: 'MO-001', name: '清洁模腔', category: '半年保养项目', description: '使用专用清洁剂清理模腔残留', enabled: true },
+  { id: 'MO-002', name: '润滑导柱', category: '半年保养项目', description: '对导柱和导套进行油脂润滑', enabled: true },
+  { id: 'MO-003', name: '检查加热棒', category: '电气保养', description: '测量加热棒阻值是否正常', enabled: false },
+  { id: 'MO-004', name: '紧固螺栓', category: '机械保养', description: '检查并紧固模具外部紧固螺栓', enabled: true },
 ];
 
 // 维修选项 (Repair Options)
