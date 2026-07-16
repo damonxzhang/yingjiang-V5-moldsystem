@@ -554,8 +554,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     });
   }, [dashboardData]);
 
-  const handleMachineClick = async (machine: any) => {
-    // 过滤掉 null 值，获取有效的模具位置
+  const handleMachineClick = async (machine: any, defaultSlot?: string) => {
     const validMoldEntries = Object.entries(machine.molds || {}).filter(([_, mold]) => mold != null);
     if (!machine || !machine.machine_code || validMoldEntries.length === 0) {
       alert(`设备 ${machine?.machine_code || '未知'} 当前无模具生产数据，无法查看详情`);
@@ -563,10 +562,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     }
     setSelectedMachine(machine);
 
-    // 获取第一个有模具的槽位作为默认槽位
     const availablePos = validMoldEntries.map(([pos]) => pos);
-    const defaultSlot = availablePos.length > 0 ? availablePos[0] : 'P1';
-    setSelectedMoldPos(defaultSlot as any);
+    const slot = defaultSlot && availablePos.includes(defaultSlot) ? defaultSlot : (availablePos.length > 0 ? availablePos[0] : 'P1');
+    setSelectedMoldPos(slot as any);
 
     // 调用 API 获取机台详情（不传 slot 参数，获取所有 slots 数据）
     setIsLoadingMachineDetail(true);
@@ -1446,20 +1444,26 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
               validMoldEntries.length === 2 ? 'grid-cols-2' : 'grid-cols-1'
             } gap-1.5 my-2 flex-1`}>
               {validMoldEntries.map(([pos, mold]: [string, any]) => {
-                // 任务状态横条颜色映射
                 const getTaskBarColor = (m: any) => {
                   const s = (m.status || '').toUpperCase();
-                  if (s === 'EMPTY' || m.color === 'slate') return 'bg-slate-600'; // 物色
-                  if (s === 'OVERDUE' || m.isOffline || m.color === 'red') return 'bg-red-500'; // 红色
-                  if (s === 'UPCOMING' || m.color === 'yellow') return 'bg-yellow-500'; // 黄色
-                  if (s === 'BUYOFF' || m.color === 'blue') return 'bg-blue-500'; // 蓝色
-                  if (s === 'MAINTENANCE') return 'bg-purple-500'; // 紫色
-                  return 'bg-blue-500'; // 默认蓝色
+                  if (s === 'EMPTY' || m.color === 'slate') return 'bg-slate-600';
+                  if (s === 'OVERDUE' || m.isOffline || m.color === 'red') return 'bg-red-500';
+                  if (s === 'UPCOMING' || m.color === 'yellow') return 'bg-yellow-500';
+                  if (s === 'BUYOFF' || m.color === 'blue') return 'bg-blue-500';
+                  if (s === 'MAINTENANCE') return 'bg-purple-500';
+                  return 'bg-blue-500';
                 };
                 const barColor = getTaskBarColor(mold);
                 const isWhiteBar = barColor === 'bg-white';
                 return (
-                  <div key={pos} className="flex flex-col gap-1.5">
+                  <div 
+                    key={pos} 
+                    className="flex flex-col gap-1.5 cursor-pointer hover:scale-[1.02] transition-transform"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMachineClick(machine, pos);
+                    }}
+                  >
                     <div className="flex items-center gap-1.5">
                       <span className="text-[10px] text-slate-500 font-bold">{pos}</span>
                       <div className={`flex-1 h-1 rounded-full ${barColor} ${isWhiteBar ? 'border border-slate-600' : ''}`}></div>
@@ -1481,7 +1485,6 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                         </>
                       )}
                     </div>
-                    {/* Tiny Progress Bar - 使用 life_percent */}
                     {mold.status !== 'EMPTY' && (
                       <div className="space-y-1">
                         <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
