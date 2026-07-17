@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchMachineCodes, MachineCodeOption } from '../../services/dashboardService';
+import { fetchProductTypes } from '../../services/dashboardService';
+import { AuthService } from '../../services/authService';
 
 interface ProductType {
   id: number;
@@ -17,13 +18,6 @@ const ProductTypeManagement: React.FC = () => {
   const isFirstRender = useRef(true);
   const isLoadingRef = useRef(false);
 
-  const mapApiToFrontend = (apiItem: MachineCodeOption): ProductType => {
-    return {
-      id: apiItem.machine_id,
-      name: apiItem.machine_code
-    };
-  };
-
   const loadProductTypes = async () => {
     if (isLoadingRef.current) return;
     isLoadingRef.current = true;
@@ -32,8 +26,13 @@ const ProductTypeManagement: React.FC = () => {
     setError(null);
 
     try {
-      const data = await fetchMachineCodes();
-      const mappedTypes = data.map(mapApiToFrontend);
+      const authData = AuthService.getStoredAuth();
+      const department = authData?.department || '大材料';
+      const data = await fetchProductTypes(department);
+      const mappedTypes = data.map((name, index) => ({
+        id: index + 1,
+        name: name
+      }));
       setProductTypes(mappedTypes);
     } catch (err) {
       setError(err instanceof Error ? err.message : '获取数据失败');

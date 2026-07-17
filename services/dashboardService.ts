@@ -681,6 +681,44 @@ export async function fetchMachineTypes(department: string = 'ALL'): Promise<str
 }
 
 /**
+ * 获取产品类型列表
+ */
+export async function fetchProductTypes(department: string): Promise<string[]> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/product-type-list`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authData.token}`
+      },
+      body: JSON.stringify({
+        department: department
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.code === 200 && Array.isArray(data.data)) {
+      return data.data as string[];
+    }
+
+    if (Array.isArray(data)) {
+      return data as string[];
+    }
+
+    return [];
+  } catch (error) {
+    console.error('获取产品类型列表失败:', error);
+    return [];
+  }
+}
+
+/**
  * 获取所有机台编号列表
  */
 export async function fetchMachineCodes(): Promise<MachineCodeOption[]> {
@@ -850,6 +888,7 @@ export const DashboardService = {
   fetchMachineDetail,
   fetchMachineCodes,
   fetchMachineTypes,
+  fetchProductTypes,
   createMaintenanceTask,
   createRepairTask,
   disableMold,

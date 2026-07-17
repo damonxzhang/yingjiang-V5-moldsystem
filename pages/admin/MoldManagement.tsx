@@ -4,7 +4,7 @@ import { MOCK_MOLDS } from '../../services/mockData';
 import { STATUS_COLORS, STATUS_LABELS } from '../../constants';
 import { Mold, MoldStatus, BuyoffStatus, MoldComponent } from '../../types';
 import { fetchMoldList, MoldListItem, fetchMoldDetail, MoldDetailItem, saveMold, fetchInternalComponents, InternalComponentItem, toggleStatus } from '../../services/moldmanageService';
-import { fetchMachineCodes, MachineCodeOption } from '../../services/dashboardService';
+import { fetchProductTypes } from '../../services/dashboardService';
 
 /**
  * 将 API 内部组件映射为前端 MoldComponent 类型
@@ -116,13 +116,16 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
     moldCode: '',
     status: ''
   });
-  const [productTypeOptions, setProductTypeOptions] = useState<MachineCodeOption[]>([]);
+  const [productTypeOptions, setProductTypeOptions] = useState<string[]>([]);
   const isFirstRender = useRef(true);
   const isLoadingRef = useRef(false);
+  const hasFetchedProductTypes = useRef(false);
 
   const loadProductTypes = async () => {
+    if (hasFetchedProductTypes.current) return;
+    hasFetchedProductTypes.current = true;
     try {
-      const types = await fetchMachineCodes();
+      const types = await fetchProductTypes(department);
       setProductTypeOptions(types);
     } catch (err) {
       console.error('获取产品类型失败:', err);
@@ -132,7 +135,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
 
   useEffect(() => {
     loadProductTypes();
-  }, []);
+  }, [department]);
 
   // 从 API 获取模具列表
   const loadMolds = async (page: number = 1) => {
@@ -460,7 +463,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
             className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32"
           >
             <option value="">全部</option>
-            {Array.isArray(productTypeOptions) && productTypeOptions.map(p => <option key={p.machine_id} value={p.machine_code}>{p.machine_code}</option>)}
+            {Array.isArray(productTypeOptions) && productTypeOptions.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
         <div className="flex items-center gap-2">
@@ -761,7 +764,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
                       <label className="text-[9px] font-bold text-slate-500 uppercase">产品类型 (PROD TYPE)</label>
                       <select className="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm" value={currentMold.productType || ''} onChange={e => setCurrentMold({...currentMold, productType: e.target.value})}>
                         <option value="">请选择产品类型</option>
-                        {Array.isArray(productTypeOptions) && productTypeOptions.map(p => <option key={p.machine_id} value={p.machine_code}>{p.machine_code}</option>)}
+                        {Array.isArray(productTypeOptions) && productTypeOptions.map(p => <option key={p} value={p}>{p}</option>)}
                       </select>
                     </div>
                     <div>

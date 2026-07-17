@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, EnableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineCodeOption, MachineTodo, ToggleMachineStatusRequest } from '../../services/dashboardService';
+import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, EnableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineTodo, ToggleMachineStatusRequest } from '../../services/dashboardService';
 import { AuthService } from '../../services/authService';
 
 interface MachineDashboardProps {
@@ -225,22 +225,22 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   }, []);
   const [selectedMachine, setSelectedMachine] = useState<any>(null);
   const [selectedMoldPos, setSelectedMoldPos] = useState<'P1' | 'P2' | 'P3'>('P1');
-  // 当前材料类型状态
-  const [currentMaterialType, setCurrentMaterialType] = useState<'大材料' | '小材料' | 'ALL'>('大材料');
-
-  // 初始化材料类型（优先从 prop 获取，其次从登录用户信息获取，最后默认大材料）
-  useEffect(() => {
+  // 当前材料类型状态 - 从登录用户信息获取默认值
+  const getDefaultMaterialType = (): '大材料' | '小材料' | 'ALL' => {
     if (department) {
-      setCurrentMaterialType(department === '小材料' ? '小材料' : (department === '大材料' ? '大材料' : 'ALL'));
-    } else {
-      // 从登录用户信息获取 department
-      const authData = AuthService.getStoredAuth();
-      if (authData?.department) {
-        setCurrentMaterialType(authData.department === '小材料' ? '小材料' : (authData.department === '大材料' ? '大材料' : 'ALL'));
-      } else {
-        setCurrentMaterialType('大材料');
-      }
+      return department === '小材料' ? '小材料' : (department === '大材料' ? '大材料' : 'ALL');
     }
+    const authData = AuthService.getStoredAuth();
+    if (authData?.department) {
+      return authData.department === '小材料' ? '小材料' : (authData.department === '大材料' ? '大材料' : 'ALL');
+    }
+    return '大材料';
+  };
+
+  const [currentMaterialType, setCurrentMaterialType] = useState<'大材料' | '小材料' | 'ALL'>(getDefaultMaterialType());
+
+  useEffect(() => {
+    setCurrentMaterialType(getDefaultMaterialType());
   }, [department]);
   const [showInventory, setShowInventory] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -317,27 +317,27 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [onlyAbnormal, setOnlyAbnormal] = useState(false);     // 仅显示异常生产设备（模具超期、即将保养或下线）
   // 数据刷新触发器
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  // Product 下拉列表选项
-  const [productOptions, setProductOptions] = useState<MachineCodeOption[]>([]);
+  // 产品类型列表
+  const [productOptions, setProductOptions] = useState<string[]>([]);
   // 机台类型列表
   const [machineTypes, setMachineTypes] = useState<string[]>([]);
 
-  // 页面加载时获取 Product 下拉列表
+  // 页面加载时获取产品类型列表
   const hasFetchedProductOptions = useRef(false);
   useEffect(() => {
     if (hasFetchedProductOptions.current) return;
     hasFetchedProductOptions.current = true;
     const fetchProductOptions = async () => {
       try {
-        const codes = await DashboardService.fetchMachineCodes();
-        setProductOptions(Array.isArray(codes) ? codes : []);
+        const types = await DashboardService.fetchProductTypes(currentMaterialType);
+        setProductOptions(Array.isArray(types) ? types : []);
       } catch (error) {
-        console.error('获取机台编号列表失败:', error);
+        console.error('获取产品类型列表失败:', error);
         setProductOptions([]);
       }
     };
     fetchProductOptions();
-  }, []);
+  }, [currentMaterialType]);
 
   // 页面加载时获取机台类型列表
   const hasFetchedMachineTypes = useRef(false);
@@ -346,9 +346,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     hasFetchedMachineTypes.current = true;
     const fetchMachineTypesData = async () => {
       try {
-        // 根据当前部门获取机台类型
-        const dept = currentMaterialType === 'ALL' ? 'ALL' : currentMaterialType;
-        const types = await DashboardService.fetchMachineTypes(dept);
+        const types = await DashboardService.fetchMachineTypes(currentMaterialType);
         setMachineTypes(Array.isArray(types) ? types : []);
       } catch (error) {
         console.error('获取机台类型列表失败:', error);
@@ -1308,13 +1306,11 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
             className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[10px] text-blue-100 focus:outline-none focus:border-blue-500"
           >
             <option value="">所有</option>
-            {Array.isArray(productOptions) && productOptions.map(p => <option key={p.machine_id} value={p.machine_code}>{p.machine_code}</option>)}
+            {Array.isArray(productOptions) && productOptions.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
 
-
-
-<div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-blue-500 uppercase">机器类型:</span>
           <select
             value={filterMachineType}

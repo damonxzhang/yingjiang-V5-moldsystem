@@ -128,14 +128,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
   };
 
   const renderContent = () => {
-    // 获取当前用户的部门，用于看板过滤
-    const userDept = (userRole === 'MOLD_ENGINEER_BIG' || userRole === 'GUEST_BIG') ? '大材料' : 
-                     (userRole === 'MOLD_ENGINEER_SMALL' || userRole === 'GUEST_SMALL') ? '小材料' : undefined;
-    
     // 从 URL 获取访客模式下的部门 (App.tsx 已经将访客部门存入了权限/角色中，但这里可以直接解析参数更保险)
     const params = new URLSearchParams(window.location.search);
     const deptParam = params.get('dept') === 'big' ? '大材料' : (params.get('dept') === 'small' ? '小材料' : undefined);
-    const currentDept = deptParam || userDept;
+    const currentDept = deptParam || userDepartment;
 
     switch(activePage) {
       case 'dashboard': return <Dashboard department={currentDept} />;
