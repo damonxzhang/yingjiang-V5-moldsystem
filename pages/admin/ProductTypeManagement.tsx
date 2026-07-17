@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchProductTypes, saveProductType } from '../../services/dashboardService';
+import { fetchProductTypes, toggleProductTypeStatus, updateProductType, ProductTypeItem } from '../../services/productTypeService';
+import { saveProductType } from '../../services/dashboardService';
 import { AuthService } from '../../services/authService';
 
 interface ProductType {
   id: number;
   name: string;
+  status: number;
 }
+
+const ITEMS_PER_PAGE = 20;
 
 const ProductTypeManagement: React.FC = () => {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
@@ -15,11 +19,12 @@ const ProductTypeManagement: React.FC = () => {
   const [editingItem, setEditingItem] = useState<ProductType | null>(null);
   const [editName, setEditName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
 
-  const isFirstRender = useRef(true);
   const isLoadingRef = useRef(false);
 
-  const loadProductTypes = async () => {
+  const loadProductTypes = async (page: number = 1) => {
     if (isLoadingRef.current) return;
     isLoadingRef.current = true;
 
@@ -29,15 +34,23 @@ const ProductTypeManagement: React.FC = () => {
     try {
       const authData = AuthService.getStoredAuth();
       const department = authData?.department || '大材料';
-      const data = await fetchProductTypes(department);
-      const mappedTypes = data.map((name, index) => ({
-        id: index + 1,
-        name: name
+      const response = await fetchProductTypes({
+        department,
+        page,
+        page_size: ITEMS_PER_PAGE
+      });
+      const mappedTypes: ProductType[] = response.data.list.map((item) => ({
+        id: item.id,
+        name: item.product_type || item.name || '',
+        status: item.status ?? 1
       }));
       setProductTypes(mappedTypes);
+      setTotalRecords(response.data.total);
+      setCurrentPage(page);
     } catch (err) {
       setError(err instanceof Error ? err.message : '获取数据失败');
       setProductTypes([]);
+      setTotalRecords(0);
     } finally {
       setLoading(false);
       isLoadingRef.current = false;
@@ -45,11 +58,8 @@ const ProductTypeManagement: React.FC = () => {
   };
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      loadProductTypes();
-    }
-  }, []);
+    loadProductTypes(currentPage);
+  }, [currentPage]);
 
   const handleEditClick = (item: ProductType) => {
     setEditingItem(item);
@@ -57,9 +67,26 @@ const ProductTypeManagement: React.FC = () => {
     setShowEditModal(true);
   };
 
-  const handleDeleteClick = (item: ProductType) => {
-    if (window.confirm(`确定要删除产品类型 "${item.name}" 吗？`)) {
-      alert('删除功能暂未实现');
+  const handleToggleStatus = async (item: ProductType) => {
+    const isActivate = item.status == 0;
+    const confirmMsg = isActivate ? `确定要启用产品类型 "${item.name}" 吗？` : `确定要禁用产品类型 "${item.name}" 吗？`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const response = await toggleProductTypeStatus({
+        id: item.id,
+        status: isActivate ? 1 : 0
+      });
+      if (response.code === 200) {
+        alert(response?.message || (isActivate ? '启用成功' : '禁用成功'));
+        setProductTypes(productTypes.map(t => t.id === item.id ? { ...t, status: isActivate ? 1 : 0 } : t));
+      } else {
+        alert(response?.message || (isActivate ? '启用失败' : '禁用失败'));
+      }
+    } catch (err) {
+      console.error(isActivate ? '启用产品类型失败:' : '禁用产品类型失败:', err);
+      alert(err instanceof Error ? err.message : (isActivate ? '启用失败' : '禁用失败'));
     }
   };
 
@@ -69,22 +96,25 @@ const ProductTypeManagement: React.FC = () => {
       return;
     }
 
-    if (editingItem) {
-      alert('编辑功能暂未实现');
-      return;
-    }
-
     setSaving(true);
 
     try {
-      await saveProductType(editName.trim());
-      alert('保存成功');
+      if (editingItem) {
+        await updateProductType({
+          id: editingItem.id,
+          product_type: editName.trim()
+        });
+        alert('更新成功');
+      } else {
+        await saveProductType(editName.trim());
+        alert('保存成功');
+      }
       setShowEditModal(false);
       setEditingItem(null);
       setEditName('');
-      loadProductTypes();
+      loadProductTypes(currentPage);
     } catch (error) {
-      alert(error instanceof Error ? error.message : '保存失败');
+      alert(error instanceof Error ? error.message : (editingItem ? '更新失败' : '保存失败'));
     } finally {
       setSaving(false);
     }
@@ -144,6 +174,7 @@ const ProductTypeManagement: React.FC = () => {
             <thead className="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-widest">
               <tr>
                 <th className="px-4 py-4 font-bold">产品类型名称</th>
+                <th className="px-4 py-4 font-bold text-center">状态</th>
                 <th className="px-4 py-4 font-bold">操作</th>
               </tr>
             </thead>
@@ -153,26 +184,91 @@ const ProductTypeManagement: React.FC = () => {
                   <td className="px-4 py-4">
                     <span className="font-medium text-slate-700">{item.name}</span>
                   </td>
+                  <td className="px-4 py-4 text-center">
+                    {item.status == 0 ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                        <i className="fas fa-times-circle"></i> 已禁用
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                        <i className="fas fa-check-circle"></i> 启用中
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-4">
                     <div className="flex justify-center gap-6">
                       <button
                         onClick={() => handleEditClick(item)}
                         className="text-slate-400 hover:text-indigo-600 transition-colors"
+                        title="编辑"
                       >
                         <i className="fas fa-edit"></i>
                       </button>
-                      <button
-                        onClick={() => handleDeleteClick(item)}
-                        className="text-slate-400 hover:text-red-600 transition-colors"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
+                      {item.status != 0 ? (
+                        <button
+                          onClick={() => handleToggleStatus(item)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1.5 rounded-lg transition-colors text-sm font-medium"
+                          title="禁用"
+                        >
+                          <i className="fas fa-ban mr-1"></i>
+                          禁用
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleToggleStatus(item)}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50 px-2 py-1.5 rounded-lg transition-colors text-sm font-medium"
+                          title="启用"
+                        >
+                          <i className="fas fa-check-circle mr-1"></i>
+                          启用
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {totalRecords > ITEMS_PER_PAGE && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <i className="fas fa-chevron-left mr-1"></i> 上一页
+          </button>
+          
+          <div className="flex gap-1">
+            {Array.from({ length: Math.ceil(totalRecords / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-9 h-9 rounded-lg text-sm font-bold transition-colors ${
+                  currentPage === page
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+          
+          <button
+            onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalRecords / ITEMS_PER_PAGE), p + 1))}
+            disabled={currentPage === Math.ceil(totalRecords / ITEMS_PER_PAGE)}
+            className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            下一页 <i className="fas fa-chevron-right ml-1"></i>
+          </button>
+          
+          <span className="text-sm text-slate-500 ml-4">
+            共 {totalRecords} 条记录，第 {currentPage}/{Math.ceil(totalRecords / ITEMS_PER_PAGE)} 页
+          </span>
         </div>
       )}
 

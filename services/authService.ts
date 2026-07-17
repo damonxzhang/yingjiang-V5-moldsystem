@@ -94,7 +94,6 @@ export const AuthService = {
    * 用户登录
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    debugger
     try {
       const response = await loginApi(credentials);
       
