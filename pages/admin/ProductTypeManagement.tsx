@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchProductTypes } from '../../services/dashboardService';
+import { fetchProductTypes, saveProductType } from '../../services/dashboardService';
 import { AuthService } from '../../services/authService';
 
 interface ProductType {
@@ -14,6 +14,7 @@ const ProductTypeManagement: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ProductType | null>(null);
   const [editName, setEditName] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const isFirstRender = useRef(true);
   const isLoadingRef = useRef(false);
@@ -62,15 +63,31 @@ const ProductTypeManagement: React.FC = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editName.trim()) {
       alert('请输入产品类型名称');
       return;
     }
-    alert(`保存成功：${editName}`);
-    setShowEditModal(false);
-    setEditingItem(null);
-    setEditName('');
+
+    if (editingItem) {
+      alert('编辑功能暂未实现');
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      await saveProductType(editName.trim());
+      alert('保存成功');
+      setShowEditModal(false);
+      setEditingItem(null);
+      setEditName('');
+      loadProductTypes();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '保存失败');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -197,9 +214,10 @@ const ProductTypeManagement: React.FC = () => {
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors"
+                  disabled={saving}
+                  className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed"
                 >
-                  保存
+                  {saving ? '保存中...' : '保存'}
                 </button>
               </div>
             </div>

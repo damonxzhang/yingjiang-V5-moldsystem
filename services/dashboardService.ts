@@ -719,6 +719,40 @@ export async function fetchProductTypes(department: string): Promise<string[]> {
 }
 
 /**
+ * 保存产品类型（新增）
+ */
+export async function saveProductType(productType: string): Promise<void> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  if (!authData.department) {
+    throw new Error('当前用户未设置部门信息');
+  }
+
+  const requestBody = {
+    product_type: productType,
+    department: authData.department
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/mold/product-type-save`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const data = await response.json();
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '保存产品类型失败');
+  }
+}
+
+/**
  * 获取所有机台编号列表
  */
 export async function fetchMachineCodes(): Promise<MachineCodeOption[]> {
@@ -889,6 +923,7 @@ export const DashboardService = {
   fetchMachineCodes,
   fetchMachineTypes,
   fetchProductTypes,
+  saveProductType,
   createMaintenanceTask,
   createRepairTask,
   disableMold,
