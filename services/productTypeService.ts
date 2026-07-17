@@ -39,7 +39,6 @@ export interface UpdateProductTypeResponse {
 }
 
 export interface FetchProductTypesParams {
-  department: string;
   page?: number;
   page_size?: number;
 }
@@ -52,6 +51,10 @@ export async function fetchProductTypes(
     throw new Error('未登录或登录已过期');
   }
 
+  if (!authData.department) {
+    throw new Error('用户部门信息缺失');
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/admin/mold/product-type-list-page`, {
     method: 'POST',
     headers: {
@@ -59,7 +62,7 @@ export async function fetchProductTypes(
       'Authorization': `Bearer ${authData.token}`
     },
     body: JSON.stringify({
-      department: params.department,
+      department: authData.department,
       page: params.page || 1,
       page_size: params.page_size || 20
     })
@@ -82,13 +85,20 @@ export async function toggleProductTypeStatus(
     throw new Error('未登录或登录已过期');
   }
 
+  if (!authData.department) {
+    throw new Error('用户部门信息缺失');
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/admin/mold/product-type-toggle-status`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${authData.token}`
     },
-    body: JSON.stringify(params)
+    body: JSON.stringify({
+      ...params,
+      department: authData.department
+    })
   });
 
   const data = await response.json();

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchProductTypes, toggleProductTypeStatus, updateProductType, ProductTypeItem } from '../../services/productTypeService';
 import { saveProductType } from '../../services/dashboardService';
-import { AuthService } from '../../services/authService';
 
 interface ProductType {
   id: number;
@@ -32,10 +31,7 @@ const ProductTypeManagement: React.FC = () => {
     setError(null);
 
     try {
-      const authData = AuthService.getStoredAuth();
-      const department = authData?.department || '大材料';
       const response = await fetchProductTypes({
-        department,
         page,
         page_size: ITEMS_PER_PAGE
       });
@@ -232,7 +228,7 @@ const ProductTypeManagement: React.FC = () => {
         </div>
       )}
 
-      {totalRecords > ITEMS_PER_PAGE && (
+      {totalRecords > 0 && (
         <div className="flex justify-center items-center gap-2 mt-6">
           <button
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
