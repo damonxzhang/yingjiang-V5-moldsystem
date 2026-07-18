@@ -794,7 +794,7 @@ export async function fetchMachineCodes(): Promise<MachineCodeOption[]> {
 // 机台待办事项类型
 export type TodoType = 'MAINTENANCE' | 'REPAIR' | 'INSTALL' | 'UNINSTALL' | 'DISABLE';
 
-// 机台待办事项
+// 机台待办事项 - MMS 保养任务列表格式
 export interface MachineTodo {
   id: number;
   machine_id: number;
@@ -807,6 +807,11 @@ export interface MachineTodo {
   is_read: number;
   type: TodoType;
   payload: Record<string, any>;
+  mms_id?: number;
+  template_name?: string;
+  date_early?: string;
+  date_late?: string;
+  slots_str?: string[];
 }
 
 // 机台待办列表响应
@@ -818,50 +823,158 @@ export interface MachineTodoListResponse {
 
 // 机台待办列表请求参数
 export interface MachineTodoListRequest {
-  machine_id: string;
+  machine_code: string;
 }
 
 /**
  * 获取机台待办清单列表
+ * 调用 API: POST /api/admin/machine/task-list
  */
 export async function fetchMachineTodoList(
   params: MachineTodoListRequest
 ): Promise<MachineTodo[]> {
-  return getMockTodoList(params.machine_id);
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  if (!authData.department) {
+    throw new Error('当前用户未设置部门信息');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/machine/task-list`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify({
+      machine_code: params.machine_code
+    })
+  });
+
+  const data = await response.json();
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '获取待办清单失败');
+  }
+
+  return data.data as MachineTodo[];
 }
 
-/** Mock 待办清单测试数据 */
-function getMockTodoList(machineId: string): MachineTodo[] {
-  const now = new Date();
-  const formatDate = (d: Date) => {
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-  };
+// MMS保养任务确认请求参数
+export interface MmsConfirmRequest {
+  machine_code: string;
+  mms_id: string | number;
+}
 
-  return [
-    {
-      id: 2001,
-      machine_id: Number(machineId) || 1,
-      mold_id: 0,
-      mold_code: 'TY16/TY12/TY02',
-      slot: 'P1/P2/P3',
-      user_id: 0,
-      user_name: '系统定时任务',
-      created_at: formatDate(new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)),
-      is_read: 0,
-      type: 'MAINTENANCE',
-      payload: {
-        start_time: formatDate(new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)),
-        end_time: formatDate(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)),
-        description: 'MMS半年保养',
-        molds: [
-          { mold_code: 'TY16', slot: 'P1', type: 'REMOVAL', text: '模具下架待处理' },
-          { mold_code: 'TY12', slot: 'P2', type: 'MAINTENANCE', text: 'MMS推送保养信息' },
-          { mold_code: 'TY02', slot: 'P3', type: 'REPAIR', text: '维修待处理' }
-        ]
-      }
-    }
-  ];
+// MMS保养任务确认返回数据项
+export interface MmsConfirmItem {
+  machine_code: string;
+  machine_id: number;
+  mms_id: number;
+  template_name: string;
+  date_early: string;
+  date_late: string;
+  create_time: string;
+  operator: string;
+  slots_str: string[];
+}
+
+// MMS保养任务确认响应
+export interface MmsConfirmResponse {
+  code: number;
+  message: string;
+  data: MmsConfirmItem[];
+}
+
+/**
+ * 获取 MMS 保养任务确认详情
+ * 调用 API: POST /api/admin/machine/mms-confirm
+ */
+export async function fetchMmsConfirm(
+  params: MmsConfirmRequest
+): Promise<MmsConfirmItem[]> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  if (!authData.department) {
+    throw new Error('当前用户未设置部门信息');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/machine/mms-confirm`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify({
+      machine_code: params.machine_code,
+      mms_id: String(params.mms_id)
+    })
+  });
+
+  const data = await response.json();
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '获取保养任务确认信息失败');
+  }
+
+  return data.data as MmsConfirmItem[];
+}
+
+// 保存 MMS 保养任务请求参数
+export interface SaveMmsTaskRequest {
+  order_time: string;
+  mms_id: string | number;
+  machine_id: string | number;
+}
+
+// 保存 MMS 保养任务响应
+export interface SaveMmsTaskResponse {
+  code: number;
+  message: string;
+  data: null;
+}
+
+/**
+ * 保存 MMS 保养任务
+ * 调用 API: POST /api/admin/machine/mms-save
+ */
+export async function saveMmsTask(
+  params: SaveMmsTaskRequest
+): Promise<SaveMmsTaskResponse> {
+  const authData = AuthService.getStoredAuth();
+  if (!authData) {
+    throw new Error('未登录或登录已过期');
+  }
+
+  if (!authData.department) {
+    throw new Error('当前用户未设置部门信息');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/machine/mms-save`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authData.token}`
+    },
+    body: JSON.stringify({
+      order_time: params.order_time,
+      mms_id: String(params.mms_id),
+      machine_id: String(params.machine_id)
+    })
+  });
+
+  const data = await response.json();
+
+  if (data.code !== 200) {
+    throw new Error(data.message || '保存保养任务失败');
+  }
+
+  return data as SaveMmsTaskResponse;
 }
 
 // 设备状态切换请求参数
@@ -930,5 +1043,7 @@ export const DashboardService = {
   enableMold,
   moldAction,
   fetchMachineTodoList,
+  fetchMmsConfirm,
+  saveMmsTask,
   toggleMachineStatus
 };

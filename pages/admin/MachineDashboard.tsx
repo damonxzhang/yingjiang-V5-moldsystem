@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, EnableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineTodo, ToggleMachineStatusRequest } from '../../services/dashboardService';
+import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, EnableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineTodo, ToggleMachineStatusRequest, MmsConfirmItem } from '../../services/dashboardService';
 import { AuthService } from '../../services/authService';
 
 interface MachineDashboardProps {
@@ -257,6 +257,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const [showMaintenanceConfirmModal, setShowMaintenanceConfirmModal] = useState(false);
   const [confirmTodoItem, setConfirmTodoItem] = useState<MachineTodo | null>(null);
   const [confirmTimeRange, setConfirmTimeRange] = useState({ start: '', end: '' });
+  const [mmsConfirmDetail, setMmsConfirmDetail] = useState<MmsConfirmItem | null>(null);
+  const [isLoadingMmsConfirm, setIsLoadingMmsConfirm] = useState(false);
+  const [isSavingMmsTask, setIsSavingMmsTask] = useState(false);
   // 用户自定义保养时间
   const [userMaintenanceStart, setUserMaintenanceStart] = useState('');
   const [userMaintenanceEnd, setUserMaintenanceEnd] = useState('');
@@ -722,7 +725,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     setIsLoadingTodoList(true);
     try {
       const todos = await DashboardService.fetchMachineTodoList({
-        machine_id: machine.machine_id || machine.machine_code
+        machine_code: machine.machine_code
       });
       setTodoList(todos);
     } catch (error) {
@@ -747,20 +750,53 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   };
 
   // 处理系统定时保养任务确认
-  const handleMaintenanceConfirm = (todo: MachineTodo) => {
+  const handleMaintenanceConfirm = async (todo: MachineTodo) => {
     setConfirmTodoItem(todo);
-    // 从 payload 中获取保养时间范围
-    const start = todo.payload?.start_time || '';
-    const end = todo.payload?.end_time || '';
-    setConfirmTimeRange({ start, end });
-    // 预填用户自定义时间：开始时间默认为有效开始时间，结束时间默认为有效时间结束时间
-    const pad2 = (n: number) => n.toString().padStart(2, '0');
-    const defaultStart = start ? start.replace(' ', 'T').slice(0, 16) : '';
-    const defaultEnd = end ? end.replace(' ', 'T').slice(0, 16) : '';
-    setUserMaintenanceStart(defaultStart);
-    setUserMaintenanceEnd(defaultEnd);
-    setUserTimeError('');
-    setShowMaintenanceConfirmModal(true);
+    setIsLoadingMmsConfirm(true);
+    setMmsConfirmDetail(null);
+
+    try {
+      const results = await DashboardService.fetchMmsConfirm({
+        machine_code: todoMachine?.machine_code || '',
+        mms_id: todo.mms_id || todo.id
+      });
+
+      if (results.length > 0) {
+        const detail = results[0];
+        setMmsConfirmDetail(detail);
+        const start = detail.date_early || todo.date_early || '';
+        const end = detail.date_late || todo.date_late || '';
+        setConfirmTimeRange({ start, end });
+        const pad2 = (n: number) => n.toString().padStart(2, '0');
+        const defaultStart = start ? start.replace(' ', 'T').slice(0, 16) : '';
+        const defaultEnd = end ? end.replace(' ', 'T').slice(0, 16) : '';
+        setUserMaintenanceStart(defaultStart);
+        setUserMaintenanceEnd(defaultEnd);
+      } else {
+        const start = todo.date_early || todo.payload?.start_time || '';
+        const end = todo.date_late || todo.payload?.end_time || '';
+        setConfirmTimeRange({ start, end });
+        const pad2 = (n: number) => n.toString().padStart(2, '0');
+        const defaultStart = start ? start.replace(' ', 'T').slice(0, 16) : '';
+        const defaultEnd = end ? end.replace(' ', 'T').slice(0, 16) : '';
+        setUserMaintenanceStart(defaultStart);
+        setUserMaintenanceEnd(defaultEnd);
+      }
+    } catch (error) {
+      console.error('获取保养任务确认信息失败:', error);
+      const start = todo.date_early || todo.payload?.start_time || '';
+      const end = todo.date_late || todo.payload?.end_time || '';
+      setConfirmTimeRange({ start, end });
+      const pad2 = (n: number) => n.toString().padStart(2, '0');
+      const defaultStart = start ? start.replace(' ', 'T').slice(0, 16) : '';
+      const defaultEnd = end ? end.replace(' ', 'T').slice(0, 16) : '';
+      setUserMaintenanceStart(defaultStart);
+      setUserMaintenanceEnd(defaultEnd);
+    } finally {
+      setIsLoadingMmsConfirm(false);
+      setUserTimeError('');
+      setShowMaintenanceConfirmModal(true);
+    }
   };
 
   // 处理创建保养任务
@@ -2105,62 +2141,52 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 </div>
               ) : (
                 todoList.map((todo) => {
-                  const taskId = `${todo.machine_id}-${todo.mold_id}-${todo.type}`;
+                  const taskId = `${todo.machine_code}-${todo.mms_id}`;
                   const isCompleted = completedTasks.has(taskId);
-                  const hasMolds = todo.payload?.molds && todo.payload.molds.length > 1;
 
                   return (
-                    <div key={todo.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                    <div key={todo.mms_id || todo.id} className={`p-4 rounded-xl border transition-all ${
                       isCompleted
                         ? 'bg-green-500/10 border-green-500/30'
                         : 'bg-white/5 border-white/5 hover:border-indigo-500/30'
                     }`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`w-1.5 h-8 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-indigo-500'}`}></div>
-                        <div>
-                          {hasMolds && todo.payload?.molds ? (
-                            <div className="flex flex-wrap gap-1 mb-1">
-                              {(todo.payload.molds as { mold_code: string; slot: string }[]).map((m: { mold_code: string; slot: string }, i: number) => (
+                      <div className="flex items-start gap-3">
+                        <div className={`w-1.5 h-12 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-indigo-500'}`}></div>
+                        <div className="flex-1">
+                          {todo.slots_str && todo.slots_str.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {todo.slots_str.map((slot: string, i: number) => (
                                 <span key={i} className="text-[9px] font-black text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
-                                  {m.slot} {m.mold_code}
+                                  {slot}
                                 </span>
                               ))}
                             </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{todo.slot}</span>
-                              <span className="text-[10px] font-bold text-slate-400">{todo.mold_code}</span>
-                            </div>
                           )}
-                          <p className={`text-xs font-black ${isCompleted ? 'text-green-400 line-through' : 'text-slate-200'}`}>
-                            {todo.type === 'MAINTENANCE' ? 'MMS半年保养' : todo.type}
+                          <p className={`text-sm font-black ${isCompleted ? 'text-green-400 line-through' : 'text-slate-200'}`}>
+                            {todo.template_name || 'MMS保养'}
                           </p>
-                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
-                            {todo.created_at}
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter mt-1">
+                            {todo.date_early && todo.date_late ? `${todo.date_early}~${todo.date_late}` : (todo.date_late || todo.date_early || '')}
                           </p>
                         </div>
+                        <button
+                          onClick={() => {
+                            handleMaintenanceConfirm(todo);
+                          }}
+                          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all border ${
+                            isCompleted
+                              ? 'bg-green-600 text-white border-green-500'
+                              : 'bg-amber-600/20 text-amber-400 border border-amber-500/30 hover:bg-amber-600 hover:text-white'
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <span className="flex items-center gap-1">
+                              <i className="fas fa-check-circle"></i>
+                              已完成
+                            </span>
+                          ) : '确认信息'}
+                        </button>
                       </div>
-                      <button
-                        onClick={() => {
-                          handleMaintenanceConfirm(todo);
-                        }}
-                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
-                          isCompleted
-                            ? 'bg-green-600 text-white border-green-500'
-                            : todo.type === 'REMOVAL'
-                              ? 'bg-red-600/20 text-red-400 border-red-500/30 hover:bg-red-600 hover:text-white'
-                              : todo.type === 'REPAIR'
-                                ? 'bg-blue-600/20 text-blue-400 border-blue-500/30 hover:bg-blue-600 hover:text-white'
-                                : 'bg-amber-600/20 text-amber-400 border border-amber-500/30 hover:bg-amber-600 hover:text-white'
-                        }`}
-                      >
-                        {isCompleted ? (
-                          <span className="flex items-center gap-1">
-                            <i className="fas fa-check-circle"></i>
-                            已完成
-                          </span>
-                        ) : '确认信息'}
-                      </button>
                     </div>
                   );
                 })
@@ -2622,9 +2648,20 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
               <div className="bg-slate-950/50 p-4 rounded-2xl border border-blue-900/30 space-y-2.5">
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">机台编号</span>
-                  <span className="text-blue-400 font-bold">{todoMachine?.machine_code}</span>
+                  <span className="text-blue-400 font-bold">{mmsConfirmDetail?.machine_code || todoMachine?.machine_code}</span>
                 </div>
-                {confirmTodoItem.payload?.molds && (confirmTodoItem.payload.molds as any[]).length > 1 ? (
+                {mmsConfirmDetail?.slots_str && mmsConfirmDetail.slots_str.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <span className="text-xs text-slate-400 block">槽位信息</span>
+                    <div className="flex flex-wrap gap-2">
+                      {mmsConfirmDetail.slots_str.map((slot: string, i: number) => (
+                        <span key={i} className="text-[10px] font-black text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded border border-indigo-500/30">
+                          {slot}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : confirmTodoItem.payload?.molds && (confirmTodoItem.payload.molds as any[]).length > 1 ? (
                   <div className="space-y-1.5">
                     <span className="text-xs text-slate-400 block">模具信息（共 {(confirmTodoItem.payload.molds as any[]).length} 套）</span>
                     <div className="grid grid-cols-3 gap-2">
@@ -2648,15 +2685,15 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                     </div>
                   </>
                 )}
-                {confirmTodoItem.user_name && (
+                {mmsConfirmDetail?.operator && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-slate-400">操作人员</span>
-                    <span className="text-blue-400 font-bold">{confirmTodoItem.user_name}</span>
+                    <span className="text-slate-400">操作人</span>
+                    <span className="text-blue-400 font-bold">{mmsConfirmDetail.operator}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">创建时间</span>
-                  <span className="text-blue-400 font-bold">{confirmTodoItem.created_at}</span>
+                  <span className="text-blue-400 font-bold">{mmsConfirmDetail?.create_time || confirmTodoItem.created_at || '---'}</span>
                 </div>
                 <div className="flex justify-between text-xs border-t border-slate-800 pt-2.5 mt-1">
                   <span className="text-slate-400">当前系统时间</span>
@@ -2673,11 +2710,11 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                 <div className="bg-slate-950/80 p-3 rounded-xl border border-red-500/20 space-y-2">
                   <div className="flex justify-between text-xs">
                     <span className="text-red-300/70">有效开始时间</span>
-                    <span className="text-red-300 font-bold font-mono">{confirmTimeRange.start || '---'}</span>
+                    <span className="text-red-300 font-bold font-mono">{mmsConfirmDetail?.date_early || confirmTimeRange.start || '---'}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-red-300/70">有效结束时间</span>
-                    <span className="text-red-300 font-bold font-mono">{confirmTimeRange.end || '---'}</span>
+                    <span className="text-red-300 font-bold font-mono">{mmsConfirmDetail?.date_late || confirmTimeRange.end || '---'}</span>
                   </div>
                 </div>
                 {confirmTimeRange.start && confirmTimeRange.end && (
@@ -2739,8 +2776,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                   关闭
                 </button>
                 <button
-                  onClick={() => {
-                    // 校验用户自定义时间
+                  onClick={async () => {
                     const effectiveStart = confirmTimeRange.start?.replace(' ', 'T').slice(0, 16);
                     const effectiveEnd = confirmTimeRange.end?.replace(' ', 'T').slice(0, 16);
 
@@ -2763,14 +2799,53 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       return;
                     }
 
-                    // 校验通过，标记为已完成
-                    toggleTaskComplete(confirmTodoItem.machine_id?.toString() || '', confirmTodoItem.mold_id?.toString() || '', confirmTodoItem.type);
-                    setShowMaintenanceConfirmModal(false);
-                    setConfirmTodoItem(null);
+                    setIsSavingMmsTask(true);
+                    try {
+                      const orderTime = userMaintenanceStart.replace('T', ' ');
+                      const mmsId = confirmTodoItem.mms_id || confirmTodoItem.id;
+                      const machineId = mmsConfirmDetail?.machine_id || todoMachine?.machine_id || '';
+
+                      await DashboardService.saveMmsTask({
+                        order_time: orderTime,
+                        mms_id: mmsId,
+                        machine_id: machineId
+                      });
+
+                      alert('保存成功');
+                      toggleTaskComplete(mmsConfirmDetail?.machine_code || '', String(mmsId), confirmTodoItem.type);
+                      setShowMaintenanceConfirmModal(false);
+                      setConfirmTodoItem(null);
+                      setMmsConfirmDetail(null);
+
+                      if (showTodoList && todoMachine) {
+                        setIsLoadingTodoList(true);
+                        try {
+                          const todos = await DashboardService.fetchMachineTodoList({
+                            machine_code: todoMachine.machine_code
+                          });
+                          setTodoList(todos);
+                        } catch (error) {
+                          console.error('刷新待办清单失败:', error);
+                          setTodoList([]);
+                        } finally {
+                          setIsLoadingTodoList(false);
+                        }
+                      }
+                    } catch (error: any) {
+                      console.error('保存保养任务失败:', error);
+                      alert('保存失败: ' + (error.message || '未知错误'));
+                    } finally {
+                      setIsSavingMmsTask(false);
+                    }
                   }}
-                  className="flex-1 bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-amber-900/20"
+                  disabled={isSavingMmsTask}
+                  className="flex-1 bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-amber-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  确认时间并提交
+                  {isSavingMmsTask ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <i className="fas fa-spinner fa-spin"></i> 提交中...
+                    </span>
+                  ) : '确认时间并提交'}
                 </button>
               </div>
             </div>
