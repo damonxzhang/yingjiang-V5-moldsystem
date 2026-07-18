@@ -114,7 +114,12 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     moldCode: '',
-    status: ''
+    status: '',
+    person: '',
+    productType: '',
+    location: '',
+    shotCountMin: '',
+    shotCountMax: ''
   });
   const [productTypeOptions, setProductTypeOptions] = useState<string[]>([]);
   const isFirstRender = useRef(true);
@@ -150,7 +155,12 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         page: page,
         page_size: ITEMS_PER_PAGE,
         mold_code: filters.moldCode,
-        status: filters.status
+        status: filters.status,
+        responsible_person: filters.person,
+        product_type: filters.productType,
+        location: filters.location,
+        shots_min: filters.shotCountMin,
+        shots_max: filters.shotCountMax
       });
       if (response.code === 200 && response.data) {
         const mappedMolds = response.data.list.map(mapApiMoldToFrontend);

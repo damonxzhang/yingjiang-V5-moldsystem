@@ -42,7 +42,12 @@ export interface FetchMoldListParams {
   page?: number;
   page_size?: number;
   mold_code?: string;  // 模具编号筛选
-  status?: string;     // 状态筛选
+  status?: string;     // 状态筛选 (IDLE: 闲置, IN_USE: 使用中, MAINTENANCE: 保养中, REPAIR: 维修中, SCRAP: 停用)
+  responsible_person?: string;  // 负责人模糊查询
+  product_type?: string;        // 产品类型模糊查询
+  location?: string;            // 位置模糊查询
+  shots_min?: string;           // SHOT COUNT 下限
+  shots_max?: string;           // SHOT COUNT 上限
 }
 
 /**
@@ -56,14 +61,24 @@ export async function fetchMoldList(
     throw new Error('未登录或登录已过期');
   }
 
-  const requestBody: FetchMoldListParams = {
+  if (!authData.department) {
+    throw new Error('当前用户未设置部门信息');
+  }
+
+  const baseBody: FetchMoldListParams = {
     user_id: authData.user_id,
-    department: authData.department || 'ALL',
+    department: authData.department,
     page: params.page || 1,
-    page_size: params.page_size || 10,
-    mold_code: params.mold_code,
-    status: params.status
+    page_size: params.page_size || 20
   };
+
+  if (params.mold_code) baseBody.mold_code = params.mold_code;
+  if (params.status) baseBody.status = params.status;
+  if (params.responsible_person) baseBody.responsible_person = params.responsible_person;
+  if (params.product_type) baseBody.product_type = params.product_type;
+  if (params.location) baseBody.location = params.location;
+  if (params.shots_min) baseBody.shots_min = params.shots_min;
+  if (params.shots_max) baseBody.shots_max = params.shots_max;
 
   const response = await fetch(`${API_BASE_URL}/api/admin/mold/list`, {
     method: 'POST',
@@ -71,7 +86,7 @@ export async function fetchMoldList(
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${authData.token}`
     },
-    body: JSON.stringify(requestBody)
+    body: JSON.stringify(baseBody)
   });
 
   const data = await response.json();
