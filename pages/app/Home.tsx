@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Role } from '../../types';
 import { DashboardService } from '../../services/dashboardService';
-import type { MachineTodo } from '../../services/dashboardService';
+import { AuthService } from '../../services/authService';
+import type { MachineTodo, DashboardMachine } from '../../services/dashboardService';
 
 interface HomeProps {
   userRole: Role;
@@ -21,11 +22,43 @@ const Home: React.FC<HomeProps> = ({ userRole, onNavigate }) => {
   const loadTodoList = async () => {
     setIsLoadingTodo(true);
     try {
-      // 获取 BMD-01 的待办列表
-      const todos = await DashboardService.fetchMachineTodoList({
-        machine_id: 'BMD-01'
+      const authData = AuthService.getStoredAuth();
+      if (!authData) {
+        setTodoList([]);
+        return;
+      }
+
+      const department = authData.department || 'ALL';
+
+      const dashboardData = await DashboardService.fetchDashboardMachinesStatus({
+        department: department
       });
-      setTodoList(todos);
+
+      const machinesWithTodos: DashboardMachine[] = (dashboardData?.machines || []).filter(
+        (machine) => machine.pending_todos_count && machine.pending_todos_count > 0
+      );
+
+      if (machinesWithTodos.length === 0) {
+        setTodoList([]);
+        return;
+      }
+
+      const todoPromises = machinesWithTodos.map((machine) =>
+        DashboardService.fetchMachineTodoList({ machine_code: machine.machine_code })
+      );
+
+      const results = await Promise.allSettled(todoPromises);
+
+      const allTodos: MachineTodo[] = [];
+      results.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          allTodos.push(...result.value);
+        }
+      });
+
+      allTodos.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setTodoList(allTodos);
     } catch (error) {
       console.error('获取待办清单失败:', error);
       setTodoList([]);
