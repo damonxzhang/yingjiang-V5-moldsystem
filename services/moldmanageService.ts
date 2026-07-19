@@ -43,7 +43,7 @@ export interface FetchMoldListParams {
   page_size?: number;
   mold_code?: string;  // 模具编号筛选
   status?: string;     // 状态筛选 (IDLE: 闲置, IN_USE: 使用中, MAINTENANCE: 保养中, REPAIR: 维修中, SCRAP: 停用)
-  responsible_person?: string;  // 负责人模糊查询
+  mold_category?: string;  // 模具分类模糊查询
   product_type?: string;        // 产品类型模糊查询
   location?: string;            // 位置模糊查询
   shots_min?: string;           // SHOT COUNT 下限
@@ -74,7 +74,7 @@ export async function fetchMoldList(
 
   if (params.mold_code) baseBody.mold_code = params.mold_code;
   if (params.status) baseBody.status = params.status;
-  if (params.responsible_person) baseBody.responsible_person = params.responsible_person;
+  if (params.mold_category) baseBody.mold_category = params.mold_category;
   if (params.product_type) baseBody.product_type = params.product_type;
   if (params.location) baseBody.location = params.location;
   if (params.shots_min) baseBody.shots_min = params.shots_min;

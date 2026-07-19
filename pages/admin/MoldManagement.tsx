@@ -156,7 +156,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
         page_size: ITEMS_PER_PAGE,
         mold_code: filters.moldCode,
         status: filters.status,
-        responsible_person: filters.person,
+        mold_category: filters.person,
         product_type: filters.productType,
         location: filters.location,
         shots_min: filters.shotCountMin,
