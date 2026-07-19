@@ -444,6 +444,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       const machine_code = item.machine_code;
       const machine_id = item.machine_id;
       const status = item.status; // 机台状态: NORMAL, MAINTENANCE_DUE, OVERDUE, BUYOFF, DISABLED, OFFLINE
+      const color_status_machine = typeof item.color_status_machine === 'number' ? item.color_status_machine : parseInt(String(item.color_status_machine), 10); // 机台颜色状态: 0白色 1绿色 2黄色 3蓝色 4紫色 10红色
       const pending_todos_count = item.machine_code === 'BMD-01' ? 1 : (item.pending_todos_count || 0);
       const part_no = item.part_no;
       const product_type = item.product_type;
@@ -499,6 +500,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
           status: moldItemInfo.status === 'EMPTY' ? 'EMPTY' : statusInfo.status,
           statusText: moldItemInfo.status === 'EMPTY' ? '无模具' : statusInfo.statusText,
           color: moldItemInfo.status === 'EMPTY' ? 'slate' : statusInfo.color,
+          // 颜色状态字段（统一转换为数字）
+          color_status_mold: typeof moldItemInfo.color_status_mold === 'number' ? moldItemInfo.color_status_mold : parseInt(String(moldItemInfo.color_status_mold), 10),
+          color_status_task: typeof moldItemInfo.color_status_task === 'number' ? moldItemInfo.color_status_task : parseInt(String(moldItemInfo.color_status_task), 10),
           // 其他字段保持 API 原始命名
           life_percent,
           current_shots,
@@ -523,20 +527,27 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         return acc;
       }, {});
 
-      // 整体状态逻辑：使用机台状态优先，其次根据模具状态计算
-      // 过滤掉 null 值的模具数组
-      const validMolds = Object.values(molds).filter(Boolean) as any[];
-      // molds 为空时显示灰色
-      let colorClass = validMolds.length === 0
-        ? 'border-[3px] border-slate-600 shadow-[0_0_12px_rgba(71,85,105,0.3)]'
-        : 'border-[3px] border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)]';
-      if (status === 'OVERDUE' || status === 'DISABLED' || status === 'OFFLINE' || validMolds.some((m: any) => m.status === 'OVERDUE')) {
-        colorClass = 'border-[3px] border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]';
-      } else if (status === 'MAINTENANCE_DUE' || validMolds.some((m: any) => m.status === 'UPCOMING')) {
-        colorClass = 'border-[3px] border-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.4)]';
-      } else if (status === 'BUYOFF' || validMolds.some((m: any) => m.status === 'BUYOFF')) {
-        colorClass = 'border-[3px] border-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.4)]';
-      }
+      // 根据 color_status_machine 字段判断机台边框颜色
+      // 0白色 1绿色 2黄色 3蓝色 4紫色 10红色，默认灰色
+      const getMachineColorClass = (colorVal: number | undefined) => {
+        switch (colorVal) {
+          case 0:
+            return 'border-[3px] border-white shadow-[0_0_12px_rgba(255,255,255,0.3)]';
+          case 1:
+            return 'border-[3px] border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)]';
+          case 2:
+            return 'border-[3px] border-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.4)]';
+          case 3:
+            return 'border-[3px] border-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.4)]';
+          case 4:
+            return 'border-[3px] border-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.4)]';
+          case 10:
+            return 'border-[3px] border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]';
+          default:
+            return 'border-[3px] border-slate-600 shadow-[0_0_12px_rgba(71,85,105,0.3)]';
+        }
+      };
+      const colorClass = getMachineColorClass(color_status_machine);
 
       return {
         // 使用 API 原始字段名
@@ -1478,12 +1489,24 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
               {validMoldEntries.map(([pos, mold]: [string, any]) => {
                 const getTaskBarColor = (m: any) => {
                   const s = (m.status || '').toUpperCase();
-                  if (s === 'EMPTY' || m.color === 'slate') return 'bg-slate-600';
-                  if (s === 'OVERDUE' || m.isOffline || m.color === 'red') return 'bg-red-500';
-                  if (s === 'UPCOMING' || m.color === 'yellow') return 'bg-yellow-500';
-                  if (s === 'BUYOFF' || m.color === 'blue') return 'bg-blue-500';
-                  if (s === 'MAINTENANCE') return 'bg-purple-500';
-                  return 'bg-blue-500';
+                  if (s === 'EMPTY') return 'bg-slate-600';
+                  const colorStatus = typeof m.color_status_task === 'number' ? m.color_status_task : parseInt(String(m.color_status_task), 10);
+                  switch (colorStatus) {
+                    case 0:
+                      return 'bg-white';
+                    case 1:
+                      return 'bg-green-500';
+                    case 2:
+                      return 'bg-yellow-500';
+                    case 3:
+                      return 'bg-blue-500';
+                    case 4:
+                      return 'bg-purple-500';
+                    case 10:
+                      return 'bg-red-500';
+                    default:
+                      return 'bg-slate-600';
+                  }
                 };
                 const barColor = getTaskBarColor(mold);
                 const isWhiteBar = barColor === 'bg-white';
@@ -1501,13 +1524,26 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       <div className={`flex-1 h-1 rounded-full ${barColor} ${isWhiteBar ? 'border border-slate-600' : ''}`}></div>
                       {mold.isOffline && <span className="w-2.5 h-2.5 bg-red-600 rounded-full shrink-0"></span>}
                     </div>
-                    <div className={`h-6 rounded border-2 flex items-center justify-between px-1.5 text-[9px] font-black relative overflow-hidden ${
-                      mold.status === 'EMPTY' ? 'bg-slate-500/5 border-slate-500/30 text-slate-500/0' :
-                      mold.color === 'green' ? 'bg-green-500/10 border-green-500/50 text-green-500' :
-                      mold.color === 'blue' ? 'bg-blue-500/10 border-blue-500/50 text-blue-500' :
-                      mold.color === 'yellow' ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500' :
-                      'bg-red-500/10 border-red-500/50 text-red-500'
-                    }`}>
+                    <div className={`h-6 rounded border-2 flex items-center justify-between px-1.5 text-[9px] font-black relative overflow-hidden ${(() => {
+                      if (mold.status === 'EMPTY') return 'bg-slate-500/5 border-slate-500/30 text-slate-500/0';
+                      const colorStatus = typeof mold.color_status_mold === 'number' ? mold.color_status_mold : parseInt(String(mold.color_status_mold), 10);
+                      switch (colorStatus) {
+                        case 0:
+                          return 'bg-white/10 border-white/50 text-white';
+                        case 1:
+                          return 'bg-green-500/10 border-green-500/50 text-green-500';
+                        case 2:
+                          return 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500';
+                        case 3:
+                          return 'bg-blue-500/10 border-blue-500/50 text-blue-500';
+                        case 4:
+                          return 'bg-purple-500/10 border-purple-500/50 text-purple-500';
+                        case 10:
+                          return 'bg-red-500/10 border-red-500/50 text-red-500';
+                        default:
+                          return 'bg-slate-500/10 border-slate-500/50 text-slate-500';
+                      }
+                    })()}`}>
                       {mold.status !== 'EMPTY' && (
                         <>
                           <span>{mold.short_name || mold.mold_code || mold.mold_id}</span>

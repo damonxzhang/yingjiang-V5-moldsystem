@@ -6,11 +6,17 @@ export interface DashboardMold {
   mold_id: string;
   mold_code: string;
   name: string;
+  short_name?: string;
   current_shots: number;
   max_shots: number;
   mold_category?: string;
-  status: 'RUNNING' | 'IDLE' | 'MAINTENANCE' | 'OFFLINE';
+  status: 'RUNNING' | 'IDLE' | 'MAINTENANCE' | 'OFFLINE' | 'EMPTY' | 'IN_USE';
   slot?: string;
+  mold_number?: string;
+  life_percent?: number;
+  color_status_mold?: number | string;
+  color_status_task?: number | string;
+  product_type?: string;
 }
 
 // 机台状态类型
@@ -22,6 +28,10 @@ export interface DashboardMachine {
   mold_count: number;
   molds: DashboardMold[];
   pending_tasks: number;
+  pending_todos_count?: number;
+  product_type?: string;
+  type?: string;
+  color_status_machine?: number | string;
 }
 
 // 看板统计摘要
