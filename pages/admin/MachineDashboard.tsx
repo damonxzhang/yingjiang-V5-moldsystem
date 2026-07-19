@@ -445,7 +445,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       const machine_id = item.machine_id;
       const status = item.status; // 机台状态: NORMAL, MAINTENANCE_DUE, OVERDUE, BUYOFF, DISABLED, OFFLINE
       const color_status_machine = typeof item.color_status_machine === 'number' ? item.color_status_machine : parseInt(String(item.color_status_machine), 10); // 机台颜色状态: 0白色 1绿色 2黄色 3蓝色 4紫色 10红色
-      const pending_todos_count = item.machine_code === 'BMD-01' ? 1 : (item.pending_todos_count || 0);
+      const pending_todos_count = item.pending_todos_count || 0;
       const part_no = item.part_no;
       const product_type = item.product_type;
       const mold_count = item.mold_count;
