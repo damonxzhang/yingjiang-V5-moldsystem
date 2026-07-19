@@ -367,6 +367,35 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   // 标记是否是材料类型切换（按钮点击不需要防抖，输入框需要防抖）
   const isMaterialTypeChangeRef = useRef<boolean>(false);
+  // 定时刷新数据的定时器ref
+  const dataRefreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const clearDataRefreshTimer = () => {
+    if (dataRefreshTimerRef.current) {
+      clearInterval(dataRefreshTimerRef.current);
+      dataRefreshTimerRef.current = null;
+    }
+  };
+
+  const startDataRefreshTimer = () => {
+    clearDataRefreshTimer();
+    dataRefreshTimerRef.current = setInterval(async () => {
+      try {
+        const data = await DashboardService.fetchDashboardMachinesStatus({
+          department: currentMaterialType,
+          product_type: filterProduct,
+          type: filterMachineType,
+          machine_code: filterMachine,
+          mold_code: filterMold,
+          only_producible: onlyProducible,
+          only_abnormal: onlyAbnormal
+        });
+        setDashboardData(data);
+      } catch (error) {
+        console.error('定时刷新看板数据失败:', error);
+      }
+    }, 60000);
+  };
 
   // 调用API获取看板数据
   useEffect(() => {
@@ -374,6 +403,9 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
+
+    // 清除之前的定时刷新任务（筛选条件变化时先清除，等数据加载完成后再重新启动）
+    clearDataRefreshTimer();
 
     // 根据是否是材料类型切换决定延迟时间
     // 材料类型切换（按钮点击）使用 0ms，输入框使用 500ms 防抖
@@ -391,6 +423,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
           only_abnormal: onlyAbnormal
         });
         setDashboardData(data);
+        // 数据加载成功后启动定时刷新任务
+        startDataRefreshTimer();
       } catch (error) {
         console.error('获取看板数据失败:', error);
       }
@@ -406,6 +440,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       }
     };
   }, [filterProduct, filterMachine, filterMold, filterMachineType, onlyProducible, onlyAbnormal, refreshTrigger, currentMaterialType]);
+
+  // 组件卸载时清除定时刷新任务
+  useEffect(() => {
+    return () => {
+      clearDataRefreshTimer();
+    };
+  }, []);
 
   const formatDate = (date: Date) => {
     return date.toLocaleString('zh-CN', {
@@ -2852,6 +2893,8 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       setShowMaintenanceConfirmModal(false);
                       setConfirmTodoItem(null);
                       setMmsConfirmDetail(null);
+
+                      await refreshDashboardData();
 
                       if (showTodoList && todoMachine) {
                         setIsLoadingTodoList(true);
