@@ -940,6 +940,7 @@ export interface SaveMmsTaskRequest {
   order_time: string;
   mms_id: string | number;
   machine_id: string | number;
+  user_id?: string;
 }
 
 // 保存 MMS 保养任务响应
@@ -974,7 +975,8 @@ export async function saveMmsTask(
     body: JSON.stringify({
       order_time: params.order_time,
       mms_id: String(params.mms_id),
-      machine_id: String(params.machine_id)
+      machine_id: String(params.machine_id),
+      user_id: String(authData.user_id)
     })
   });
 
