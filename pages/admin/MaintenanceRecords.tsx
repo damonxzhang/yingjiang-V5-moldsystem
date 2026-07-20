@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchMaintenanceRecords, fetchMaintenanceDetail, MaintenanceRecordItem, MaintenanceDetailResponse } from '../../services/maintenanceRecordsService';
+import { fetchMaintenanceRecords, fetchMaintenanceDetail, MaintenanceRecordItem, MaintenanceDetailResponse, MaintenanceDetailFirstStep, MaintenanceDetailSecondStep, MaintenanceDetailThirdStep, MaintenanceDetailFourthStep } from '../../services/maintenanceRecordsService';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -291,16 +291,19 @@ const MaintenanceRecords: React.FC = () => {
 
       {isDetailModalOpen && selectedRecord && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-8 py-6 bg-slate-900 text-white flex justify-between items-start shrink-0">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-8 py-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex justify-between items-start shrink-0">
               <div>
                 <div className="flex items-center gap-3">
-                   <h3 className="font-black text-xl tracking-tight uppercase">模具保养执行鉴定书</h3>
+                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                    <i className="fas fa-wrench text-lg"></i>
+                  </div>
+                  <h3 className="font-black text-xl tracking-tight">保养执行详情</h3>
                 </div>
-                <p className="text-[10px] text-slate-400 font-bold mt-1">工单编号: {selectedRecord.order_no} | 模具: {selectedRecord.mold_code}</p>
+                <p className="text-xs text-white/70 font-bold mt-2">工单编号: {selectedRecord.order_no} | 模具: {selectedRecord.mold_code}</p>
               </div>
-              <button onClick={() => setIsDetailModalOpen(false)} className="text-slate-500 hover:text-white transition-colors">
-                <i className="fas fa-times text-2xl"></i>
+              <button onClick={() => setIsDetailModalOpen(false)} className="text-white/60 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg">
+                <i className="fas fa-times text-xl"></i>
               </button>
             </div>
             
@@ -309,109 +312,178 @@ const MaintenanceRecords: React.FC = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
               </div>
             ) : (
-              <div className="flex-1 overflow-y-auto p-8 grid grid-cols-12 gap-8">
-                <div className="col-span-8 space-y-8">
-                  <section>
-                    <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                      <i className="fas fa-info-circle text-indigo-500"></i>
-                      Step 1: 保养背景与需求说明
-                    </h4>
-                    <div className="bg-slate-50 border-l-4 border-slate-300 p-4 rounded-r-xl">
-                      <p className="text-sm text-slate-700 italic font-medium leading-relaxed">
-                        "{detailData?.remark || '现场未记录文字描述'}"
-                      </p>
-                    </div>
-                  </section>
-
-                  <section>
-                    <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                      <i className="fas fa-tasks text-indigo-500"></i>
-                      Step 2: 保养执行项目鉴定
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      {detailData?.options?.map((option, i) => (
-                        <div key={i} className="flex items-center gap-3 bg-white border border-slate-100 p-4 rounded-2xl shadow-sm">
-                          <i className="fas fa-check-circle text-green-500"></i>
-                          <span className="text-xs font-bold text-slate-700">{option}</span>
+              <div className="flex-1 overflow-y-auto p-8">
+                <div className="grid grid-cols-12 gap-8">
+                  <div className="col-span-8 space-y-6">
+                    <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                          <span className="text-blue-600 font-black text-sm">01</span>
                         </div>
-                      ))}
-                      {(!detailData?.options || detailData.options.length === 0) && (
-                        <div className="col-span-2 text-center text-slate-400 italic py-4">暂无保养项目信息</div>
-                      )}
-                    </div>
-                  </section>
-
-                  <section className="bg-slate-900 rounded-[2rem] p-8 text-white">
-                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Step 3: 保养质量鉴定结论</h4>
-                    <div className="grid grid-cols-2 gap-8">
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase">保养结论 Maintenance Result</p>
-                        <div className="flex items-center gap-3">
-                          <span className={`text-2xl font-black ${(detailData?.maintenance_result || selectedRecord.maintenance_result) === 'OK' ? 'text-green-400' : (detailData?.maintenance_result || selectedRecord.maintenance_result) === 'NG' ? 'text-red-400' : 'text-slate-400'}`}>
-                            {detailData?.maintenance_result || selectedRecord.maintenance_result || 'PENDING'}
-                          </span>
-                          <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-bold">最终鉴定</span>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-800">第一阶段</h4>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase">验收状态 Buyoff Status</p>
-                        <div className="flex items-center gap-3">
-                          <span className={`text-2xl font-black ${(detailData?.buyoff_status || selectedRecord.buyoff_status) === 'PASSED' ? 'text-green-400' : (detailData?.buyoff_status || selectedRecord.buyoff_status) === 'FAILED' ? 'text-red-400' : 'text-slate-400'}`}>
-                            {detailData?.buyoff_status || selectedRecord.buyoff_status || 'NONE'}
-                          </span>
-                          <i className={`fas ${(detailData?.buyoff_status || selectedRecord.buyoff_status) === 'PASSED' ? 'fa-check-double text-green-400' : (detailData?.buyoff_status || selectedRecord.buyoff_status) === 'FAILED' ? 'fa-times-circle text-red-400' : 'fa-clock text-slate-400'} text-xl`}></i>
+                      <div className="space-y-3 pl-13">
+                        {detailData?.data?.first && Object.entries(detailData.data.first).map(([key, value]) => (
+                          <div key={key} className="flex justify-between items-center py-2 border-b border-slate-100">
+                            <span className="text-xs font-bold text-slate-400 uppercase capitalize">
+                              {key === 'user_name' ? '创建人员' : key === 'date_time' ? '创建时间' : key === 'order_time' ? '计划时间' : key === 'machine_code' ? '机台编号' : key}
+                            </span>
+                            <span className="text-sm font-medium text-slate-700">{value || '-'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                          <span className="text-indigo-600 font-black text-sm">02</span>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-800">第二阶段</h4>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        {detailData?.data?.second && Object.entries(detailData.data.second).map(([key, value]) => (
+                          <div key={key} className="flex justify-between items-center py-2 border-b border-slate-100">
+                            <span className="text-xs font-bold text-slate-400 uppercase capitalize">
+                              {key === 'user_name' ? '执行人员' : key === 'date_time' ? '执行时间' : key === 'short_name' ? '模具简称' : key}
+                            </span>
+                            <span className="text-sm font-medium text-slate-700">{value || '-'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                          <span className="text-purple-600 font-black text-sm">03</span>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-800">第三阶段</h4>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        {detailData?.data?.third && (
+                          <>
+                            <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                              <span className="text-xs font-bold text-slate-400 uppercase">审核人员</span>
+                              <span className="text-sm font-medium text-slate-700">{detailData.data.third.user_name || '-'}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                              <span className="text-xs font-bold text-slate-400 uppercase">审核时间</span>
+                              <span className="text-sm font-medium text-slate-700">{detailData.data.third.date_time || '-'}</span>
+                            </div>
+                            <div className="py-2 border-b border-slate-100">
+                              <span className="text-xs font-bold text-slate-400 uppercase block mb-2">审核备注</span>
+                              <p className="text-sm text-slate-700 italic bg-slate-50 p-3 rounded-lg">{detailData.data.third.comment || '-'}</p>
+                            </div>
+                            <div className="py-2 border-b border-slate-100">
+                              <span className="text-xs font-bold text-slate-400 uppercase block mb-2">保养执行项目</span>
+                              <div className="flex flex-wrap gap-2">
+                                {detailData.data.third.options?.map((option, i) => (
+                                  <span key={i} className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-100">
+                                    <i className="fas fa-check mr-1"></i>{option}
+                                  </span>
+                                ))}
+                                {(!detailData.data.third.options || detailData.data.third.options.length === 0) && (
+                                  <span className="text-sm text-slate-400 italic">暂无保养项目信息</span>
+                                )}
+                              </div>
+                            </div>
+                            {detailData.data.third.picture_path && detailData.data.third.picture_path.length > 0 && (
+                              <div className="py-2">
+                                <span className="text-xs font-bold text-slate-400 uppercase block mb-2">现场图片</span>
+                                <div className="grid grid-cols-3 gap-3">
+                                  {detailData.data.third.picture_path.map((path, i) => (
+                                    <div key={i} className="aspect-square bg-slate-100 rounded-xl overflow-hidden">
+                                      <img src={path} alt={`图片 ${i + 1}`} className="w-full h-full object-cover" />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+                          <span className="text-green-600 font-black text-sm">04</span>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-800">第四阶段</h4>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        {detailData?.data?.fourth && Object.entries(detailData.data.fourth).map(([key, value]) => (
+                          <div key={key} className="flex justify-between items-center py-2 border-b border-slate-100">
+                            <span className="text-xs font-bold text-slate-400 uppercase capitalize">
+                              {key === 'user_name' ? '验收人员' : key === 'date_time' ? '验收时间' : key === 'buyoff_status' ? '验收状态' : key === 'maintenance_result' ? '保养结果' : key}
+                            </span>
+                            <span className={`text-sm font-medium ${key === 'buyoff_status' && value === 'PASSED' ? 'text-green-600' : key === 'buyoff_status' && value === 'FAILED' ? 'text-red-600' : key === 'maintenance_result' && value === 'OK' ? 'text-green-600' : key === 'maintenance_result' && value === 'NG' ? 'text-red-600' : 'text-slate-700'}`}>
+                              {value || '-'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-4">
+                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg sticky top-8">
+                      <div className="flex items-center gap-2 mb-6">
+                        <i className="fas fa-file-alt text-lg"></i>
+                        <h4 className="text-sm font-black uppercase tracking-wider">基础信息</h4>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-bold text-white/70 uppercase">备注信息</span>
+                        </div>
+                        <p className="text-sm text-white/90 font-medium bg-white/10 p-3 rounded-lg">{detailData?.remark || '-'}</p>
+                        
+                        <div className="border-t border-white/20 pt-4 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-bold text-white/70 uppercase">工单编号</span>
+                            <span className="text-sm font-mono font-medium">{detailData?.order_no || '-'}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-bold text-white/70 uppercase">模具编号</span>
+                            <span className="text-sm font-mono font-medium">{detailData?.mold_code || '-'}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-bold text-white/70 uppercase">归位类型</span>
+                            <span className="text-sm font-medium">{detailData?.location_type || '-'}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-bold text-white/70 uppercase">库位/机台</span>
+                            <span className="text-sm font-mono font-medium">{detailData?.location || '-'}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-bold text-white/70 uppercase">完成时间</span>
+                            <span className="text-sm font-medium">{detailData?.complete_time || '-'}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-bold text-white/70 uppercase">保养结论</span>
+                            <span className={`text-sm font-bold ${detailData?.maintenance_result === 'OK' ? 'text-green-300' : detailData?.maintenance_result === 'NG' ? 'text-red-300' : 'text-yellow-300'}`}>
+                              {detailData?.maintenance_result || 'WAIT'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-bold text-white/70 uppercase">验收状态</span>
+                            <span className={`text-sm font-bold ${detailData?.buyoff_status === 'PASSED' ? 'text-green-300' : detailData?.buyoff_status === 'FAILED' ? 'text-red-300' : 'text-gray-300'}`}>
+                              {detailData?.buyoff_status || 'NONE'}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </section>
-                </div>
-
-                <div className="col-span-4 space-y-8">
-                  <section className="bg-indigo-50 border border-indigo-100 p-6 rounded-3xl space-y-4">
-                    <h4 className="text-[11px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
-                      <i className="fas fa-location-dot"></i>
-                      物理归位扫码识别
-                    </h4>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-end border-b border-indigo-200 pb-2">
-                        <span className="text-[10px] font-bold text-indigo-400 uppercase">归位类型</span>
-                        <span className="text-sm font-black text-indigo-900">{detailData?.location_type || selectedRecord.location || '-'}</span>
-                      </div>
-                      <div className="flex justify-between items-end border-b border-indigo-200 pb-2">
-                        <span className="text-[10px] font-bold text-indigo-400 uppercase">库位/机台</span>
-                        <span className="text-sm font-mono font-black text-indigo-900">{detailData?.location || selectedRecord.location || '-'}</span>
-                      </div>
-                      <div className="pt-2">
-                         <span className={`text-[9px] px-2 py-0.5 rounded font-black tracking-widest uppercase ${detailData?.location_binding_success ? 'bg-green-500 text-white' : 'bg-slate-400 text-white'}`}>
-                           {detailData?.location_binding_success ? 'Location Binding Success' : 'Location Binding Pending'}
-                         </span>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section className="flex items-center gap-4 p-4 border border-slate-100 rounded-2xl">
-                    <div className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-sm">
-                      {selectedRecord.executor_name ? selectedRecord.executor_name.slice(0, 1) : '-'}
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">主责人员</p>
-                      <p className="text-sm font-black text-slate-800">{selectedRecord.executor_name || '-'}</p>
-                      <p className="text-[10px] text-slate-400">完成于: {selectedRecord.complete_time || '-'}</p>
-                    </div>
-                  </section>
-
-                  {detailData?.acceptor_name && (
-                    <section className="flex items-center gap-4 p-4 border border-slate-100 rounded-2xl">
-                      <div className="w-12 h-12 rounded-full bg-green-600 text-white flex items-center justify-center font-black text-sm">
-                        {detailData.acceptor_name.slice(0, 1)}
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">验收人员</p>
-                        <p className="text-sm font-black text-slate-800">{detailData.acceptor_name}</p>
-                        <p className="text-[10px] text-slate-400">验收于: {detailData.acceptor_time || '-'}</p>
-                      </div>
-                    </section>
-                  )}
+                  </div>
                 </div>
               </div>
             )}
@@ -419,9 +491,9 @@ const MaintenanceRecords: React.FC = () => {
             <div className="px-8 py-5 bg-slate-50 border-t border-slate-200 flex justify-end gap-3 shrink-0">
               <button 
                 onClick={() => setIsDetailModalOpen(false)}
-                className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors"
+                className="px-6 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors"
               >
-                关闭预览
+                关闭
               </button>
             </div>
           </div>

@@ -31,6 +31,34 @@ export interface FetchMaintenanceRecordsParams {
   page_size?: number;     // 每页条数，默认20
 }
 
+export interface MaintenanceDetailFirstStep {
+  user_name: string;      // 创建人姓名
+  date_time: string;      // 创建时间
+  order_time: string;     // 计划时间
+  machine_code: string;   // 机台编号
+}
+
+export interface MaintenanceDetailSecondStep {
+  user_name: string;      // 执行人员姓名
+  date_time: string;      // 执行时间
+  short_name: string;     // 模具简称
+}
+
+export interface MaintenanceDetailThirdStep {
+  user_name: string;      // 审核人员姓名
+  date_time: string;      // 审核时间
+  comment: string;        // 审核备注
+  options: string[];      // 保养执行项目名称列表
+  picture_path: string[]; // 图片路径列表
+}
+
+export interface MaintenanceDetailFourthStep {
+  user_name: string;      // 验收人员姓名
+  date_time: string;      // 验收时间
+  buyoff_status: string;  // 验收状态
+  maintenance_result: string;  // 保养结果
+}
+
 export interface MaintenanceDetailResponse {
   code: number;           // 状态码，200表示成功
   message: string;        // 提示信息
@@ -38,14 +66,17 @@ export interface MaintenanceDetailResponse {
     remark: string;       // 备注信息
     order_no: string;     // 工单编号
     mold_code: string;    // 模具编号
-    options: string[];    // 保养选项列表
-    maintenance_result: string;  // 保养结果
-    buyoff_status: string;  // 验收状态
-    location_type: string;  // 位置类型
-    location: string;     // 位置信息
-    location_binding_success: boolean;  // 位置绑定是否成功
-    acceptor_name: string;  // 验收人名称
-    acceptor_time: string;  // 验收时间
+    maintenance_result: string;  // 保养结论（OK/NG/WAIT）
+    buyoff_status: string;  // 验收状态（PASSED/FAILED/NONE）
+    location_type: string;  // 归位类型（模具库/机台等）
+    location: string;     // 库位/机台位置
+    complete_time: string;  // 完成时间
+    data: {
+      first: MaintenanceDetailFirstStep;    // 创建阶段信息
+      second: MaintenanceDetailSecondStep;  // 执行阶段信息
+      third: MaintenanceDetailThirdStep;    // 审核阶段信息
+      fourth: MaintenanceDetailFourthStep;  // 验收阶段信息
+    };
   };
 }
 
