@@ -1,103 +1,175 @@
-import React, { useState, useMemo } from 'react';
-import { MOCK_MAINTENANCE_OPTIONS } from '../../services/mockData';
+import React, { useState, useEffect, useMemo } from 'react';
+import { MaintenanceOptionService, MaintenanceOptionItem, TemplateMonthItem } from '../../services/maintenanceOptionService';
+import { AuthService } from '../../services/authService';
+import Pagination from '../../components/Pagination';
 
-interface MaintenanceOption {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  enabled: boolean;
-}
-
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 const MaintenanceOptionManagement: React.FC = () => {
-  const [options, setOptions] = useState<MaintenanceOption[]>(MOCK_MAINTENANCE_OPTIONS);
+  const [options, setOptions] = useState<MaintenanceOptionItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingOption, setEditingOption] = useState<MaintenanceOption | null>(null);
+  const [editingOption, setEditingOption] = useState<MaintenanceOptionItem | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [templateMonthList, setTemplateMonthList] = useState<TemplateMonthItem[]>([]);
   
   const [filters, setFilters] = useState({
     name: '',
-    category: '',
-    enabled: ''
+    template_month: '',
+    status: ''
   });
   
   const [searchFilters, setSearchFilters] = useState({
     name: '',
-    category: '',
-    enabled: ''
+    template_month: '',
+    status: ''
   });
   
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+
+  const loadData = async (page: number, filters?: { name: string; template_month: string; status: string }) => {
+    setIsLoading(true);
+    try {
+      const currentFilters = filters || searchFilters;
+      const response = await MaintenanceOptionService.fetchMaintenanceOptions({
+        name: currentFilters.name,
+        template_month: currentFilters.template_month,
+        status: currentFilters.status ? Number(currentFilters.status) : undefined,
+        page,
+        page_size: ITEMS_PER_PAGE
+      });
+      setOptions(response.data.list);
+      setTotalRecords(response.data.total);
+    } catch (error) {
+      console.error('获取保养选项列表失败:', error);
+      alert('获取保养选项列表失败');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData(1);
+    loadTemplateMonth();
+  }, []);
+
+  const loadTemplateMonth = async () => {
+    const authData = AuthService.getStoredAuth();
+    if (!authData || !authData.department) return;
+    
+    try {
+      const response = await MaintenanceOptionService.fetchTemplateMonth(authData.department);
+      setTemplateMonthList(response.data);
+    } catch (error) {
+      console.error('获取保养模板月份失败:', error);
+    }
+  };
 
   const handleAdd = () => {
+    const defaultItem = templateMonthList[0] || { template_month: '1M', template_comment: '月度保养' };
     setEditingOption({
-      id: `MO-${Date.now()}`,
+      id: 0,
       name: '',
-      category: '半年保养项目',
-      description: '',
-      enabled: true
+      template_month: defaultItem.template_month,
+      template_comment: defaultItem.template_comment,
+      department_id: 0,
+      comment: '',
+      status: 1,
+      created_at: '',
+      updated_at: ''
     });
     setIsModalOpen(true);
   };
 
-  const handleEdit = (option: MaintenanceOption) => {
+  const handleEdit = (option: MaintenanceOptionItem) => {
     setEditingOption({ ...option });
     setIsModalOpen(true);
   };
 
-  const handleToggleStatus = (id: string) => {
-    const option = options.find(o => o.id === id);
-    if (!option) return;
-    
-    const isEnable = !option.enabled;
-    const confirmMsg = isEnable ? '确定要启用该保养选项吗？' : '确定要禁用该保养选项吗？';
+  const handleToggleStatus = async (id: number, targetStatus: number) => {
+    const isEnabling = targetStatus === 1;
+    const confirmMsg = isEnabling ? '确定要启用该保养选项吗？' : '确定要禁用该保养选项吗？';
     
     if (!confirm(confirmMsg)) return;
     
-    setOptions(options.map(o => o.id === id ? { ...o, enabled: isEnable } : o));
-    alert(isEnable ? '启用成功' : '禁用成功');
+    try {
+      await MaintenanceOptionService.toggleMaintenanceOptionStatus({ 
+        id: String(id), 
+        status: targetStatus 
+      });
+      
+      const newStatus = isEnabling ? 1 : 2;
+      setOptions(options.map(o => o.id === id ? { ...o, status: newStatus } : o));
+      alert(isEnabling ? '启用成功' : '禁用成功');
+    } catch (error) {
+      console.error('切换保养选项状态失败:', error);
+      alert('切换保养选项状态失败');
+    }
   };
 
-  const saveOption = () => {
-    if (!editingOption || !editingOption.name) return;
-    const exists = options.find(o => o.id === editingOption.id);
-    if (exists) {
-      setOptions(options.map(o => o.id === editingOption.id ? editingOption : o));
-    } else {
-      setOptions([...options, editingOption]);
+  const saveOption = async () => {
+    if (!editingOption || !editingOption.name) {
+      alert('请填写保养选项名称');
+      return;
     }
-    setIsModalOpen(false);
+    
+    const authData = AuthService.getStoredAuth();
+    if (!authData) {
+      alert('用户信息缺失');
+      return;
+    }
+    
+    try {
+      const isNew = editingOption.id === 0;
+      
+      if (isNew) {
+        if (!authData.department) {
+          alert('用户部门信息缺失');
+          return;
+        }
+        await MaintenanceOptionService.saveMaintenanceOption({
+          name: editingOption.name,
+          template_month: editingOption.template_month,
+          department: authData.department,
+          comment: editingOption.comment,
+          status: editingOption.status
+        });
+      } else {
+        await MaintenanceOptionService.updateMaintenanceOption({
+          id: String(editingOption.id),
+          name: editingOption.name,
+          template_month: editingOption.template_month,
+          comment: editingOption.comment,
+          status: editingOption.status
+        });
+      }
+      
+      alert(isNew ? '新增成功' : '更新成功');
+      setIsModalOpen(false);
+      setCurrentPage(1);
+      loadData(1, searchFilters);
+    } catch (error) {
+      console.error('保存保养选项失败:', error);
+      alert('保存保养选项失败');
+    }
   };
 
   const handleSearch = () => {
-    setSearchFilters({ ...filters });
+    const newFilters = { ...filters };
+    setSearchFilters(newFilters);
     setCurrentPage(1);
+    loadData(1, newFilters);
   };
 
-  const categories = useMemo(() => {
-    const cats = [...new Set(options.map(o => o.category))];
-    return cats;
-  }, [options]);
-
-  const filteredOptions = useMemo(() => {
-    return options.filter(opt => {
-      if (searchFilters.name && !opt.name.includes(searchFilters.name)) return false;
-      if (searchFilters.category && opt.category !== searchFilters.category) return false;
-      if (searchFilters.enabled === 'true' && !opt.enabled) return false;
-      if (searchFilters.enabled === 'false' && opt.enabled) return false;
-      return true;
+  const templateMonthOptions = useMemo(() => {
+    const options = [{ value: '', label: '全部' }];
+    templateMonthList.forEach(item => {
+      options.push({ value: item.template_month, label: item.template_comment });
     });
-  }, [options, searchFilters]);
+    return options;
+  }, [templateMonthList]);
 
-  const totalRecords = filteredOptions.length;
   const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
-  
-  const paginatedOptions = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
-    return filteredOptions.slice(start, end);
-  }, [filteredOptions, currentPage]);
 
   return (
     <div className="space-y-6">
@@ -125,24 +197,25 @@ const MaintenanceOptionManagement: React.FC = () => {
         <div className="flex items-center gap-2">
           <label className="text-sm font-bold text-slate-700">分类:</label>
           <select 
-            value={filters.category} 
-            onChange={(e) => setFilters({...filters, category: e.target.value})} 
+            value={filters.template_month} 
+            onChange={(e) => setFilters({...filters, template_month: e.target.value})} 
             className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
-            <option value="">全部</option>
-            {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            {templateMonthOptions.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
           </select>
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm font-bold text-slate-700">状态:</label>
           <select 
-            value={filters.enabled} 
-            onChange={(e) => setFilters({...filters, enabled: e.target.value})} 
+            value={filters.status} 
+            onChange={(e) => setFilters({...filters, status: e.target.value})} 
             className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
             <option value="">全部状态</option>
-            <option value="true">启用</option>
-            <option value="false">禁用</option>
+            <option value="1">启用</option>
+            <option value="2">禁用</option>
           </select>
         </div>
         <button 
@@ -166,116 +239,100 @@ const MaintenanceOptionManagement: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {paginatedOptions.map(option => (
-              <tr key={option.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="px-6 py-4">
-                  <span className="text-xs font-mono font-bold text-slate-400">{option.id}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                      <i className="fas fa-tools text-xs"></i>
-                    </div>
-                    <span className="text-sm font-bold text-slate-700">{option.name}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold border border-slate-200 uppercase tracking-wider">
-                    {option.category}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500 max-w-xs truncate">
-                  {option.description}
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded text-[10px] font-bold border uppercase tracking-wider ${
-                    option.enabled 
-                      ? 'bg-green-100 text-green-600 border-green-200' 
-                      : 'bg-slate-100 text-slate-400 border-slate-200'
-                  }`}>
-                    {option.enabled ? '启用' : '禁用'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button 
-                      onClick={() => handleEdit(option)}
-                      className="text-indigo-600 p-2 hover:bg-indigo-50 rounded-lg transition-colors"
-                      title="编辑"
-                    >
-                      <i className="fas fa-edit mr-1"></i>编辑
-                    </button>
-                    {option.enabled ? (
-                      <button
-                        onClick={() => handleToggleStatus(option.id)}
-                        className="text-red-500 p-2 hover:bg-red-50 rounded-lg transition-colors"
-                        title="禁用"
-                      >
-                        <i className="fas fa-ban mr-1"></i>禁用
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleToggleStatus(option.id)}
-                        className="text-green-600 p-2 hover:bg-green-50 rounded-lg transition-colors"
-                        title="启用"
-                      >
-                        <i className="fas fa-check-circle mr-1"></i>启用
-                      </button>
-                    )}
-                  </div>
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                  <p className="mt-2 text-sm text-slate-500">加载中...</p>
                 </td>
               </tr>
-            ))}
+            ) : options.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                  暂无数据
+                </td>
+              </tr>
+            ) : (
+              options.map(option => (
+                <tr key={option.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-4">
+                    <span className="text-xs font-mono font-bold text-slate-400">{option.id}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                        <i className="fas fa-tools text-xs"></i>
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">{option.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold border border-slate-200 uppercase tracking-wider">
+                      {option.template_comment}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500 max-w-xs truncate">
+                    {option.comment}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded text-[10px] font-bold border uppercase tracking-wider ${
+                      option.status == 1
+                        ? 'bg-green-100 text-green-600 border-green-200' 
+                        : 'bg-slate-100 text-slate-400 border-slate-200'
+                    }`}>
+                      {option.status == 1 ? '启用' : '禁用'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        onClick={() => handleEdit(option)}
+                        className="text-indigo-600 p-2 hover:bg-indigo-50 rounded-lg transition-colors"
+                        title="编辑"
+                      >
+                        <i className="fas fa-edit mr-1"></i>编辑
+                      </button>
+                      {option.status == 1 ? (
+                        <button
+                          onClick={() => handleToggleStatus(option.id, 0)}
+                          className="text-red-500 p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          title="禁用"
+                        >
+                          <i className="fas fa-ban mr-1"></i>禁用
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleToggleStatus(option.id, 1)}
+                          className="text-green-600 p-2 hover:bg-green-50 rounded-lg transition-colors"
+                          title="启用"
+                        >
+                          <i className="fas fa-check-circle mr-1"></i>启用
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <i className="fas fa-chevron-left mr-1"></i> 上一页
-          </button>
-          
-          <div className="flex gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-9 h-9 rounded-lg text-sm font-bold transition-colors ${
-                  currentPage === page
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-          </div>
-          
-          <button
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            下一页 <i className="fas fa-chevron-right ml-1"></i>
-          </button>
-          
-          <span className="text-sm text-slate-500 ml-4">
-            共 {totalRecords} 条记录，第 {currentPage}/{totalPages} 页
-          </span>
-        </div>
-      )}
+      <Pagination
+        totalRecords={totalRecords}
+        currentPage={currentPage}
+        onPageChange={(page) => {
+          setCurrentPage(page);
+          loadData(page);
+        }}
+      />
 
       {isModalOpen && editingOption && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-indigo-50/30">
               <h3 className="text-lg font-bold text-slate-800">
-                {options.find(o => o.id === editingOption.id) ? '编辑保养选项' : '新增保养选项'}
+                {editingOption.id > 0 ? '编辑保养选项' : '新增保养选项'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
                 <i className="fas fa-times text-xl"></i>
@@ -295,22 +352,31 @@ const MaintenanceOptionManagement: React.FC = () => {
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">分类</label>
                 <select 
-                  value={editingOption.category}
-                  onChange={(e) => setEditingOption({...editingOption, category: e.target.value})}
+                  value={editingOption.template_month}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const selectedItem = templateMonthList.find(item => item.template_month === value);
+                    setEditingOption({
+                      ...editingOption, 
+                      template_month: value,
+                      template_comment: selectedItem ? selectedItem.template_comment : ''
+                    });
+                  }}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-500 transition-all appearance-none"
                 >
-                  <option value="半年保养项目">半年保养项目</option>
-                  <option value="电气保养">电气保养</option>
-                  <option value="机械保养">机械保养</option>
-                  <option value="液压保养">液压保养</option>
+                  {templateMonthList.map(item => (
+                    <option key={item.template_month} value={item.template_month}>
+                      {item.template_comment}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">描述说明</label>
                 <textarea 
                   rows={3}
-                  value={editingOption.description}
-                  onChange={(e) => setEditingOption({...editingOption, description: e.target.value})}
+                  value={editingOption.comment}
+                  onChange={(e) => setEditingOption({...editingOption, comment: e.target.value})}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-500 transition-all resize-none"
                   placeholder="请输入该选项的详细作业说明..."
                 />
@@ -319,9 +385,9 @@ const MaintenanceOptionManagement: React.FC = () => {
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">状态</label>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setEditingOption({...editingOption, enabled: true})}
+                    onClick={() => setEditingOption({...editingOption, status: 1})}
                     className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-                      editingOption.enabled 
+                      editingOption.status == 1
                         ? 'bg-green-600 text-white shadow-lg shadow-green-100' 
                         : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                     }`}
@@ -329,9 +395,9 @@ const MaintenanceOptionManagement: React.FC = () => {
                     启用
                   </button>
                   <button
-                    onClick={() => setEditingOption({...editingOption, enabled: false})}
+                    onClick={() => setEditingOption({...editingOption, status: 0})}
                     className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-                      !editingOption.enabled 
+                      editingOption.status != 1
                         ? 'bg-slate-400 text-white shadow-lg shadow-slate-100' 
                         : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                     }`}
