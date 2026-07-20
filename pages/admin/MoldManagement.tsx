@@ -5,6 +5,7 @@ import { STATUS_COLORS, STATUS_LABELS } from '../../constants';
 import { Mold, MoldStatus, BuyoffStatus, MoldComponent } from '../../types';
 import { fetchMoldList, MoldListItem, fetchMoldDetail, MoldDetailItem, saveMold, fetchInternalComponents, InternalComponentItem, toggleStatus } from '../../services/moldmanageService';
 import { fetchProductTypes } from '../../services/dashboardService';
+import Pagination from '../../components/Pagination';
 
 /**
  * 将 API 内部组件映射为前端 MoldComponent 类型
@@ -226,21 +227,27 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
 
   // 组件挂载时加载数据
   useEffect(() => {
-    // 防止 React StrictMode 导致的重复请求
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadMolds(currentPage);
+      loadMolds(1);
     }
   }, []);
 
-  // 当页码或部门变化时重新加载
+  // 当页码变化时重新加载
   useEffect(() => {
     if (!isFirstRender.current) {
       loadMolds(currentPage);
     }
-  }, [currentPage, department]);
+  }, [currentPage]);
 
-  const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
+  // 当部门变化时重新加载
+  useEffect(() => {
+    if (!isFirstRender.current) {
+      setCurrentPage(1);
+      loadMolds(1);
+    }
+  }, [department]);
+
   const paginatedMolds = molds;
 
   const handleSave = async () => {
@@ -268,7 +275,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
       if (response.code === 200 && response.data?.success) {
         // 保存成功，刷新列表
         alert(response.data.message || '保存成功');
-        loadMolds(currentPage);
+        setCurrentPage(1);
       } else {
         alert(response.message || '保存失败');
       }
@@ -522,7 +529,6 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
           <button 
             onClick={() => {
               setCurrentPage(1);
-              loadMolds(1);
             }} 
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors"
           >
@@ -681,45 +687,11 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
       )}
 
       {/* 分页控件 */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <i className="fas fa-chevron-left mr-1"></i> 上一页
-          </button>
-          
-          <div className="flex gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-9 h-9 rounded-lg text-sm font-bold transition-colors ${
-                  currentPage === page
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-          </div>
-          
-          <button
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            下一页 <i className="fas fa-chevron-right ml-1"></i>
-          </button>
-          
-          <span className="text-sm text-slate-500 ml-4">
-            共 {totalRecords} 条记录，第 {currentPage}/{totalPages} 页
-          </span>
-        </div>
-      )}
+      <Pagination 
+        totalRecords={totalRecords} 
+        currentPage={currentPage}
+        onPageChange={setCurrentPage} 
+      />
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">

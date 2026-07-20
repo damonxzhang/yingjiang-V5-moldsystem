@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchProductTypes, toggleProductTypeStatus, updateProductType, ProductTypeItem } from '../../services/productTypeService';
 import { saveProductType } from '../../services/dashboardService';
+import Pagination from '../../components/Pagination';
 
 interface ProductType {
   id: number;
@@ -42,7 +43,6 @@ const ProductTypeManagement: React.FC = () => {
       }));
       setProductTypes(mappedTypes);
       setTotalRecords(response.data.total);
-      setCurrentPage(page);
     } catch (err) {
       setError(err instanceof Error ? err.message : '获取数据失败');
       setProductTypes([]);
@@ -53,8 +53,19 @@ const ProductTypeManagement: React.FC = () => {
     }
   };
 
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
-    loadProductTypes(currentPage);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      loadProductTypes(1);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isFirstRender.current) {
+      loadProductTypes(currentPage);
+    }
   }, [currentPage]);
 
   const handleEditClick = (item: ProductType) => {
@@ -108,7 +119,7 @@ const ProductTypeManagement: React.FC = () => {
       setShowEditModal(false);
       setEditingItem(null);
       setEditName('');
-      loadProductTypes(currentPage);
+      setCurrentPage(1);
     } catch (error) {
       alert(error instanceof Error ? error.message : (editingItem ? '更新失败' : '保存失败'));
     } finally {
@@ -228,45 +239,12 @@ const ProductTypeManagement: React.FC = () => {
         </div>
       )}
 
-      {totalRecords > 0 && (
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <i className="fas fa-chevron-left mr-1"></i> 上一页
-          </button>
-          
-          <div className="flex gap-1">
-            {Array.from({ length: Math.ceil(totalRecords / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-9 h-9 rounded-lg text-sm font-bold transition-colors ${
-                  currentPage === page
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-          </div>
-          
-          <button
-            onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalRecords / ITEMS_PER_PAGE), p + 1))}
-            disabled={currentPage === Math.ceil(totalRecords / ITEMS_PER_PAGE)}
-            className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            下一页 <i className="fas fa-chevron-right ml-1"></i>
-          </button>
-          
-          <span className="text-sm text-slate-500 ml-4">
-            共 {totalRecords} 条记录，第 {currentPage}/{Math.ceil(totalRecords / ITEMS_PER_PAGE)} 页
-          </span>
-        </div>
-      )}
+      {/* 分页控件 */}
+      <Pagination 
+        totalRecords={totalRecords} 
+        currentPage={currentPage}
+        onPageChange={setCurrentPage} 
+      />
 
       {showEditModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

@@ -4,6 +4,7 @@ import {
   MachineStatusHistoryItem,
   FetchMachineStatusHistoryParams
 } from '../../services/machineStatusHistoryService';
+import Pagination from '../../components/Pagination';
 
 /**
  * 前端机台状态变更记录数据类型
@@ -111,7 +112,6 @@ const MachineStatusHistory: React.FC = () => {
 
   // 组件挂载时加载数据
   useEffect(() => {
-    // 防止 React StrictMode 导致的重复请求
     if (isFirstRender.current) {
       isFirstRender.current = false;
       loadStatusHistoryList(1);
@@ -124,9 +124,6 @@ const MachineStatusHistory: React.FC = () => {
       loadStatusHistoryList(currentPage);
     }
   }, [currentPage]);
-
-  // 计算总页数
-  const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-6">
@@ -205,50 +202,11 @@ const MachineStatusHistory: React.FC = () => {
           </table>
 
           {/* 分页 */}
-          <div className="flex items-center justify-between px-4 py-4 border-t border-slate-100">
-            <span className="text-sm text-slate-500">
-              共 {totalRecords} 条记录，第 {currentPage} / {totalPages} 页
-            </span>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                上一页
-              </button>
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                // 显示当前页附近的页码
-                let startPage = Math.max(1, currentPage - 2);
-                let endPage = Math.min(totalPages, startPage + 4);
-                if (endPage - startPage < 4) {
-                  startPage = Math.max(1, endPage - 4);
-                }
-                const page = startPage + i;
-                if (page > totalPages) return null;
-                return (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
-                      currentPage === page
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                下一页
-              </button>
-            </div>
-          </div>
+          <Pagination 
+            totalRecords={totalRecords} 
+            currentPage={currentPage}
+            onPageChange={setCurrentPage} 
+          />
         </div>
       )}
     </div>
