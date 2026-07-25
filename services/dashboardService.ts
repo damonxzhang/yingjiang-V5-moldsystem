@@ -887,6 +887,7 @@ export interface MmsConfirmItem {
   date_early: string;
   date_late: string;
   create_time: string;
+  order_time?: string; // 计划开始时间，有值时优先显示
   operator: string;
   slots_str: string[];
 }

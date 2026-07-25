@@ -816,11 +816,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       if (results.length > 0) {
         const detail = results[0];
         setMmsConfirmDetail(detail);
+        // confirmTimeRange 用于约束和显示有效时间范围，保持使用 date_early/date_late
         const start = detail.date_early || todo.date_early || '';
         const end = detail.date_late || todo.date_late || '';
         setConfirmTimeRange({ start, end });
         const pad2 = (n: number) => n.toString().padStart(2, '0');
-        const defaultStart = start ? start.replace(' ', 'T').slice(0, 16) : '';
+        // 计划开始时间输入框默认值：优先使用 order_time，没有值则使用 date_early
+        const defaultStart = (detail.order_time || detail.date_early || todo.date_early || '').replace(' ', 'T').slice(0, 16);
         const defaultEnd = end ? end.replace(' ', 'T').slice(0, 16) : '';
         setUserMaintenanceStart(defaultStart);
         setUserMaintenanceEnd(defaultEnd);
