@@ -2919,8 +2919,13 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       setIsSavingMmsTask(false);
                     }
                   }}
-                  disabled={isSavingMmsTask}
-                  className="flex-1 bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-amber-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={
+                    isSavingMmsTask ||
+                    !mmsConfirmDetail ||
+                    mmsConfirmDetail.other_module_status !== 2 ||
+                    mmsConfirmDetail.confirm_role !== 2
+                  }
+                  className="flex-1 bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-amber-900/20 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   {isSavingMmsTask ? (
                     <span className="flex items-center justify-center gap-2">

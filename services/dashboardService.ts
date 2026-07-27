@@ -890,6 +890,8 @@ export interface MmsConfirmItem {
   order_time?: string; // 计划开始时间，有值时优先显示
   operator: string;
   slots_str: string[];
+  confirm_role: number; // 是否可以点击选择时间 1: 不可以, 2: 可以
+  other_module_status: number; // 其他模块状态 (1: 存在已完成保养记录不可以确认, 2: 无已完成保养记录可以确认)
 }
 
 // MMS保养任务确认响应
@@ -923,7 +925,8 @@ export async function fetchMmsConfirm(
     },
     body: JSON.stringify({
       machine_code: params.machine_code,
-      mms_id: String(params.mms_id)
+      mms_id: String(params.mms_id),
+      user_id: authData.user_id || '1'
     })
   });
 
