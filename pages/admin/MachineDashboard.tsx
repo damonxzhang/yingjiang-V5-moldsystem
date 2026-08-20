@@ -1899,14 +1899,14 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                           } ${isUninstallingMold && !isGuestMode ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           {isGuestMode ? (
-                            <><i className="fas fa-plus-circle"></i> 安装模具</>
+                            <><i className="fas fa-plus-circle"></i> 更换/安装</>
                           ) : isInstallingMold ? (
                             <>
                               <i className="fas fa-spinner fa-spin"></i> 处理中...
                             </>
                           ) : (
                             <>
-                              <i className="fas fa-plus-circle"></i> 安装模具
+                              <i className="fas fa-plus-circle"></i> 更换/安装
                             </>
                           )}
                         </button>
