@@ -139,6 +139,9 @@ export interface Mold {
   
   // 模具启用状态 (启用 / 停用)，对应 API 的 mold_status 字段
   moldStatus?: string;
+
+  // 是否存在待停用（待现场扫码确认停用）
+  pendingDeactivate?: boolean;
 }
 
 export interface WorkOrderSpare {

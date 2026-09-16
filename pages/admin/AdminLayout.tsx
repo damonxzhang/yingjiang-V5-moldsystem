@@ -69,7 +69,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
   const menuItems = [
     { id: 'machine_screen', name: '设备生产看板 (主入口)', icon: 'fa-display', permission: Permission.MONITOR_SCREEN_VIEW },
     { id: 'dashboard', name: '仪表盘 (待定)', icon: 'fa-chart-pie', permission: Permission.DASHBOARD_VIEW },
-    { id: 'tooling_screen', name: '模具监控大屏（待定）', icon: 'fa-desktop', permission: Permission.MONITOR_SCREEN_VIEW },
+    // { id: 'tooling_screen', name: '模具监控大屏（待定）', icon: 'fa-desktop', permission: Permission.MONITOR_SCREEN_VIEW },
     { id: 'production_list', name: '可生产产品 LIST', icon: 'fa-list-check', permission: Permission.MOLD_VIEW },
     { id: 'shot_monitor', name: '实时 Shot 数监控', icon: 'fa-wave-square', permission: Permission.MOLD_VIEW },
     { id: 'molds_big', name: '模具台账 (大材料)', icon: 'fa-cube', department: '大材料', permission: Permission.MOLD_VIEW },
@@ -82,7 +82,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
     { id: 'binding_machine', name: '模具机台绑定', icon: 'fa-link', permission: Permission.MACHINE_EDIT },
     { id: 'maintenance_confirm', name: '保养任务中心', icon: 'fa-calendar-check', permission: Permission.MAINTENANCE_MANAGE },
     { id: 'repair_confirm', name: '维修任务中心', icon: 'fa-screwdriver-wrench', permission: Permission.REPAIR_MANAGE },
-    { id: 'maintenance_logs', name: '保养执行记录', icon: 'fa-clipboard-check', permission: Permission.MAINTENANCE_VIEW },
+    { id: 'maintenance_logs', name: '保养执行记录', icon: 'fa-clipboard-check', badge: 5, permission: Permission.MAINTENANCE_VIEW },
     { id: 'repair_logs', name: '维修执行记录', icon: 'fa-tools', permission: Permission.REPAIR_VIEW },
     { id: 'maintenance_option_manage', name: '保养选项管理', icon: 'fa-wrench', permission: Permission.MAINTENANCE_OPTION_MANAGE },
     { id: 'repair_option_manage', name: '维修选项管理', icon: 'fa-toolbox', permission: Permission.REPAIR_OPTION_MANAGE },
@@ -191,6 +191,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
             >
               <i className={`fas ${item.icon} w-5 text-center`}></i>
               <span className="font-medium text-sm">{item.name}</span>
+              {item.badge > 0 && (
+                <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center">
+                  {item.badge}
+                </span>
+              )}
             </button>
           ))}
         </nav>
