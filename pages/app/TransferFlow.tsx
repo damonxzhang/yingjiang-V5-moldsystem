@@ -181,9 +181,6 @@ const TransferFlow: React.FC<TransferFlowProps> = ({ onBack, onGoMaintenance }) 
                * 规则：模具拆下入柜或不同机器间互换，强制触发保养，避免由于保养随设备走使模具保养超出周期。
              </p>
           </div>
-          <div className="bg-green-600 text-white p-4 rounded-xl text-center font-bold">
-            状态转为：backup
-          </div>
           <button 
             onClick={() => onGoMaintenance ? onGoMaintenance() : onBack()} 
             className="w-full bg-red-600 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 flex items-center justify-center gap-2"
