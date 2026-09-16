@@ -5,14 +5,20 @@ import { Mold, BuyoffStatus, MoldStatus } from '../../types';
 
 interface TransferFlowProps {
   onBack: () => void;
+  // 跳转到“模具保养执行流程”列表
+  onGoMaintenance?: () => void;
 }
 
-const TransferFlow: React.FC<TransferFlowProps> = ({ onBack }) => {
+const TransferFlow: React.FC<TransferFlowProps> = ({ onBack, onGoMaintenance }) => {
   const [mode, setMode] = useState<'SELECT' | 'REMOVE' | 'INSTALL'>('SELECT');
   const [step, setStep] = useState(0);
   const [selectedMold, setSelectedMold] = useState<Mold | null>(null);
   const [shotCount, setShotCount] = useState<string>('');
   const [buyoffLoading, setBuyoffLoading] = useState(false);
+  // 直接入柜（暂不保养）：扫柜位码记录模具存放位置
+  const [cabinetCode, setCabinetCode] = useState<string>('');
+  const [cabinetError, setCabinetError] = useState<string>('');
+  const [cabinetVerified, setCabinetVerified] = useState(false);
 
   // BUYOFF 表单数据
   const [buyoffFormData, setBuyoffFormData] = useState({
@@ -66,6 +72,34 @@ const TransferFlow: React.FC<TransferFlowProps> = ({ onBack }) => {
   };
 
   const nextStep = () => setStep(s => s + 1);
+
+  // 进入“直接入柜（暂不保养）”流程
+  const startCabinetFlow = () => {
+    setCabinetCode('');
+    setCabinetError('');
+    setCabinetVerified(false);
+    nextStep();
+  };
+
+  // 扫描模具柜位码，记录模具存放柜位
+  const handleScanCabinet = (value: string) => {
+    const code = value.trim().toUpperCase();
+    if (!code) {
+      setCabinetError('请扫描或输入模具柜位置码');
+      return;
+    }
+    setCabinetCode(code);
+    setCabinetError('');
+    setCabinetVerified(true);
+  };
+
+  // 确认入柜：记录模具存放柜位后结束流程
+  const handleSaveToCabinet = () => {
+    if (!cabinetVerified) return;
+    setSelectedMold(prev => prev ? { ...prev, location: cabinetCode } : prev);
+    alert(`模具 ${selectedMold?.id} 已存入柜位 ${cabinetCode}，本次暂不保养，保养任务保留待执行。`);
+    onBack();
+  };
 
   // ----------------- 拆下流程步骤 -----------------
   const renderRemoveFlow = () => {
@@ -151,15 +185,22 @@ const TransferFlow: React.FC<TransferFlowProps> = ({ onBack }) => {
             状态转为：backup
           </div>
           <button 
-            onClick={() => {
-              alert(`模具 ${selectedMold?.id} 已成功解绑并同步冲次 (${shotCount})！\n由于系统规则，现在将跳转至保养执行流程。`);
-              onBack(); // 这里模拟跳转回主菜单或直接结束流程
-            }} 
+            onClick={() => onGoMaintenance ? onGoMaintenance() : onBack()} 
             className="w-full bg-red-600 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 flex items-center justify-center gap-2"
           >
             <i className="fas fa-tools"></i>
             去保养
           </button>
+          <button 
+            onClick={startCabinetFlow} 
+            className="w-full bg-white border-2 border-red-600 text-red-600 py-4 rounded-xl font-bold shadow-sm active:scale-95 flex items-center justify-center gap-2"
+          >
+            <i className="fas fa-warehouse"></i>
+            直接保存到柜子中，暂不保养
+          </button>
+          <p className="text-[10px] text-slate-400 text-center italic leading-relaxed">
+            * 此按钮点击后待保养任务已生成，可随时进行保养
+          </p>
         </div>
       );
       case 3: return (
@@ -169,13 +210,44 @@ const TransferFlow: React.FC<TransferFlowProps> = ({ onBack }) => {
                <i className="fas fa-warehouse text-blue-400"></i>
                <h3 className="font-bold">最终步骤：扫模具柜码</h3>
              </div>
-             <p className="text-xs text-slate-400">请对准模具柜存放位二维码进行扫描</p>
-             <input type="text" placeholder="扫描位置码 (A1-02)" className="w-full bg-slate-800 rounded-xl p-4 text-center" />
+             <p className="text-xs text-slate-400">请对准存放该模具的模具柜位二维码进行扫描</p>
+             <input 
+               type="text" 
+               value={cabinetCode}
+               onChange={(e) => setCabinetCode(e.target.value)}
+               onKeyDown={(e) => e.key === 'Enter' && handleScanCabinet((e.target as HTMLInputElement).value)}
+               placeholder="扫描位置码 (A1-02)" 
+               className="w-full bg-slate-800 rounded-xl p-4 text-center text-blue-400 font-mono" 
+             />
+             {cabinetError && (
+               <p className="text-xs text-red-400 font-bold text-center">{cabinetError}</p>
+             )}
           </div>
-          <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl text-blue-700 text-xs text-center font-bold">
-            动作：模具和模具柜位置绑定成功
-          </div>
-          <button onClick={() => { alert("拆下流程已完结！"); onBack(); }} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg">完成流程</button>
+          {cabinetVerified ? (
+            <>
+              <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl text-blue-700 text-xs text-center font-bold space-y-1">
+                <p>模具 {selectedMold?.id} 已存入柜位：{cabinetCode}</p>
+                <p>动作：模具和模具柜位置绑定成功</p>
+              </div>
+              <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl text-amber-700 text-xs">
+                <i className="fas fa-info-circle mr-2"></i>
+                本次选择暂不保养，保养任务保留待后续执行。
+              </div>
+              <button 
+                onClick={handleSaveToCabinet} 
+                className="w-full bg-green-600 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95"
+              >
+                确认入柜并完成
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={() => handleScanCabinet('A1-02')} 
+              className="text-blue-600 font-bold text-sm underline block mx-auto"
+            >
+              模拟扫码 A1-02
+            </button>
+          )}
         </div>
       );
       default: return null;
