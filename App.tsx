@@ -4,6 +4,7 @@ import { AuthService } from './services/authService';
 import LoginPage from './pages/auth/LoginPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import AppLayout from './pages/app/AppLayout';
+import { MessageContainer } from './components/Message';
 
 const App: React.FC = () => {
   const [view, setView] = useState<'APP' | 'ADMIN'>('ADMIN');
@@ -109,6 +110,9 @@ const App: React.FC = () => {
       ) : (
         <AdminLayout userRole={userData.role} onLogout={handleLogout} />
       )}
+
+      {/* 全局信息提示容器 */}
+      <MessageContainer />
     </div>
   );
 };
