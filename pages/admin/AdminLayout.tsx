@@ -32,6 +32,9 @@ interface AdminLayoutProps {
   onLogout?: () => void;
 }
 
+/** 超级管理员角色代码：仅该角色可访问角色权限管理 */
+const SUPER_ADMIN_ROLE_CODE = 'SUPER_ADMIN';
+
 const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
   const [activePage, setActivePage] = useState<'dashboard' | 'production_list' | 'shot_monitor' | 'molds_big' | 'molds_small' | 'molds_audit' | 'spares_big' | 'spares_small' | 'prediction' | 'binding' | 'binding_machine' | 'maintenance_confirm' | 'repair_confirm' | 'maintenance_logs' | 'repair_logs' | 'tooling_screen' | 'machine_screen' | 'role_manage' | 'user_manage' | 'maintenance_option_manage' | 'repair_option_manage' | 'machine_slot_config' | 'machine_base_list' | 'machine_status_history' | 'product_type_manage' | 'maintenance_reminder_cycle'>('machine_screen');
 
@@ -113,6 +116,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
     });
   }
 
+  // 角色权限管理仅超级管理员可见
+  if (userRole !== SUPER_ADMIN_ROLE_CODE) {
+    visibleMenuItems = visibleMenuItems.filter(item => item.id !== 'role_manage');
+  }
+
   const getRoleLabel = (role: string) => {
     switch(role) {
       case 'ADMIN': return '系统管理员';
@@ -158,7 +166,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
       case 'machine_status_history': return <MachineStatusHistory />;
       case 'product_type_manage': return <ProductTypeManagement />;
       case 'maintenance_reminder_cycle': return <MaintenanceReminderCycle />;
-      case 'role_manage': return <RoleManagement />;
+      case 'role_manage': return userRole === SUPER_ADMIN_ROLE_CODE
+        ? <RoleManagement />
+        : (
+          <div className="flex flex-col justify-center items-center py-24">
+            <i className="fas fa-lock text-4xl text-slate-300 mb-4"></i>
+            <p className="text-slate-500 font-bold">无权限访问角色权限管理</p>
+            <p className="text-xs text-slate-400 mt-1">该页面仅超级管理员可访问</p>
+          </div>
+        );
       case 'user_manage': return <UserManagement />;
       default: return <div className="p-10 text-slate-400 italic">该模块正在开发中...</div>;
     }
