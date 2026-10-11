@@ -23,7 +23,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ userRole, onLogout }) => {
   const renderScreen = () => {
     switch(currentScreen) {
       case 'inquiry': return <MoldInquiry onBack={() => setCurrentScreen('main')} />;
-      case 'transfer': return <TransferFlow onBack={() => setCurrentScreen('main')} />;
+      case 'transfer': return <TransferFlow onBack={() => setCurrentScreen('main')} onGoMaintenance={() => setCurrentScreen('maintenance')} />;
       case 'maintenance': return <MaintenanceFlow onBack={() => setCurrentScreen('main')} />;
       case 'maintenance_scan': return <MaintenanceFlow onBack={() => setCurrentScreen('main')} initialStep="SCAN" />;
       case 'repair': return <RepairFlow onBack={() => setCurrentScreen('main')} />;

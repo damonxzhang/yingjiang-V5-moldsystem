@@ -116,6 +116,7 @@ export const MOCK_MOLDS: Mold[] = [
     substrateThickness: '0.3', pinCode: 'A',
     shortName: 'BGA-01', thickness: '250mm', moldCategory: '大材料模具', productType: 'BGA', department: '大材料',
     maintenanceCycle: '30天', maintenanceStartTime: '2026-01-01',
+    pendingDeactivate: true,
     components: generateComponents('#1/6-100597')
   },
   { 
