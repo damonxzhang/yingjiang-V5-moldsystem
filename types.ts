@@ -53,13 +53,17 @@ export interface RolePermission {
 
 export interface User {
   id: string;
-  username: string;
-  name: string;
-  role: Role;
-  department?: string;
+  username: string;          // 登录账号/员工工号（user_code）
+  name: string;              // 用户姓名（user_name）
+  cardNo?: string;           // 工卡号（card_no）
+  role: Role;                // 角色代码（role_code）
+  roleName?: string;         // 接口关联查询返回的角色名称（Roles.description）
+  departmentId?: number;     // 部门ID（department_id）
+  department?: string;       // 部门名称（department_name）
   avatar?: string;
   email?: string;
   lastLogin?: string;
+  createdAt?: string;        // 接口返回的创建时间（Users.created_at）
   status: 'active' | 'inactive';
 }
 

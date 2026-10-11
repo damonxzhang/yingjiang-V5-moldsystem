@@ -1,11 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Role } from '../../types';
-import { MOCK_USERS } from '../../services/mockData';
+import { message } from '../../components/Message';
+import {
+  fetchUserList,
+  fetchUserDetail,
+  fetchRoles,
+  fetchDepartments,
+  saveUser as createUserApi,
+  updateUser,
+  deleteUser as deleteUserApi,
+  UserListItem,
+  RoleOption,
+  DepartmentOption
+} from '../../services/userService';
+import Pagination from '../../components/Pagination';
+
+const ITEMS_PER_PAGE = 20;
+
+/** 将接口用户数据映射为页面使用的 User 结构 */
+const mapUserItem = (item: UserListItem): User => ({
+  id: String(item.user_id),
+  username: item.user_code,
+  name: item.user_name,
+  cardNo: item.card_no,
+  role: item.role_code as Role,
+  roleName: item.role_name,
+  departmentId: item.department_id,
+  department: item.department_name,
+  createdAt: item.created_at,
+  status: item.status === 'ACTIVE' ? 'active' : 'inactive'
+});
 
 const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  // 列表相关状态
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+
+  // 角色/部门下拉数据
+  const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+
+  // 弹窗相关状态
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const isLoadingRef = useRef(false);
+  const isFirstRender = useRef(true);
+
+  /** 调用 /api/admin/user/list 获取用户列表 */
+  const loadUsers = async (page: number = 1) => {
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetchUserList({
+        page,
+        page_size: ITEMS_PER_PAGE
+      });
+      setUsers(response.data.list.map(mapUserItem));
+      setTotalRecords(response.data.total);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '获取用户列表失败');
+      setUsers([]);
+      setTotalRecords(0);
+    } finally {
+      setLoading(false);
+      isLoadingRef.current = false;
+    }
+  };
+
+  /** 并行加载角色列表 (/api/admin/user/roles) 与部门列表 (/api/admin/user/departments) */
+  const loadRolesAndDepartments = async () => {
+    try {
+      const [roleRes, deptRes] = await Promise.all([
+        fetchRoles(),
+        fetchDepartments()
+      ]);
+      setRoles(roleRes.data);
+      setDepartments(deptRes.data);
+    } catch (err) {
+      // 下拉数据加载失败不阻塞用户列表展示
+      console.error('获取角色/部门列表失败:', err);
+    }
+  };
+
+  // 组件挂载时加载第一页用户列表及角色/部门下拉数据
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      loadUsers(1);
+      loadRolesAndDepartments();
+    }
+  }, []);
+
+  // 页码变化时重新加载数据
+  useEffect(() => {
+    if (!isFirstRender.current) {
+      loadUsers(currentPage);
+    }
+  }, [currentPage]);
 
   const getRoleLabel = (role: Role) => {
     switch(role) {
@@ -18,38 +120,124 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  /** 关闭弹窗并清理编辑态，避免下次打开残留旧数据 */
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingUser(null);
+    setDetailLoading(false);
+    setModalMode('add');
+  };
+
+  /** 新增用户：打开空白弹窗，部门默认取第一个 */
   const handleAddUser = () => {
+    setModalMode('add');
     setEditingUser({
-      id: `U-${Date.now()}`,
+      id: '',
       username: '',
       name: '',
+      cardNo: '',
       role: Role.Operator,
-      status: 'active',
-      department: ''
+      departmentId: departments[0]?.department_id,
+      department: departments[0]?.department_name,
+      status: 'active'
     });
     setIsModalOpen(true);
   };
 
-  const handleEditUser = (user: User) => {
+  /** 编辑用户：先打开弹窗（行数据兜底），再调用 /api/admin/user/detail 拉取详情回显 */
+  const handleEditUser = async (user: User) => {
+    setModalMode('edit');
     setEditingUser({ ...user });
     setIsModalOpen(true);
-  };
+    setDetailLoading(true);
 
-  const handleDeleteUser = (userId: string) => {
-    if (confirm('确定要删除该用户吗？')) {
-      setUsers(users.filter(u => u.id !== userId));
+    try {
+      const response = await fetchUserDetail(user.id);
+      setEditingUser(mapUserItem(response.data));
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '获取用户详情失败');
+      closeModal();
+    } finally {
+      setDetailLoading(false);
     }
   };
 
-  const saveUser = () => {
-    if (!editingUser) return;
-    const exists = users.find(u => u.id === editingUser.id);
-    if (exists) {
-      setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
-    } else {
-      setUsers([...users, editingUser]);
+  /** 删除用户：调用 /api/admin/user/delete，成功后刷新列表 */
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('确定要删除该用户吗？')) return;
+
+    try {
+      const response = await deleteUserApi({ user_id: userId });
+      message.success(response.message || '删除用户成功');
+      // 当前页只剩一条且不是第一页时，删除后自动回退一页
+      if (users.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      } else {
+        loadUsers(currentPage);
+      }
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '删除用户失败');
     }
-    setIsModalOpen(false);
+  };
+
+  /** 保存用户：编辑调用 /api/admin/user/update，新增调用 /api/admin/user/save，成功后刷新列表 */
+  const handleSaveUser = async () => {
+    if (!editingUser || saving) return;
+
+    // 必填项校验
+    if (!editingUser.name.trim()) {
+      message.warning('请输入姓名');
+      return;
+    }
+    if (!editingUser.username.trim()) {
+      message.warning('请输入登录账号');
+      return;
+    }
+    if (!editingUser.cardNo?.trim()) {
+      message.warning('请输入工卡号');
+      return;
+    }
+    if (!editingUser.role) {
+      message.warning('请选择系统角色');
+      return;
+    }
+    if (!editingUser.departmentId) {
+      message.warning('请选择所属部门');
+      return;
+    }
+
+    const baseParams = {
+      user_code: editingUser.username.trim(),    // 员工工号（唯一）
+      user_name: editingUser.name.trim(),        // 用户姓名
+      card_no: editingUser.cardNo.trim(),        // 工卡号
+      role_code: editingUser.role as string,     // 角色代码
+      department_id: editingUser.departmentId,   // 部门ID
+      status: editingUser.status === 'active' ? 'ACTIVE' : 'DISABLED' // 启用/禁用
+    };
+
+    setSaving(true);
+    try {
+      if (modalMode === 'edit') {
+        const response = await updateUser({
+          user_id: editingUser.id,
+          ...baseParams
+        });
+        message.success(response.message || '更新用户成功');
+        closeModal();
+        loadUsers(currentPage);
+      } else {
+        const response = await createUserApi(baseParams);
+        message.success(response.message || '新增用户成功');
+        closeModal();
+        // 新增后回到第一页并刷新
+        setCurrentPage(1);
+        loadUsers(1);
+      }
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '保存失败');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -68,6 +256,30 @@ const UserManagement: React.FC = () => {
         </button>
       </div>
 
+      {loading && (
+        <div className="flex justify-center items-center py-12 bg-white rounded-2xl border border-slate-200">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <span className="ml-3 text-slate-500">加载中...</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-2xl">
+          <i className="fas fa-exclamation-circle mr-2"></i>
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && users.length === 0 && (
+        <div className="flex justify-center items-center py-12 bg-white rounded-2xl border border-slate-200">
+          <div className="text-center">
+            <i className="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+            <p className="text-slate-500">暂无用户数据</p>
+          </div>
+        </div>
+      )}
+
+      {!loading && users.length > 0 && (
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-slate-50 border-b border-slate-100">
@@ -75,7 +287,7 @@ const UserManagement: React.FC = () => {
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">用户信息</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">所属角色</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">部门</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">最后登录</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">创建时间</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">状态</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
             </tr>
@@ -102,14 +314,14 @@ const UserManagement: React.FC = () => {
                     user.role === Role.ShiftLeader ? 'bg-purple-100 text-purple-700 border border-purple-200' :
                     'bg-slate-100 text-slate-600 border border-slate-200'
                   }`}>
-                    {getRoleLabel(user.role)}
+                    {user.roleName || getRoleLabel(user.role)}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <span className="text-sm text-slate-600 font-medium">{user.department || '-'}</span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-xs text-slate-500 font-mono">{user.lastLogin || '从未登录'}</span>
+                  <span className="text-xs text-slate-500 font-mono">{user.createdAt || '-'}</span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-1.5">
@@ -124,6 +336,7 @@ const UserManagement: React.FC = () => {
                     <button 
                       onClick={() => handleEditUser(user)}
                       className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                      title="编辑用户"
                     >
                       <i className="fas fa-user-edit"></i>
                     </button>
@@ -141,28 +354,45 @@ const UserManagement: React.FC = () => {
           </tbody>
         </table>
       </div>
+      )}
 
-      {/* 编辑用户弹窗 */}
+      {/* 分页控件 */}
+      <Pagination
+        totalRecords={totalRecords}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+      />
+
+      {/* 新增/编辑用户弹窗 */}
       {isModalOpen && editingUser && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
               <h3 className="text-xl font-bold text-slate-800">
-                {users.find(u => u.id === editingUser.id) ? '编辑用户信息' : '新增系统用户'}
+                {modalMode === 'edit' ? '编辑用户信息' : '新增系统用户'}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={closeModal} className="text-slate-400 hover:text-slate-600">
                 <i className="fas fa-times text-xl"></i>
               </button>
             </div>
             
-            <div className="p-8 space-y-5">
+            <div className="relative p-8 space-y-5">
+              {/* 详情加载中提示 */}
+              {detailLoading && (
+                <div className="absolute inset-0 bg-white/70 z-10 flex flex-col justify-center items-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                  <span className="mt-3 text-sm text-slate-500">用户详情加载中...</span>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-2">姓名</label>
                   <input 
                     type="text" 
                     placeholder="例如: 张三"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                    disabled={detailLoading}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-60"
                     value={editingUser.name}
                     onChange={e => setEditingUser({...editingUser, name: e.target.value})}
                   />
@@ -171,8 +401,9 @@ const UserManagement: React.FC = () => {
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-2">登录账号</label>
                   <input 
                     type="text" 
-                    placeholder="例如: zhangsan_01"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                    placeholder="例如: E001"
+                    disabled={detailLoading}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-60"
                     value={editingUser.username}
                     onChange={e => setEditingUser({...editingUser, username: e.target.value})}
                   />
@@ -181,38 +412,72 @@ const UserManagement: React.FC = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">工卡号</label>
+                  <input 
+                    type="text" 
+                    placeholder="例如: CARD001"
+                    disabled={detailLoading}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-60"
+                    value={editingUser.cardNo || ''}
+                    onChange={e => setEditingUser({...editingUser, cardNo: e.target.value})}
+                  />
+                </div>
+                <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-2">系统角色</label>
                   <select 
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none disabled:opacity-60"
+                    disabled={detailLoading}
                     value={editingUser.role}
                     onChange={e => setEditingUser({...editingUser, role: e.target.value as Role})}
                   >
-                    {Object.values(Role).map(role => (
-                      <option key={role} value={role}>{getRoleLabel(role)}</option>
-                    ))}
+                    {roles.length > 0
+                      ? roles.map(role => (
+                          <option key={role.role_code} value={role.role_code}>{role.description}</option>
+                        ))
+                      : Object.values(Role).map(role => (
+                          <option key={role} value={role}>{getRoleLabel(role)}</option>
+                        ))
+                    }
                   </select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-2">所属部门</label>
-                  <input 
-                    type="text" 
-                    placeholder="例如: 生产部"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                    value={editingUser.department || ''}
-                    onChange={e => setEditingUser({...editingUser, department: e.target.value})}
-                  />
+                  <select
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none disabled:opacity-60"
+                    disabled={detailLoading}
+                    value={editingUser.departmentId ?? ''}
+                    onChange={e => {
+                      const deptId = Number(e.target.value);
+                      const dept = departments.find(d => d.department_id === deptId);
+                      setEditingUser({
+                        ...editingUser,
+                        departmentId: deptId,
+                        department: dept?.department_name
+                      });
+                    }}
+                  >
+                    <option value="" disabled>请选择部门</option>
+                    {departments.map(dept => (
+                      <option key={dept.department_id} value={dept.department_id}>
+                        {dept.department_name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2">账号状态</label>
                 <div className="flex gap-4">
-                  <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all cursor-pointer ${editingUser.status === 'active' ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
+                  <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all cursor-pointer ${editingUser.status === 'active' ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 bg-slate-50 text-slate-400'} ${detailLoading ? 'pointer-events-none opacity-60' : ''}`}>
                     <input type="radio" className="hidden" checked={editingUser.status === 'active'} onChange={() => setEditingUser({...editingUser, status: 'active'})} />
                     <i className="fas fa-check-circle text-xs"></i>
                     <span className="text-xs font-bold uppercase tracking-wide">启用</span>
                   </label>
-                  <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all cursor-pointer ${editingUser.status === 'inactive' ? 'border-red-600 bg-red-50 text-red-600' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
+                  <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all cursor-pointer ${editingUser.status === 'inactive' ? 'border-red-600 bg-red-50 text-red-600' : 'border-slate-100 bg-slate-50 text-slate-400'} ${detailLoading ? 'pointer-events-none opacity-60' : ''}`}>
                     <input type="radio" className="hidden" checked={editingUser.status === 'inactive'} onChange={() => setEditingUser({...editingUser, status: 'inactive'})} />
                     <i className="fas fa-ban text-xs"></i>
                     <span className="text-xs font-bold uppercase tracking-wide">禁用</span>
@@ -222,14 +487,21 @@ const UserManagement: React.FC = () => {
             </div>
 
             <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-white transition-all">
+              <button
+                onClick={closeModal}
+                disabled={saving}
+                className="px-6 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-white transition-all disabled:opacity-50"
+              >
                 取消
               </button>
               <button 
-                onClick={saveUser}
-                className="px-8 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
+                onClick={handleSaveUser}
+                disabled={detailLoading || saving}
+                className="px-8 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {users.find(u => u.id === editingUser.id) ? '保存修改' : '确认新增'}
+                {saving
+                  ? '保存中...'
+                  : modalMode === 'edit' ? '保存修改' : '确认新增'}
               </button>
             </div>
           </div>
