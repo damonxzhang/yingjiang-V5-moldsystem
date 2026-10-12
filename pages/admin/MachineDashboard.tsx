@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DashboardService, DashboardStatusResponse, CreateMaintenanceTaskRequest, CreateRepairTaskRequest, DisableMoldRequest, EnableMoldRequest, MoldActionRequest, MachineDetailResponse, InventoryMold, InventoryResponse, fetchInventoryMolds, installMold, MachineTodo, ToggleMachineStatusRequest, MmsConfirmItem } from '../../services/dashboardService';
 import { AuthService } from '../../services/authService';
+import { message } from '../../components/Message';
 
 interface MachineDashboardProps {
   onSwitchView?: (view: 'tooling' | 'machine') => void;
@@ -107,6 +108,30 @@ const DateTimeDropdownPicker: React.FC<{
   const days = getDays();
   const hours = getHours();
   const minutes = getMinutes();
+
+  // 当年/月/日/时变化导致可选范围变化时（如跨年切换），把越界的选中值钳位到最近的有效值，
+  // 确保下拉框显示与选中值始终一致，显示文本随下拉选择同步更新
+  useEffect(() => {
+    if (months.length > 0 && !months.includes(month)) {
+      // 月越界：钳位到最近的有效月份
+      setMonth(month < months[0] ? months[0] : months[months.length - 1]);
+      return;
+    }
+    if (days.length > 0 && !days.includes(day)) {
+      // 日越界：钳位到最近的有效日期
+      setDay(day < days[0] ? days[0] : days[days.length - 1]);
+      return;
+    }
+    if (hours.length > 0 && !hours.includes(hour)) {
+      // 时越界：钳位到最近的有效小时
+      setHour(hour < hours[0] ? hours[0] : hours[hours.length - 1]);
+      return;
+    }
+    if (minutes.length > 0 && !minutes.includes(minute)) {
+      // 分越界：钳位到最近的有效分钟
+      setMinute(minute < minutes[0] ? minutes[0] : minutes[minutes.length - 1]);
+    }
+  }, [year, month, day, hour, minute, minDate, maxDate]);
 
   const truncateToMinute = (date: Date) => {
     const d = new Date(date);
@@ -610,7 +635,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
   const handleMachineClick = async (machine: any, defaultSlot?: string) => {
     const validMoldEntries = Object.entries(machine.molds || {}).filter(([_, mold]) => mold != null);
     if (!machine || !machine.machine_code || validMoldEntries.length === 0) {
-      alert(`设备 ${machine?.machine_code || '未知'} 当前无模具生产数据，无法查看详情`);
+      message.warning(`设备 ${machine?.machine_code || '未知'} 当前无模具生产数据，无法查看详情`);
       return;
     }
     setSelectedMachine(machine);
@@ -635,7 +660,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       setMachineDetail(detail);
     } catch (error: any) {
       console.error('获取机台详情失败:', error);
-      alert('获取机台详情失败: ' + (error.message || '未知错误'));
+      message.error('获取机台详情失败: ' + (error.message || '未知错误'));
     } finally {
       setIsLoadingMachineDetail(false);
     }
@@ -664,7 +689,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         } : detail);
       } catch (error: any) {
         console.error('获取机台详情失败:', error);
-        alert('获取机台详情失败: ' + (error.message || '未知错误'));
+        message.error('获取机台详情失败: ' + (error.message || '未知错误'));
       } finally {
         setIsLoadingMachineDetail(false);
       }
@@ -731,7 +756,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
         await handleSlotChange(selectedMoldPos);
         // 刷新看板数据
         await refreshDashboardData();
-        alert(machineStatusAction === 'NORMAL' ? '设备启用成功' : '设备停用成功');
+        message.success(machineStatusAction === 'NORMAL' ? '设备启用成功' : '设备停用成功');
       } else {
         setMachineStatusError(response.message || '操作失败');
       }
@@ -1068,7 +1093,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       setInventoryData(data);
     } catch (error: any) {
       console.error('获取库存模具清单失败:', error);
-      alert('获取库存模具清单失败: ' + (error.message || '未知错误'));
+      message.error('获取库存模具清单失败: ' + (error.message || '未知错误'));
     } finally {
       setIsFetchingInventory(false);
     }
@@ -1092,7 +1117,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
       setRefreshTrigger(prev => prev + 1);
     } catch (error: any) {
       console.error('模具安装失败:', error);
-      alert('模具安装失败: ' + (error.message || '未知错误'));
+      message.error('模具安装失败: ' + (error.message || '未知错误'));
     } finally {
       setIsInstallingMold(false);
     }
@@ -2890,7 +2915,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                         machine_id: machineId
                       });
 
-                      alert('保存成功');
+                      message.success('保存成功');
                       toggleTaskComplete(mmsConfirmDetail?.machine_code || '', String(mmsId), confirmTodoItem.type);
                       setShowMaintenanceConfirmModal(false);
                       setConfirmTodoItem(null);
@@ -2914,7 +2939,7 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
                       }
                     } catch (error: any) {
                       console.error('保存保养任务失败:', error);
-                      alert('保存失败: ' + (error.message || '未知错误'));
+                      message.error('保存失败: ' + (error.message || '未知错误'));
                     } finally {
                       setIsSavingMmsTask(false);
                     }
