@@ -68,12 +68,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         setError(response.message || '登录失败，请重试');
       }
     } catch (err: any) {
-      // 处理错误
-      if (err.code === 401) {
-        setError(err.message || '用户名或密码错误');
-        // 清空密码输入框
-        setPassword('');
+      // 接口返回了错误响应时，优先展示接口返回的提示语
+      if (err?.message) {
+        setError(err.message);
+        // 401 用户名或密码错误时清空密码输入框
+        if (err.code === 401) {
+          setPassword('');
+        }
       } else {
+        // 无接口响应（真正的网络故障）时提示网络错误
         setError('网络连接失败，请检查网络后重试');
       }
     } finally {
