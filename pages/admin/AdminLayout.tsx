@@ -53,6 +53,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
     return authData?.department;
   }, []);
 
+  // 获取当前登录用户名
+  const userName = React.useMemo(() => {
+    const authData = AuthService.getStoredAuth();
+    return authData?.user_name || '未登录';
+  }, []);
+
   // 处理登出
   const handleLogout = () => {
     if (window.confirm('确定要退出系统吗？')) {
@@ -222,8 +228,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ userRole, onLogout }) => {
               {userRole.slice(0, 2)}
             </div>
             <div className="text-xs">
-              <p className="text-white font-bold">{getRoleLabel(userRole)}</p>
-              <p className="text-slate-500">登录用户</p>
+              <p className="text-white font-bold">{userName}</p>
+              <p className="text-slate-500">{getRoleLabel(userRole)}</p>
             </div>
           </div>
           <button onClick={handleLogout} className="mt-4 w-full text-left text-xs text-slate-500 hover:text-white flex items-center gap-2">
