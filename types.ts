@@ -56,8 +56,9 @@ export interface User {
   username: string;          // 登录账号/员工工号（user_code）
   name: string;              // 用户姓名（user_name）
   cardNo?: string;           // 工卡号（card_no）
-  role: Role;                // 角色代码（role_code）
-  roleName?: string;         // 接口关联查询返回的角色名称（Roles.description）
+  role: Role;                // 主角色代码（role_code 数组的第一个，兼容旧逻辑）
+  roles?: string[];          // 角色代码数组（role_code，JSON数组格式，支持多角色）
+  roleName?: string;         // 所有角色名称字符串，逗号分隔（role_names，关联查询 Roles.description）
   departmentId?: number;     // 部门ID（department_id）
   department?: string;       // 部门名称（department_name）
   avatar?: string;

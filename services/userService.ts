@@ -7,8 +7,8 @@ export interface UserListItem {
   user_code: string;          // 登录账号/员工工号 (Users.user_code)
   user_name: string;          // 用户姓名 (Users.user_name)
   card_no: string;            // 工卡号 (Users.card_no)
-  role_code: string;          // 角色代码 (Users.role_code，关联键)
-  role_name: string;          // 角色名称 (Roles.description，关联查询)
+  role_code: string[];        // 角色代码数组 (Users.role_code，JSON数组格式，支持多角色)
+  role_name: string;          // 所有角色名称字符串，逗号分隔 (关联查询 Roles.description)
   department_id: number;      // 部门ID (Users.department_id，关联键)
   department_name: string;    // 部门名称 (Departments.department_name，关联查询)
   status: string;             // 状态 ACTIVE启用 / DISABLED禁用 (Users.status)
@@ -20,7 +20,7 @@ export interface FetchUserListParams {
   page?: number;              // 当前页码，从1开始，默认1
   page_size?: number;         // 每页条数，默认20
   keyword?: string;           // 搜索关键词（匹配 user_code / user_name），可选
-  role_code?: string;         // 角色代码精确筛选，可选
+  role_code?: string;         // 角色代码筛选（JSON_CONTAINS 匹配包含该角色的用户），可选
   department_id?: number | string; // 部门ID精确筛选，可选
   status?: string;            // 状态筛选 ACTIVE / DISABLED，可选
 }
@@ -75,7 +75,7 @@ export interface SaveUserParams {
   user_code: string;          // 必填, 员工工号 (唯一)
   user_name: string;          // 必填, 用户姓名
   card_no: string;            // 必填, 工卡号
-  role_code: string;          // 必填, 角色代码，默认 OPERATOR
+  role_code: string[];        // 必填, 角色代码数组 (支持多选, 默认 ["OPERATOR"])
   department_id: number;      // 必填, 部门ID
   status: string;             // 必填, 状态 ACTIVE / DISABLED
 }
@@ -151,7 +151,7 @@ export async function fetchUserList(
     page: params.page || 1,                  // 当前页码，从1开始
     page_size: params.page_size || 20,       // 每页条数，固定为20
     keyword: params.keyword || '',           // 搜索关键词，可选
-    role_code: params.role_code || '',       // 角色代码精确筛选，可选
+    role_code: params.role_code || '',       // 角色代码筛选（JSON_CONTAINS 匹配），可选
     department_id: params.department_id || '', // 部门ID精确筛选，可选
     status: params.status || ''              // 状态筛选 ACTIVE / DISABLED，可选
   });
@@ -196,7 +196,7 @@ export async function saveUser(
     user_code: params.user_code,             // 必填, 员工工号 (唯一)
     user_name: params.user_name,             // 必填, 用户姓名
     card_no: params.card_no,                 // 必填, 工卡号
-    role_code: params.role_code,             // 必填, 角色代码
+    role_code: params.role_code,             // 必填, 角色代码数组（支持多选）
     department_id: params.department_id,     // 必填, 部门ID
     status: params.status                    // 必填, 状态 ACTIVE / DISABLED
   });
@@ -214,7 +214,7 @@ export async function updateUser(
     user_code: params.user_code,             // 用户工号（修改时做唯一校验）
     user_name: params.user_name,             // 用户姓名
     card_no: params.card_no,                 // 工卡号
-    role_code: params.role_code,             // 角色代码
+    role_code: params.role_code,             // 角色代码数组（支持多选）
     department_id: params.department_id,     // 部门ID
     status: params.status                    // 状态 ACTIVE / DISABLED
   });

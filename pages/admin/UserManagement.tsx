@@ -23,8 +23,9 @@ const mapUserItem = (item: UserListItem): User => ({
   username: item.user_code,
   name: item.user_name,
   cardNo: item.card_no,
-  role: item.role_code as Role,
-  roleName: item.role_name,
+  role: (item.role_code?.[0] || '') as Role,   // 主角色取角色数组第一个（兼容旧逻辑）
+  roles: item.role_code || [],                 // 角色代码数组（多角色）
+  roleName: item.role_name,                    // 所有角色名称，逗号分隔
   departmentId: item.department_id,
   department: item.department_name,
   createdAt: item.created_at,
@@ -50,8 +51,23 @@ const UserManagement: React.FC = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // 角色多选下拉展开状态
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
+
   const isLoadingRef = useRef(false);
   const isFirstRender = useRef(true);
+
+  // 点击角色下拉框外部时收起下拉
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(e.target as Node)) {
+        setRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   /** 调用 /api/admin/user/list 获取用户列表 */
   const loadUsers = async (page: number = 1) => {
@@ -126,9 +142,10 @@ const UserManagement: React.FC = () => {
     setEditingUser(null);
     setDetailLoading(false);
     setModalMode('add');
+    setRoleDropdownOpen(false);
   };
 
-  /** 新增用户：打开空白弹窗，部门默认取第一个 */
+  /** 新增用户：打开空白弹窗，部门默认取第一个，角色默认 OPERATOR */
   const handleAddUser = () => {
     setModalMode('add');
     setEditingUser({
@@ -137,11 +154,22 @@ const UserManagement: React.FC = () => {
       name: '',
       cardNo: '',
       role: Role.Operator,
+      roles: [Role.Operator],
       departmentId: departments[0]?.department_id,
       department: departments[0]?.department_name,
       status: 'active'
     });
     setIsModalOpen(true);
+  };
+
+  /** 切换角色选中状态（多选），主角色同步为数组第一个 */
+  const toggleRole = (roleCode: string) => {
+    if (!editingUser) return;
+    const current = editingUser.roles || [];
+    const next = current.includes(roleCode)
+      ? current.filter(r => r !== roleCode)
+      : [...current, roleCode];
+    setEditingUser({ ...editingUser, roles: next, role: (next[0] || '') as Role });
   };
 
   /** 编辑用户：先打开弹窗（行数据兜底），再调用 /api/admin/user/detail 拉取详情回显 */
@@ -197,8 +225,8 @@ const UserManagement: React.FC = () => {
       message.warning('请输入工卡号');
       return;
     }
-    if (!editingUser.role) {
-      message.warning('请选择系统角色');
+    if (!editingUser.roles || editingUser.roles.length === 0) {
+      message.warning('请选择系统角色（至少一个）');
       return;
     }
     if (!editingUser.departmentId) {
@@ -210,7 +238,7 @@ const UserManagement: React.FC = () => {
       user_code: editingUser.username.trim(),    // 员工工号（唯一）
       user_name: editingUser.name.trim(),        // 用户姓名
       card_no: editingUser.cardNo.trim(),        // 工卡号
-      role_code: editingUser.role as string,     // 角色代码
+      role_code: editingUser.roles,          // 角色代码数组（支持多选）
       department_id: editingUser.departmentId,   // 部门ID
       status: editingUser.status === 'active' ? 'ACTIVE' : 'DISABLED' // 启用/禁用
     };
@@ -308,13 +336,13 @@ const UserManagement: React.FC = () => {
                 </td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${
-                    user.role === Role.Admin ? 'bg-amber-100 text-amber-700 border border-amber-200' : 
+                    user.role === Role.Admin ? 'bg-amber-100 text-amber-700 border border-amber-200' :
                     user.role === Role.MoldEngineerBig ? 'bg-blue-100 text-blue-700 border border-blue-200' :
                     user.role === Role.MoldEngineerSmall ? 'bg-cyan-100 text-cyan-700 border border-cyan-200' :
                     user.role === Role.ShiftLeader ? 'bg-purple-100 text-purple-700 border border-purple-200' :
                     'bg-slate-100 text-slate-600 border border-slate-200'
                   }`}>
-                    {user.roleName || getRoleLabel(user.role)}
+                    {user.roleName || '-'}
                   </span>
                 </td>
                 <td className="px-6 py-4">
@@ -423,22 +451,50 @@ const UserManagement: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">系统角色</label>
-                  <select 
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none disabled:opacity-60"
-                    disabled={detailLoading}
-                    value={editingUser.role}
-                    onChange={e => setEditingUser({...editingUser, role: e.target.value as Role})}
-                  >
-                    {roles.length > 0
-                      ? roles.map(role => (
-                          <option key={role.role_code} value={role.role_code}>{role.description}</option>
-                        ))
-                      : Object.values(Role).map(role => (
-                          <option key={role} value={role}>{getRoleLabel(role)}</option>
-                        ))
-                    }
-                  </select>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">系统角色（可多选）</label>
+                  <div className="relative" ref={roleDropdownRef}>
+                    {/* 多选下拉触发框：显示已选角色名称 */}
+                    <button
+                      type="button"
+                      disabled={detailLoading}
+                      onClick={() => setRoleDropdownOpen(open => !open)}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-60 flex items-center justify-between gap-2"
+                    >
+                      <span className={`truncate ${editingUser.roles && editingUser.roles.length > 0 ? 'text-slate-800' : 'text-slate-400'}`}>
+                        {editingUser.roles && editingUser.roles.length > 0
+                          ? (roles.length > 0
+                              ? roles.filter(r => editingUser.roles!.includes(r.role_code)).map(r => r.description).join('、')
+                              : editingUser.roles.map(r => getRoleLabel(r as Role)).join('、'))
+                          : '请选择角色'}
+                      </span>
+                      <i className={`fas fa-chevron-${roleDropdownOpen ? 'up' : 'down'} text-xs text-slate-400 shrink-0`}></i>
+                    </button>
+                    {/* 多选下拉面板：checkbox 列表 */}
+                    {roleDropdownOpen && (
+                      <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                        {(roles.length > 0
+                          ? roles.map(r => ({ code: r.role_code, label: r.description }))
+                          : Object.values(Role).map(r => ({ code: r as string, label: getRoleLabel(r) }))
+                        ).map(option => {
+                          const checked = editingUser.roles?.includes(option.code) || false;
+                          return (
+                            <label
+                              key={option.code}
+                              className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors ${checked ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                            >
+                              <input
+                                type="checkbox"
+                                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                checked={checked}
+                                onChange={() => toggleRole(option.code)}
+                              />
+                              <span className="text-sm font-medium">{option.label}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
