@@ -107,6 +107,7 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
   const [scrapPendingIds, setScrapPendingIds] = useState<string[]>([]);   // 已提交申请、等待审批
   const [scrapApprovedIds, setScrapApprovedIds] = useState<string[]>([]); // 领导已审批，待提交报废信息
   const [scrapReason, setScrapReason] = useState('');
+  const [scrapExpectedDate, setScrapExpectedDate] = useState('');
   const [scrapNote, setScrapNote] = useState('');
   
   const filteredMolds = MOCK_MOLDS.filter(m => 
@@ -131,6 +132,7 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
     setOpCabinet('');
     setOpSubmitted(false);
     setScrapReason('');
+    setScrapExpectedDate('');
     setScrapNote('');
     // 报废：按当前审批状态决定进入哪个阶段（等待审批 / 直接填写报废信息）
     if (type === 'scrap') {
@@ -152,6 +154,7 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
     setOpSubmitted(false);
     setScrapStage('scan');
     setScrapReason('');
+    setScrapExpectedDate('');
     setScrapNote('');
     if (redirectTimerRef.current) {
       window.clearTimeout(redirectTimerRef.current);
@@ -198,14 +201,14 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
     redirectTimerRef.current = window.setTimeout(() => onBack(), 1800);
   };
 
-  // 报废：扫码核对后提交申请（发送审批信件给领导）
+  // 报废：扫码核对并填写报废描述、预计报废时间后提交申请（模拟发送审批邮件给领导）
   const handleScrapApply = () => {
-    if (!activeOpMold || !scanVerified) return;
+    if (!activeOpMold || !scanVerified || !scrapReason.trim() || !scrapExpectedDate) return;
     setScrapPendingIds(prev => [...prev, activeOpMold.id]);
     setScrapStage('waiting');
   };
 
-  // 报废：领导审批通过（演示入口），等待页自动跳转到报废信息填写
+  // 报废：领导审批通过（演示入口），等待页自动跳转到报废信息确认
   const handleSimulateApprove = () => {
     if (!activeOpMold) return;
     setScrapPendingIds(prev => prev.filter(x => x !== activeOpMold.id));
@@ -214,6 +217,16 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
     setScanError('');
     setScanVerified(false);
     setScrapStage('info');
+  };
+
+  // 报废：领导驳回（演示入口），回到扫码页重新提交
+  const handleScrapReject = () => {
+    if (!activeOpMold) return;
+    setScrapPendingIds(prev => prev.filter(x => x !== activeOpMold.id));
+    setScanValue('');
+    setScanError('报废申请已被驳回，请核对信息后重新提交');
+    setScanVerified(false);
+    setScrapStage('scan');
   };
 
   // 报废：再次扫码后提交报废信息，成功后跳回 APP 首页
@@ -392,10 +405,40 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
                         <i className="fas fa-check-circle text-green-500"></i>
                         <p className="text-sm font-black text-slate-800">模具编号核对一致</p>
                       </div>
-                      <p className="text-xs text-slate-500 leading-relaxed">提交后将向部门领导发送报废审批信件，审批通过后方可填写报废信息。</p>
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">报废描述 *</label>
+                        <textarea
+                          rows={3}
+                          value={scrapReason}
+                          onChange={(e) => setScrapReason(e.target.value)}
+                          placeholder="请填写模具报废的具体原因（如：寿命到期、型腔损伤、产品换代等）"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-red-500 transition-all resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">预计报废时间 *</label>
+                        <input
+                          type="date"
+                          value={scrapExpectedDate}
+                          onChange={(e) => setScrapExpectedDate(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-red-500 transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">备注（选填）</label>
+                        <input
+                          type="text"
+                          value={scrapNote}
+                          onChange={(e) => setScrapNote(e.target.value)}
+                          placeholder="其他需要说明的信息"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-red-500 transition-all"
+                        />
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed">提交后将向部门领导推送报废审批邮件，审批通过后方可进行后续操作。</p>
                       <button
                         onClick={handleScrapApply}
-                        className={`w-full ${opMeta.confirmBtn}`}
+                        disabled={!scrapReason.trim() || !scrapExpectedDate}
+                        className={`w-full ${opMeta.confirmBtn} disabled:opacity-40 disabled:active:scale-100`}
                       >
                         {opMeta.confirmText}
                       </button>
@@ -425,17 +468,48 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
                     </div>
                     <i className="fas fa-hourglass-half text-amber-500 ml-auto"></i>
                   </div>
-                  <p className="text-slate-500 text-[10px] mt-4">审批通过后再次进入本页面，将直接跳转至报废信息填写</p>
+                  <p className="text-slate-500 text-[10px] mt-4">审批通过后再次进入本页面，将直接跳转至报废信息确认</p>
+
+                  {/* 模拟邮件推送预览：包含报废描述、预计报废时间与审批链接 */}
+                  <div className="mt-6 w-full bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden text-left">
+                    <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center gap-2">
+                      <i className="fas fa-envelope-open-text text-slate-400"></i>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">已推送审批邮件（模拟）</p>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      <div className="space-y-1">
+                        <p className="text-[11px] text-slate-500">收件人：王总（设备部经理）&lt;wangzong@company.com&gt;</p>
+                        <p className="text-xs font-black text-slate-800">【报废审批】模具 {activeOpMold.id} 报废申请</p>
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed">您好，以下模具已提交报废申请，请及时审批：</p>
+                      <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-1.5">
+                        <p className="text-xs text-slate-800"><span className="text-slate-400 font-black">模具编号：</span>{activeOpMold.id}</p>
+                        <p className="text-xs text-slate-800"><span className="text-slate-400 font-black">报废描述：</span>{scrapReason}</p>
+                        <p className="text-xs text-slate-800"><span className="text-slate-400 font-black">预计报废时间：</span>{scrapExpectedDate}</p>
+                        {scrapNote && <p className="text-xs text-slate-800"><span className="text-slate-400 font-black">备注：</span>{scrapNote}</p>}
+                      </div>
+                      <p className="text-xs text-slate-600">请点击以下链接处理本次申请：</p>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={handleSimulateApprove}
+                          className="flex-1 bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs font-black py-3 rounded-xl active:scale-95 transition-all"
+                        >
+                          同意报废
+                        </button>
+                        <button
+                          onClick={handleScrapReject}
+                          className="flex-1 bg-red-50 border border-red-200 text-red-600 text-xs font-black py-3 rounded-xl active:scale-95 transition-all"
+                        >
+                          驳回请求
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400 break-all">https://mold.company.com/scrap/approve?mold={activeOpMold.id} · https://mold.company.com/scrap/reject?mold={activeOpMold.id}</p>
+                    </div>
+                  </div>
 
                   <button
-                    onClick={handleSimulateApprove}
-                    className="mt-6 bg-amber-500 text-white font-black py-4 px-8 rounded-2xl text-[11px] uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-amber-500/30"
-                  >
-                    模拟领导审批通过（演示）
-                  </button>
-                  <button
                     onClick={closeOp}
-                    className="mt-3 bg-slate-800 text-white font-black py-4 px-8 rounded-2xl text-[11px] uppercase tracking-widest active:scale-95 transition-all"
+                    className="mt-6 bg-slate-800 text-white font-black py-4 px-8 rounded-2xl text-[11px] uppercase tracking-widest active:scale-95 transition-all"
                   >
                     返回列表
                   </button>
@@ -495,33 +569,19 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
                     )}
                   </div>
 
-                  {/* 第 2 步：填写报废信息 */}
+                  {/* 第 2 步：确认报废信息 */}
                   {scanVerified && (
                     <div className="bg-white rounded-3xl p-6 space-y-4 shadow-sm border border-slate-100">
                       <div className="flex items-center gap-2">
                         <span className="bg-red-600 text-white text-[9px] font-black px-2 py-1 rounded uppercase tracking-widest">第 2 步</span>
-                        <p className="text-sm font-black text-slate-800">填写报废信息</p>
+                        <p className="text-sm font-black text-slate-800">确认报废信息</p>
                       </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">报废原因 *</label>
-                        <textarea
-                          rows={3}
-                          value={scrapReason}
-                          onChange={(e) => setScrapReason(e.target.value)}
-                          placeholder="请填写模具报废的具体原因（如：寿命到期、型腔损伤、产品换代等）"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-red-500 transition-all resize-none"
-                        />
+                      <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2">
+                        <p className="text-xs text-slate-800"><span className="text-slate-400 font-black">报废描述：</span>{scrapReason}</p>
+                        <p className="text-xs text-slate-800"><span className="text-slate-400 font-black">预计报废时间：</span>{scrapExpectedDate}</p>
+                        {scrapNote && <p className="text-xs text-slate-800"><span className="text-slate-400 font-black">备注：</span>{scrapNote}</p>}
                       </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">备注（选填）</label>
-                        <input
-                          type="text"
-                          value={scrapNote}
-                          onChange={(e) => setScrapNote(e.target.value)}
-                          placeholder="其他需要说明的信息"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-red-500 transition-all"
-                        />
-                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed">以上信息为提交申请时填写的内容，确认无误后提交即完成报废。</p>
                       <button
                         onClick={handleScrapInfoSubmit}
                         disabled={!scrapReason.trim()}
