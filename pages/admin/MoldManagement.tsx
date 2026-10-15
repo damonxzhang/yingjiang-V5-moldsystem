@@ -101,6 +101,69 @@ interface MoldManagementProps {
 
 const ITEMS_PER_PAGE = 20;
 
+/**
+ * 模具报废申请记录（演示数据，预留接口接入：后续替换为后端报废申请记录查询接口）
+ */
+interface ScrapRecord {
+  applyNo: string;        // 申请编号
+  moldId: string;         // 模具编号
+  moldName: string;       // 模具名称
+  applicant: string;      // 申请人
+  applyTime: string;      // 申请时间
+  reason: string;         // 报废描述
+  expectedDate: string;   // 预计报废时间
+  note?: string;          // 备注
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'; // 审批状态
+  approver?: string;      // 审批人
+  approveTime?: string;   // 审批时间
+  rejectReason?: string;  // 驳回原因
+}
+
+const SCRAP_STATUS_META: Record<ScrapRecord['status'], { label: string; cls: string }> = {
+  PENDING: { label: '待审批', cls: 'bg-amber-50 text-amber-600 border-amber-200' },
+  APPROVED: { label: '已同意', cls: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
+  REJECTED: { label: '已驳回', cls: 'bg-red-50 text-red-600 border-red-200' }
+};
+
+const SCRAP_RECORDS: ScrapRecord[] = [
+  {
+    applyNo: 'SCRAP-20260920-001',
+    moldId: 'MD-2024-001',
+    moldName: 'BIG BGA 0.8/0.30 上模',
+    applicant: '张英江',
+    applyTime: '2026-09-20 10:32',
+    reason: '模具寿命到期（SHOT COUNT 已达上限），型腔出现多处磨损，产品尺寸超差，无法继续使用。',
+    expectedDate: '2026-10-01',
+    note: '需同步申请新模具采购',
+    status: 'APPROVED',
+    approver: '王总',
+    approveTime: '2026-09-21 09:15'
+  },
+  {
+    applyNo: 'SCRAP-20260928-002',
+    moldId: 'MD-2024-005',
+    moldName: 'QFN 8X8 下模',
+    applicant: '李明',
+    applyTime: '2026-09-28 14:05',
+    reason: '导柱导套严重变形，合模精度不达标，维修成本高于更换成本。',
+    expectedDate: '2026-10-15',
+    status: 'PENDING'
+  },
+  {
+    applyNo: 'SCRAP-20261010-003',
+    moldId: 'MD-2023-012',
+    moldName: 'FCCSP 0.35/0.56 上模',
+    applicant: '赵强',
+    applyTime: '2026-10-10 16:40',
+    reason: '产品换代，该模具对应封装产品已停产，模具长期闲置。',
+    expectedDate: '2026-11-01',
+    status: 'REJECTED',
+    approver: '王总',
+    approveTime: '2026-10-11 10:20',
+    rejectReason: '该模具部分镶件仍有备件价值，暂缓报废，转入备件库管理。'
+  }
+];
+
 const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode }) => {
   // console.log("department:",department);
   // console.log("isAuditMode:",isAuditMode);
@@ -126,6 +189,9 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
   const isFirstRender = useRef(true);
   const isLoadingRef = useRef(false);
   const hasFetchedProductTypes = useRef(false);
+  // 模具报废申请记录弹窗
+  const [isScrapRecordOpen, setIsScrapRecordOpen] = useState(false);
+  const [viewingScrapRecord, setViewingScrapRecord] = useState<ScrapRecord | null>(null);
 
   const loadProductTypes = async () => {
     if (hasFetchedProductTypes.current) return;
@@ -526,13 +592,19 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
           </select>
         </div>
         <div className="flex items-center gap-2">
-          <button 
+          <button
             onClick={() => {
               setCurrentPage(1);
-            }} 
+            }}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors"
           >
             查询
+          </button>
+          <button
+            onClick={() => { setIsScrapRecordOpen(true); setViewingScrapRecord(null); }}
+            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors"
+          >
+            <i className="fas fa-file-alt mr-1.5 text-slate-400"></i>模具报废申请记录
           </button>
         </div>
       </div>
@@ -791,6 +863,152 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
             <div className="px-8 py-5 bg-slate-50 border-t flex justify-end gap-3 shrink-0">
               <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 text-sm text-slate-500 font-bold hover:bg-slate-100 rounded-xl transition-colors">取消</button>
               <button onClick={handleSave} className="px-8 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-xl shadow-indigo-100 active:scale-95 transition-all">保存变更</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 模具报废申请记录弹窗 */}
+      {isScrapRecordOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-8 py-5 bg-slate-900 text-white flex justify-between items-center shrink-0">
+              <div>
+                <h3 className="font-bold text-lg">{viewingScrapRecord ? '报废申请详情' : '模具报废申请记录'}</h3>
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Scrap Application History</p>
+              </div>
+              <button onClick={() => { setIsScrapRecordOpen(false); setViewingScrapRecord(null); }} className="text-slate-400 hover:text-white transition-colors">
+                <i className="fas fa-times text-xl"></i>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {viewingScrapRecord ? (
+                /* 详情视图 */
+                <div className="space-y-4">
+                  <button
+                    onClick={() => setViewingScrapRecord(null)}
+                    className="text-sm text-indigo-600 font-bold hover:text-indigo-700 transition-colors flex items-center gap-1.5"
+                  >
+                    <i className="fas fa-arrow-left"></i>返回记录列表
+                  </button>
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5">
+                    <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <i className="fas fa-file-alt text-indigo-500"></i>
+                        <span className="font-black text-slate-800">{viewingScrapRecord.applyNo}</span>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full border text-xs font-black ${SCRAP_STATUS_META[viewingScrapRecord.status].cls}`}>
+                        {SCRAP_STATUS_META[viewingScrapRecord.status].label}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-5">
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">模具编号</label>
+                        <p className="text-sm font-bold text-slate-800 mt-1">{viewingScrapRecord.moldId}</p>
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">模具名称</label>
+                        <p className="text-sm font-bold text-slate-800 mt-1">{viewingScrapRecord.moldName}</p>
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">预计报废时间</label>
+                        <p className="text-sm font-bold text-slate-800 mt-1">{viewingScrapRecord.expectedDate}</p>
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">申请人</label>
+                        <p className="text-sm font-bold text-slate-800 mt-1">{viewingScrapRecord.applicant}</p>
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">申请时间</label>
+                        <p className="text-sm font-bold text-slate-800 mt-1">{viewingScrapRecord.applyTime}</p>
+                      </div>
+                    </div>
+                    <div className="mb-4">
+                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">报废描述</label>
+                      <p className="text-sm text-slate-700 mt-1 bg-slate-50 border border-slate-100 rounded-xl p-4 leading-relaxed">{viewingScrapRecord.reason}</p>
+                    </div>
+                    {viewingScrapRecord.note && (
+                      <div className="mb-4">
+                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">备注</label>
+                        <p className="text-sm text-slate-700 mt-1 bg-slate-50 border border-slate-100 rounded-xl p-4 leading-relaxed">{viewingScrapRecord.note}</p>
+                      </div>
+                    )}
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">审批信息</label>
+                      {viewingScrapRecord.status === 'PENDING' ? (
+                        <p className="text-sm text-amber-600 font-bold mt-2 flex items-center gap-2">
+                          <i className="fas fa-hourglass-half"></i>等待审批（审批邮件已推送至部门领导）
+                        </p>
+                      ) : (
+                        <div className="mt-2 space-y-2">
+                          <p className="text-sm text-slate-700">
+                            <span className="text-slate-400 font-bold mr-2">审批人:</span>{viewingScrapRecord.approver}
+                            <span className="text-slate-400 font-bold ml-6 mr-2">审批时间:</span>{viewingScrapRecord.approveTime}
+                          </p>
+                          {viewingScrapRecord.status === 'REJECTED' && viewingScrapRecord.rejectReason && (
+                            <p className="text-sm text-slate-700">
+                              <span className="text-red-400 font-bold mr-2">驳回原因:</span>{viewingScrapRecord.rejectReason}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* 列表视图 */
+                SCRAP_RECORDS.length === 0 ? (
+                  <div className="py-20 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 text-slate-400 text-sm">
+                    <i className="fas fa-file-alt text-4xl mb-4 block opacity-20"></i>
+                    暂无报废申请记录
+                  </div>
+                ) : (
+                  <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden overflow-x-auto">
+                    <table className="w-full text-left min-w-[860px]">
+                      <thead className="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-widest">
+                        <tr>
+                          <th className="px-4 py-4 font-bold">申请编号</th>
+                          <th className="px-4 py-4 font-bold">模具编号</th>
+                          <th className="px-4 py-4 font-bold">申请人</th>
+                          <th className="px-4 py-4 font-bold">申请时间</th>
+                          <th className="px-4 py-4 font-bold">预计报废时间</th>
+                          <th className="px-4 py-4 font-bold">审批状态</th>
+                          <th className="px-4 py-4 font-bold">审批人</th>
+                          <th className="px-4 py-4 font-bold">审批时间</th>
+                          <th className="px-4 py-4 font-bold text-right">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {SCRAP_RECORDS.map(rec => (
+                          <tr key={rec.applyNo} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-4 text-sm font-bold text-slate-800 whitespace-nowrap">{rec.applyNo}</td>
+                            <td className="px-4 py-4 text-sm font-mono font-bold text-slate-800">{rec.moldId}</td>
+                            <td className="px-4 py-4 text-sm text-slate-600">{rec.applicant}</td>
+                            <td className="px-4 py-4 text-sm text-slate-600 whitespace-nowrap">{rec.applyTime}</td>
+                            <td className="px-4 py-4 text-sm text-slate-600 whitespace-nowrap">{rec.expectedDate}</td>
+                            <td className="px-4 py-4">
+                              <span className={`px-3 py-1 rounded-full border text-xs font-black whitespace-nowrap ${SCRAP_STATUS_META[rec.status].cls}`}>
+                                {SCRAP_STATUS_META[rec.status].label}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-sm text-slate-600">{rec.approver || <span className="text-slate-300">—</span>}</td>
+                            <td className="px-4 py-4 text-sm text-slate-600 whitespace-nowrap">{rec.approveTime || <span className="text-slate-300">—</span>}</td>
+                            <td className="px-4 py-4 text-right">
+                              <button
+                                onClick={() => setViewingScrapRecord(rec)}
+                                className="px-3 py-1.5 text-xs font-bold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                              >
+                                <i className="fas fa-eye mr-1"></i>查看
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              )}
             </div>
           </div>
         </div>
