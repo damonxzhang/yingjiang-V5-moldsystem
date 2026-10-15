@@ -410,7 +410,7 @@ const MoldInquiry: React.FC<MoldInquiryProps> = ({ onBack }) => {
                   </button>
                 </>
               ) : scrapStage === 'waiting' ? (
-                <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="flex flex-col items-center text-center pt-10">
                   <div className="w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-amber-500/40">
                     <i className="fas fa-envelope-open-text text-3xl text-white"></i>
                   </div>
