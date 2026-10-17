@@ -5,6 +5,7 @@ import { STATUS_COLORS, STATUS_LABELS } from '../../constants';
 import { Mold, MoldStatus, BuyoffStatus, MoldComponent } from '../../types';
 import { fetchMoldList, MoldListItem, fetchMoldDetail, MoldDetailItem, saveMold, fetchInternalComponents, InternalComponentItem, toggleStatus } from '../../services/moldmanageService';
 import { fetchProductTypes } from '../../services/dashboardService';
+import { message } from '../../components/Message';
 import Pagination from '../../components/Pagination';
 
 /**
@@ -273,20 +274,22 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
       };
       const response = await saveMold(saveParams);
       if (response.code === 200 && response.data?.success) {
-        // 保存成功，刷新列表
-        alert(response.data.message || '保存成功');
+        // 保存成功：提示并刷新列表，随后关闭弹窗
+        message.success(response.data.message || '保存成功');
         setCurrentPage(1);
+        loadMolds(1);  // 显式刷新，避免当前已处于第1页时列表不更新
+        setIsModalOpen(false);
+        setCurrentMold({});
+        setCurrentMoldDetail(null);
       } else {
-        alert(response.message || '保存失败');
+        // 保存失败：保持弹窗打开，保留已输入内容
+        message.error(response.message || '保存失败');
       }
     } catch (err) {
       console.error('保存模具失败:', err);
-      alert(err instanceof Error ? err.message : '保存失败');
+      // 请求异常：同样保持弹窗打开，保留已输入内容
+      message.error(err instanceof Error ? err.message : '保存失败');
     }
-
-    setIsModalOpen(false);
-    setCurrentMold({});
-    setCurrentMoldDetail(null);
   };
 
   const handleToggleStatus = async (id: string, action: 'activate' | 'deactivate') => {
