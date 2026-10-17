@@ -644,11 +644,12 @@ const MachineDashboard: React.FC<MachineDashboardProps> = ({ onSwitchView, onBac
     const slot = defaultSlot && availablePos.includes(defaultSlot) ? defaultSlot : (availablePos.length > 0 ? availablePos[0] : 'P1');
     setSelectedMoldPos(slot as any);
 
-    // 调用 API 获取机台详情（不传 slot 参数，获取所有 slots 数据）
+    // 调用 API 获取机台详情（传入 slot，确保 current_mold 与选中槽位一致，否则后端默认返回第一个有效槽位的模具）
     setIsLoadingMachineDetail(true);
     try {
       const detail = await DashboardService.fetchMachineDetail({
-        machine_id: machine.machine_id
+        machine_id: machine.machine_id,
+        slot: slot
       });
        const authData = AuthService.getStoredAuth();
       if(detail.department != authData?.department){
