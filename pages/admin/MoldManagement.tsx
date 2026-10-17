@@ -529,6 +529,7 @@ const MoldManagement: React.FC<MoldManagementProps> = ({ department, isAuditMode
           <button 
             onClick={() => {
               setCurrentPage(1);
+              loadMolds(1);  // 显式调用，避免当前已处于第1页时页码未变化导致筛选不生效
             }} 
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors"
           >
